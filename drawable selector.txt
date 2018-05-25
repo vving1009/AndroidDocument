@@ -1,0 +1,92 @@
+shape用于设定形状，可以在selector，layout等里面使用，有6个子标签，各属性如下：
+
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" 
+    android:shape=["rectangle" | "oval" | "line" | "ring"] >
+    
+    <!-- 圆角 -->
+    <corners
+        android:radius="9dp"
+        android:topLeftRadius="2dp"
+        android:topRightRadius="2dp"
+        android:bottomLeftRadius="2dp"
+        android:bottomRightRadius="2dp"/><!-- 设置圆角半径 -->
+    
+    <!-- 渐变 -->
+    <gradient
+        android:startColor="@android:color/white"
+        android:centerColor="@android:color/black"
+        android:endColor="@android:color/black"
+        android:useLevel="true"
+        android:angle="45"
+        android:type=["linear" | "radial" | "sweep"]
+        android:centerX="0"
+        android:centerY="0"
+        android:gradientRadius="90"/>
+    
+    <!-- 间隔 -->
+    <padding
+        android:left="2dp"
+        android:top="2dp"
+        android:right="2dp"
+        android:bottom="2dp"/><!-- 各方向的间隔 -->
+    
+    <!-- 大小 -->
+    <size
+        android:width="50dp"
+        android:height="50dp"/><!-- 宽度和高度 -->
+    
+    <!-- 填充 -->
+    <solid
+        android:color="@android:color/white"/><!-- 填充的颜色 -->
+    
+    <!-- 描边 -->
+    <stroke
+        android:width="2dp"
+        android:color="@android:color/black"
+        android:dashWidth="1dp"
+        android:dashGap="2dp"/>
+</shape>
+
+
+<?xml version="1.0" encoding="utf-8"?>  
+	<selector xmlns:android="http://schemas.android.com/apk/res/android">  
+	    <item android:state_pressed="true">
+          <shape> 
+	            <!-- 渐变 -->  
+	            <gradient android:endColor="#FFFFFF" android:gradientRadius="50" android:startColor="#ff8c00" android:type="radial"/>  
+	            <!-- 描边 -->  
+	            <stroke android:dashGap="3dp" android:dashWidth="5dp" android:width="2dp" android:color="#dcdcdc" />  
+	            <!-- 圆角 -->  
+	            <corners android:radius="2dp" />  
+	            <padding android:bottom="10dp" android:left="10dp" android:right="10dp" android:top="10dp" />  
+	        </shape>
+	    </item>  
+	    <item android:state_focused="true">
+          <shape>  
+	            <gradient android:angle="270" android:endColor="#ffc2b7" android:startColor="#ffc2b7" />  
+              <stroke android:width="2dp" android:color="#dcdcdc" />  
+              <corners android:radius="2dp" />  
+	            <padding android:bottom="10dp" android:left="10dp" android:right="10dp" android:top="10dp" />  
+          </shape>
+      </item>  
+	    <item>
+          <shape>  
+              <solid android:color="#ff9d77" />  
+              <stroke android:width="2dp" android:color="#fad3cf" />  
+              <corners android:bottomLeftRadius="5dp" android:bottomRightRadius="0dp" android:topLeftRadius="0dp" android:topRightRadius="5dp" />  
+              <padding android:bottom="10dp" android:left="10dp" android:right="10dp" android:top="10dp" />  
+          </shape>
+      </item>  
+</selector>
+
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true"
+          android:drawable="@drawable/button_pressed" /> <!-- pressed -->
+    <item android:state_focused="true"
+          android:drawable="@drawable/button_focused" /> <!-- focused -->
+    <item android:state_hovered="true"
+          android:drawable="@drawable/button_focused" /> <!-- hovered -->
+    <item android:drawable="@drawable/button_normal" /> <!-- default -->
+</selector>

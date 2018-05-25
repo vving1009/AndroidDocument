@@ -1,0 +1,98 @@
+帧动画（Frame）Drawable Animation
+http://www.cnblogs.com/whoislcj/p/5733740.html
+ 
+1. 在 res/drawable 目录添加图片素材
+2. 在 res/drawable 目录下添加文件anim_list.xml，使用AS不可放在res/anim，否则会报错
+
+<?xml version="1.0" encoding="utf-8"?>
+<animation-list xmlns:android="http://schemas.android.com/apk/res/android"
+    android:oneshot="false" >
+    <item
+        android:drawable="@drawable/cmmusic_progress_1"
+        android:duration="150">
+    </item>
+    <item
+        android:drawable="@drawable/cmmusic_progress_2"
+        android:duration="150">
+    </item>
+    <item
+        android:drawable="@drawable/cmmusic_progress_3"
+        android:duration="150">
+    </item>
+    <item
+        android:drawable="@drawable/cmmusic_progress_4"
+        android:duration="150">
+    </item>
+    <item
+        android:drawable="@drawable/cmmusic_progress_5"
+        android:duration="150">
+    </item>
+    <item
+        android:drawable="@drawable/cmmusic_progress_6"
+        android:duration="150">
+    </item>
+    <item
+        android:drawable="@drawable/cmmusic_progress_7"
+        android:duration="150">
+    </item>
+    <item
+        android:drawable="@drawable/cmmusic_progress_8"
+        android:duration="150">
+    </item>
+</animation-list>
+
+    根标签为 animation-list。
+    oneshot true表示只会播放一次并停留在最后一帧，false表示一直循环播放.
+    根标签下，内部用item节点声明一个动画帧.
+    android:duration 代表此帧持续的时间，整数，单位为毫秒。
+
+3. 为 View 控件绑定动画效果
+
+方法1：
+
+XML布局：
+ <ImageView
+   android:id="@+id/animation_iv"
+   android:layout_width="wrap_content"
+   android:layout_height="wrap_content"
+   android:layout_gravity="center"
+   android:layout_margin="10dp"
+   android:src="@drawable/lottery_animlist" />
+   
+这个时候我们运行一下，发现动画没有运行而是停留在第一帧，那是因为AnimationDrawable播放动画是依附在window上面的，而在Activity onCreate方法中调用时Window还未初始化完毕，所有才会停留在第一帧，要想实现播放必须在onWindowFocusChanged中添加如下代码：
+
+/*
+*    将 animation-list 设置为 ImageView 的 Drawable。
+*    获取 ImagView 的 Drawable 并将其转换成 AnimationDrawable。
+*    开始或停止播放动画。
+*/
+imageView.setImageResource(R.drawable.animation_list);
+//img.setBackgroundResource(R.drawable.spin_animation);3
+//AnimationDrawable frameAnimation = (AnimationDrawable) img.getBackground();
+AnimationDrawable animationDrawable=(AnimationDrawable)imageView.getDrawable()();
+animationDrawable.start();  //开始
+animationDrawable.stop();  //停止
+
+方法2：
+AnimationDrawable anim = new AnimationDrawable();
+for (int i = 1; i <= 6; i++) {
+    int id = getResources().getIdentifier("lottery_" + i, "mipmap", getPackageName());
+    Drawable drawable = getResources().getDrawable(id);
+    anim.addFrame(drawable, 200);
+}
+anim.setOneShot(false);
+imageView.setImageDrawable(anim);
+anim.start();
+
+
+AnimationDrawable 几个常见的api
+    void start() - 开始播放动画
+    void stop() - 停止播放动画
+    addFrame(Drawable frame, int duration) - 添加一帧，并设置该帧显示的持续时间
+    void setOneShoe(boolean flag) - false为循环播放，true为仅播放一次
+    boolean isRunning() - 是否正在播放
+    
+注意：AnimationDrawable. start()方法不能够在Activity的onCreate()方法中调用，因为AnimationDrawable还未完全的附加(attached)到Window,如果你不需要交互而立即播放动画，那么可以在onWindowFocusChanged() 方法中，这个方法会在你的Activity Windows获取焦点是触发。 
+
+总结：
+   Frame Animation（逐帧动画）相对来说比较简单，但是在实际开发中使用的频率还是比较高的。希望以这个小例子能够掌握逐帧动画，但是逐帧动画只能实现比较小的动画效果，如果复杂而且帧数比较多的动画不太建议使用逐帧动画，一方面是因为会造成OOM，另一方面会显得很卡，如果真是超级复杂的动画的话建议选择双缓冲绘制View来实现。

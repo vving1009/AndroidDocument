@@ -1,0 +1,18 @@
+getFragmentManager和getSupportFragmentManager的区别是?
+
+
+3.0以下：getSupportFragmentManager()
+3.0以上：getFragmentManager()
+
+
+因为3.0以下版本  是没有fragment的api  所以必须借助V4包里面的getSupportFragmentManager()方法来间接获取FragmentManager()对象。
+3.0版本之后，有了Fragment的api，就可以直接使用getFragmentManager()这个方法来获取了
+
+
+android3.0 之前没有fragment的api，所以在使用的时候需要导入support包，通过getSupportFragmentManager()来获取FragmentManager对象，同时继承
+fragmentActivity，这样在activity中才能嵌入fragment。
+
+
+3.0版本之后有了fragment的API，所以直接通过getFragmentManager()方法就能获取到FragmentManager对象，并且直接继承自Activity就嵌入使用fragment了。
+
+需要管理相互独立的并且隶属于Activity的Fragment使用FragmentManager（），而在Fragment中动态的添加Fragment要使用getChildFragmetManager（）来管理。

@@ -1,0 +1,131 @@
+LayoutParams参数的意义
+http://blog.csdn.net/zizidemenghanxiao/article/details/50051601
+
+在文章的开头先把我见过的一些设置罗列一下吧：
+
+
+
+
+直接挪用的代码：
+
+//第一个参数为宽的设置，第二个参数为高的设置。  （用的时候注意修改LinearLayout前缀,其实很多时候可以不写它的）
+LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(     
+LinearLayout.LayoutParams.FILL_PARENT,     
+LinearLayout.LayoutParams.WRAP_CONTENT     
+); 
+
+
+
+
+//设置居中显示：
+lp.gravity = Gravity.CENTER;
+//设置它的上下左右的margin：4个参数按顺序分别是左上右下
+lp.setMargins(10,10,10,10);
+
+//还可以这样添加规则：
+lp.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE); 
+lp.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE); 
+
+//给某个View设置LayoutParams参数：
+btn1.setLayoutParams(lp);
+
+//最后将添加View到Layout中：（如果是在某个自定义的Layout布局中，前缀也可以省略）
+mLayout.addView(textView, lp); 
+//其实不用LayoutParams也不会死啦
+mLayout.addView(textView, tvWidth, tvHeight);
+
+
+
+
+
+LayoutParam的功能如下：
+
+LayoutParams继承于Android.View.ViewGroup.LayoutParams.
+
+其实这个LayoutParams类是用于child view（子视图） 向 parent view（父视图）传达自己的意愿的一个东西（孩子想变成什么样向其父亲说明） 。LayoutParams相当于一个Layout的信息包，它封装了Layout的位置、高、宽等信息。假设在屏幕上一块区域是由一个Layout占领的，如果将一个View添加到一个Layout中，最好告诉Layout用户（要添加进去的View）期望的布局方式，也就是将一个认可的layoutParams传递进去。可以这样去形容LayoutParams，在象棋的棋盘（Layout）上，每个棋子（VIew）都占据一个位置，也就是每个棋子（VIew）都有一个位置的信息，如这个棋子（VIew）在4行4列，这里的“4行4列”就是棋子（VIew）的LayoutParams。
+但LayoutParams类也只是简单的描述了位置，宽和高，它们可以设置成下面的这三种值：
+       1，一个确定的值；
+       2，FILL_PARENT，即填满（和父容器一样大小）；
+       3，WRAP_CONTENT，即包裹住组件就好。
+
+在JAVA中动态构建的布局，常常这样写：（第一个参数是宽，第二个参数是高）
+
+setLayoutParams(new LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
+
+上面这一句话其实是子对父的，也就是说，父布局下的子控件要设置这句话。
+
+因为布局很多，虽然都继承至ViewGroup但是各个布局还是有很大的不同。
+
+很显然上面这句应该这样写才算准确：
+
+setLayoutParams(new TableRow.LayoutParams(TableRow.LayoutParams.FILL_PARENT,TableRow.LayoutParams.FILL_PARENT));
+
+这表示这个子控件的父布局是一个TableRow , 这样的LayoutParams 太多，所以应明确指明。
+
+ 
+下面分别说下两个常用到布局:
+
+1. FrameLayout下动态设置子控件居中，动态用JAVA代码要这样实现:（位置，要在其他的语句中进行设置）
+
+FrameLayout.LayoutParams lytp = new FrameLayout.LayoutParams(80,LayoutParams.WRAP_CONTENT);
+lytp.gravity = Gravity.CENTER;
+btn.setLayoutParams(lytp);
+
+2. RelativeLayout下动态设置子控件居中：
+
+RelativeLayout.LayoutParams lp=new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT); 
+lp.addRule(RelativeLayout.ALIGN_PARENT_RIGHT, RelativeLayout.TRUE); 
+lp.addRule(RelativeLayout.ALIGN_PARENT_TOP, RelativeLayout.TRUE); 
+btn1.setLayoutParams(lp);
+
+ 
+举例1：
+
+//创建一个线性布局LinearLayout
+private LinearLayout mLayout;     
+mLayout = (LinearLayout) findViewById(R.id.layout);     
+//现在我要往mLayout里边动态添加一个TextView   
+TextView textView = new TextView(Activity01.this);     
+textView.setText("Text View " );  
+
+//第一个参数为宽的设置，第二个参数为高的设置。  
+LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(     
+    LinearLayout.LayoutParams.FILL_PARENT,     
+    LinearLayout.LayoutParams.WRAP_CONTENT     
+);     
+
+//调用addView()方法增加一个TextView到线性布局中  
+mLayout.addView(textView, p); 
+
+
+举例2：
+
+public class Card extends FrameLayout {
+
+	public Card(Context context) {
+		super(context);
+
+		LayoutParams lp = null;
+
+		background = new View(getContext());
+		lp = new LayoutParams(-1, -1);
+		lp.setMargins(10, 10, 0, 0);
+		background.setBackgroundColor(0x33ffffff);
+		addView(background, lp);
+
+		label = new TextView(getContext());
+		label.setTextSize(28);
+		label.setGravity(Gravity.CENTER);
+
+		lp = new LayoutParams(-1, -1);
+		lp.setMargins(10, 10, 0, 0);
+		addView(label, lp);
+
+		setNum(0);
+	}
+}
+
+
+这个例子中，正如 FrameLayout 中添加两个摞起来的 View ，分别是 background 和 label 。
+
+

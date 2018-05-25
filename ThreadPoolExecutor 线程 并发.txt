@@ -1,0 +1,290 @@
+http://blog.csdn.net/wangbaochu/article/details/53941424
+http://blog.csdn.net/seu_calvin/article/details/52415337
+http://blog.csdn.net/u012702547/article/details/52259529
+http://blog.csdn.net/csdn1017355712/article/details/54098157
+使用线程池的好处
+1.重用已经创建的好的线程，避免频繁创建进而导致的频繁GC
+2.控制线程并发数，合理使用系统资源，提高应用性能
+3.可以有效的控制线程的执行，比如定时执行，取消执行等
+
+Java／Android线程池框架的结构主要包括3个部分
+1.任务：包括被执行任务需要实现的接口类：Runnable 或 Callable
+2.任务的执行器：包括任务执行机制的核心接口类Executor，以及继承自Executor的EexcutorService接口。
+3.执行器的创建者，工厂类Executors
+
+一、Executor 和 ExecutorService
+Executor只是一个接口，它是Java／Android线程池框架的基础，它将任务的提交与任务的执行分离开来。
+ExecutorService继承自Executor，有两个关键类实现了ExecutorService接口：ThreadPoolExecutor和ScheduledThreadPoolExecutor。
+（1）ThreadPoolExecutor 是线程池的核心实现类，用来执行被提交的任务。
+（2）ScheduledThreadPoolExecutor 也是一个实现类，可以在给定的延迟后运行命令，或者定期执行命令。它比Timer更灵活，功能更强大。
+
+ThreadPoolExecutor构造方法
+public ThreadPoolExecutor(int corePoolSize,  
+                              int maximumPoolSize,  
+                              long keepAliveTime,  
+                              TimeUnit unit,  
+                              BlockingQueue<Runnable> workQueue,  
+                              ThreadFactory threadFactory,  
+                              RejectedExecutionHandler handler)  
+                              
+public ThreadPoolExecutor(  
+//核心线程数，除非allowCoreThreadTimeOut被设置为true，否则它闲着也不会死  
+int corePoolSize,   
+//最大线程数，活动线程数量超过它，后续任务就会排队                     
+int maximumPoolSize,   
+//超时时长，作用于非核心线程（allowCoreThreadTimeOut被设置为true时也会同时作用于核心线程），闲置超时便被回收
+long keepAliveTime,                            
+//枚举类型，设置keepAliveTime的单位，有TimeUnit.MILLISECONDS（ms）、TimeUnit. SECONDS（s）等  
+TimeUnit unit,  
+//缓冲任务队列，线程池的execute方法会将Runnable对象存储起来  
+BlockingQueue<Runnable> workQueue,  
+//线程工厂接口，只有一个new Thread(Runnable r)方法，可为线程池创建新线程,这个我们一般使用默认即可
+ThreadFactory threadFactory,  
+//拒绝策略，当线程无法执行新任务时（一般是由于线程池中的线程数量已经达到最大数或者线程池关闭导致的），默认情况下，当线程池无法处理新线程时，会抛出一个RejectedExecutionException。
+RejectedExecutionHandler handler)
+
+（1）当currentSize<corePoolSize时，没什么好说的，直接启动一个核心线程并执行任务。
+（2）当currentSize>=corePoolSize、并且workQueue未满时，添加进来的任务会被安排到workQueue中等待执行。
+（3）当workQueue已满，但是currentSize<maximumPoolSize时，会立即开启一个非核心线程来执行任务。
+（4）当currentSize>=corePoolSize、workQueue已满、并且currentSize>maximumPoolSize时，调用handler默认抛出RejectExecutionExpection异常。
+
+BlockingQueue：
+当我们从BlockingQueue中取数据时，如果BlockingQueue是空的，则取数据的操作会进入到阻塞状态，当BlockingQueue中有了新数据时，这个取数据的操作又会被重新唤醒。同理，如果BlockingQueue中的数据已经满了，往BlockingQueue中存数据的操作又会进入阻塞状态，直到BlockingQueue中又有新的空间，存数据的操作又会被冲洗唤醒。BlockingQueue有多种不同的实现类：
+1.ArrayBlockingQueue：这个表示一个规定了大小的BlockingQueue，ArrayBlockingQueue的构造函数接受一个int类型的数据，该数据表示BlockingQueue的大小，存储在ArrayBlockingQueue中的元素按照FIFO（先进先出）的方式来进行存取。
+2.LinkedBlockingQueue：这个表示一个大小不确定的BlockingQueue，在LinkedBlockingQueue的构造方法中可以传一个int类型的数据，这样创建出来的LinkedBlockingQueue是有大小的，也可以不传，不传的话，LinkedBlockingQueue的大小就为Integer.MAX_VALUE
+3.PriorityBlockingQueue：这个队列和LinkedBlockingQueue类似，不同的是PriorityBlockingQueue中的元素不是按照FIFO来排序的，而是按照元素的Comparator来决定存取顺序的（这个功能也反映了存入PriorityBlockingQueue中的数据必须实现了Comparator接口）。
+4.SynchronousQueue：这个是同步Queue，属于线程安全的BlockingQueue的一种，在SynchronousQueue中，生产者线程的插入操作必须要等待消费者线程的移除操作，Synchronous内部没有数据缓存空间，因此我们无法对SynchronousQueue进行读取或者遍历其中的数据，元素只有在你试图取走的时候才有可能存在。我们可以理解为生产者和消费者互相等待，等到对方之后然后再一起离开。
+
+Demo：
+@Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        poolExecutor = new ThreadPoolExecutor(3, 5,
+                1, TimeUnit.SECONDS, new LinkedBlockingDeque<Runnable>(128));
+}
+
+    public void btnClick(View view) {
+        for (int i = 0; i < 30; i++) {
+            final int finalI = i;
+            Runnable runnable = new Runnable() {
+                @Override
+                public void run() {
+                    SystemClock.sleep(2000);
+                    Log.d("google_lenve_fb", "run: " + finalI);
+                }
+            };
+            poolExecutor.execute(runnable);
+        }
+    }
+
+
+二、Executors工厂类
+Executors是一个工厂类，它不继承任何其它类，它通过ThreadPoolExecutor、ScheduledThreadPoolExecutor创建出四种不同的线程池，分别为：
+
+（1）newCachedThreadPool 创建一个可缓存线程池，线程池的最大长度无限制，但如果线程池长度超过处理需要，可灵活回收空闲线程，若无可回收，则新建线程。
+-CachedThreadPool只有非核心线程，最大线程数非常大，所有线程都活动时，会为新任务创建新线程，否则利用空闲线程（60s空闲时间，过了就会被回收，所以线程池中有0个线程的可能）处理任务。
+-任务队列SynchronousQueue相当于一个空集合，导致任何任务都会被立即执行。
+-CachedThreadPool就像是一堆人去一个很大的咖啡馆喝咖啡，里面服务员也很多，随时去，随时都可以喝到咖啡。但是为了响应国家的“光盘行动”，一个人喝剩下的咖啡会被保留60秒，供新来的客人使用，哈哈哈哈哈，好恶心啊。如果你运气好，没有剩下的咖啡，你会得到一杯新咖啡。但是以前客人剩下的咖啡超过60秒，就变质了，会被服务员回收掉。
+-比较适合执行大量的耗时较少的任务。喝咖啡人挺多的，喝的时间也不长。
+
+源码：
+public static ExecutorService newCachedThreadPool() {  
+    return new ThreadPoolExecutor(0, Integer.MAX_VALUE,  
+                                     60L, TimeUnit.SECONDS,  
+                                     new SynchronousQueue<Runnable>());  
+}  
+
+示例：
+ExecutorService cachedThreadPool = Executors.newCachedThreadPool();  
+for (int i = 0; i < 10; i++) {  
+    final int index = i;  
+    try {  
+        Thread.sleep(index * 1000);  
+    } catch (InterruptedException e) {  
+        e.printStackTrace();  
+    }  
+   
+    cachedThreadPool.execute(new Runnable() {  
+   
+        @Override  
+        public void run() {  
+            System.out.println(index);  
+        }  
+    });  
+}  
+
+（2）newFixedThreadPool  创建一个定长线程池，可控制线程最大并发数，超出的线程会在队列中等待。
+-从配置参数来看，FixThreadPool只有核心线程，并且数量固定的，也不会被回收，所有线程都活动时，因为队列没有限制大小，新任务会等待执行。
+-FixThreadPool其实就像一堆人排队上公厕一样，可以无数多人排队，但是厕所位置就那么多，而且没人上时，厕所也不会被拆迁，哈哈o(∩_∩)o ，很形象吧。
+-由于线程不会回收，FixThreadPool会更快地响应外界请求，这也很容易理解，就好像有人突然想上厕所，公厕不是现用现建的。
+
+源码：
+public static ExecutorService newFixedThreadPool(int nThreads) {  
+    return new ThreadPoolExecutor(nThreads, nThreads,  
+                                  0L, TimeUnit.MILLISECONDS,  
+                                  new LinkedBlockingQueue<Runnable>());  
+}  
+示例：
+ExecutorService fixedThreadPool = Executors.newFixedThreadPool(3);  
+for (int i = 0; i < 10; i++) {  
+    final int index = i;  
+    fixedThreadPool.execute(new Runnable() {  
+   
+        @Override  
+        public void run() {  
+            try {  
+                System.out.println(index);  
+                Thread.sleep(2000);  
+            } catch (InterruptedException e) {  
+                // TODO Auto-generated catch block  
+                e.printStackTrace();  
+            }  
+        }  
+    });  
+} 
+
+（3）newScheduledThreadPool 创建一个定长线程池，支持定时及周期性任务执行。
+
+源码：
+public static ScheduledExecutorService newScheduledThreadPool(int corePoolSize) {  
+    return new ScheduledThreadPoolExecutor(corePoolSize);  
+}  
+
+示例：
+//表示延迟3秒执行
+ScheduledExecutorService scheduledThreadPool = Executors.newScheduledThreadPool(5);  
+scheduledThreadPool.schedule(new Runnable() {  
+   
+    @Override  
+    public void run() {  
+        System.out.println("delay 3 seconds");  
+    }  
+}, 3, TimeUnit.SECONDS);  
+
+//表示延迟1秒后每3秒执行一次
+scheduledThreadPool.scheduleAtFixedRate(new Runnable() {  
+   
+    @Override  
+    public void run() {  
+        System.out.println("delay 1 seconds, and excute every 3 seconds");  
+    }  
+}, 1, 3, TimeUnit.SECONDS);  
+
+（4）newSingleThreadExecutor 创建一个单线程化的线程池，它只会用唯一的工作线程来执行任务，保证所有任务按照指定顺序(FIFO, LIFO, 优先级)执行。
+-从配置参数可以看出，SingleThreadPool只有一个核心线程，确保所有任务都在同一线程中按顺序完成。因此不需要处理线程同步的问题。
+-可以把SingleThreadPool简单的理解为FixThreadPool的参数被手动设置为1的情况，即Executors.newFixThreadPool(1).execute(r)。所以SingleThreadPool可以理解为公厕里只有一个坑位，先来先上。为什么只有一个坑位呢，因为这个公厕是收费的，收费的大爷上年纪了，只能管理一个坑位，多了就管不过来了（线程同步问题）。
+
+源码：
+public static ExecutorService newSingleThreadExecutor() {  
+    return new FinalizableDelegatedExecutorService  
+        (new ThreadPoolExecutor(1, 1,  
+                                0L, TimeUnit.MILLISECONDS,  
+                                new LinkedBlockingQueue<Runnable>()));  
+}  
+
+示例：
+ExecutorService singleThreadExecutor = Executors.newSingleThreadExecutor();  
+for (int i = 0; i < 10; i++) {  
+    final int index = i;  
+    singleThreadExecutor.execute(new Runnable() {  
+   
+        @Override  
+        public void run() {  
+            try {  
+                System.out.println(index);  
+                Thread.sleep(2000);  
+            } catch (InterruptedException e) {  
+                // TODO Auto-generated catch block  
+                e.printStackTrace();  
+            }  
+        }  
+    });  
+}  
+
+线程池其他常用功能
+
+1.shutDown()  关闭线程池，不影响已经提交的任务，是停止任务队列中要执行的任务
+2.shutDownNow() 关闭线程池，并尝试去终止正在执行的线程
+3.allowCoreThreadTimeOut(boolean value) 允许核心线程闲置超时时被回收
+4.submit 一般情况下我们使用execute来提交任务，但是有时候可能也会用到submit，使用submit的好处是submit有返回值，举个栗子：
+    public void submit(View view) {  
+        List<Future<String>> futures = new ArrayList<>();  
+        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(3, 5, 1,  
+                TimeUnit.SECONDS, new LinkedBlockingDeque<Runnable>());  
+        for (int i = 0; i < 10; i++) {  
+            Future<String> taskFuture = threadPoolExecutor.submit(new MyTask(i));  
+            //将每一个任务的执行结果保存起来  
+            futures.add(taskFuture);  
+        }  
+        try {  
+            //遍历所有任务的执行结果  
+            for (Future<String> future : futures) {  
+                Log.d("google_lenve_fb", "submit: " + future.get());  
+            }  
+        } catch (InterruptedException e) {  
+            e.printStackTrace();  
+        } catch (ExecutionException e) {  
+            e.printStackTrace();  
+        }  
+    }  
+      
+    class MyTask implements Callable<String> {  
+      
+        private int taskId;  
+      
+        public MyTask(int taskId) {  
+            this.taskId = taskId;  
+        }  
+      
+        @Override  
+        public String call() throws Exception {  
+            SystemClock.sleep(1000);  
+            //返回每一个任务的执行结果  
+            return "call()方法被调用----" + Thread.currentThread().getName() + "-------" + taskId;  
+        }  
+    }  
+    
+    
+    5. 自定义线程池
+除了使用submit来定义线程池获取线程执行结果之外，我们也可以通过自定义ThreadPoolExecutor来实现这个功能，如下：
+
+public void customThreadPool(View view) {  
+        final MyThreadPool myThreadPool = new MyThreadPool(3, 5, 1, TimeUnit.MINUTES, new LinkedBlockingDeque<Runnable>());  
+        for (int i = 0; i < 10; i++) {  
+            final int finalI = i;  
+            Runnable runnable = new Runnable(){  
+                @Override  
+                public void run() {  
+                    SystemClock.sleep(100);  
+                    Log.d("google_lenve_fb", "run: " + finalI);  
+                }  
+            };  
+            myThreadPool.execute(runnable);  
+        }  
+    }  
+    class MyThreadPool extends ThreadPoolExecutor{  
+      
+        public MyThreadPool(int corePoolSize, int maximumPoolSize, long keepAliveTime, TimeUnit unit, BlockingQueue<Runnable> workQueue) {  
+            super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue);  
+        }  
+      
+        @Override  
+        protected void beforeExecute(Thread t, Runnable r) {  
+            super.beforeExecute(t, r);  
+            Log.d("google_lenve_fb", "beforeExecute: 开始执行任务！");  
+        }  
+      
+        @Override  
+        protected void afterExecute(Runnable r, Throwable t) {  
+            super.afterExecute(r, t);  
+            Log.d("google_lenve_fb", "beforeExecute: 任务执行结束！");  
+        }  
+      
+        @Override  
+        protected void terminated() {  
+            super.terminated();  
+            //当调用shutDown()或者shutDownNow()时会触发该方法  
+            Log.d("google_lenve_fb", "terminated: 线程池关闭！");  
+        }  
+    }  

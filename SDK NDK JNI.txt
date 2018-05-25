@@ -1,0 +1,179 @@
+
+ http://blog.csdn.net/krubo1/article/details/50547681
+ http://blog.csdn.net/u012005313/article/details/52005958
+ http://blog.csdn.net/carson_ho/article/details/73250163
+ http://www.cnblogs.com/linguanh/p/4624768.html?utm_source=tuicool&utm_medium=referral
+ 
+/////////////////////////////////////////////////////////////////////////////////////////////////// 
+
+最近有个新需求，要求进行定位。但是项目本身用的是动态加载框架，在只更新插件的情况下，做到定位需求。先说说Android定位，由于自带的定位不稳定，我自己测试的时候返现在室内基本都是定位不到，再加上，谷歌服务基本都被大部分厂商砍掉。所以为了准确性和稳定性，暂时只能用第三方应用。
+BAT的三个地图SDK，百度和阿里的由于要在AndroidMainfest文件中注入一个定位服务，这就意味着要更新动态加载框架，所以这2个肯定是不能用的，所以选择了腾讯的，精简，size小，实现方便。最重要的是不需要再AndroidMainfest注入服务。但是文档中说要注入一个meta-data 用来写入ID，我的做法是直接改了他的jar包，然后写死id，这样就不需要在AndroidMainfest中注入了。
+OK，下一步就是导入腾讯SDK提供的.so文件，
+
+正常方法，在main下建立jniLibs,然后安装的时候，会把jniLibs里面的拷贝到data/app/packageName/libs下。然后运行时候就会根据CPU的类型，到这个目录去加载最匹配的.so文件。
+
+然而，我们是动态加载，并不能使用这种方法，因为我们插件打包的时候并不能指定在data/app/package/下保存.so文件。
+
+所以，一开始有个想法，动态加载.so文件，就是在运行时候，把.so放在assets里面，然后拷贝到data/app/context.getpackage/libs里面，然后加载so，然而尝试了一番，发现并不行，因为data/app/packageName/libs 这个目录只有可读权限。并不能写入。
+
+换方法，了解到，System.load 和 System.loadLibrary 可以动态加载.so，先是尝试了system.loadlibry, 这种不行因为这个方法，固定的加载目录是在data/app/packageName/libs，所以不能使用，于是使用system.load() 指定绝对路径，OK可以了。有一点需要注意的是，system.load方法只能加载在data/app/packageName/libs下的 或者 在私有目录(data/data/package/...)下的，所以，同样采用在assets中存放.so 运行中动态拷贝。
+上代码
+
+/** * 初始化location，主要做一些拷贝.so的操作 */
+  public void initLoacation() {
+    LogUtils.d(Build.CPU_ABI);
+    File soFile = null;  
+  if (DeviceInfo.getDeviceCpu().equals("armeabi-v7a")) {   
+     soFile = new File(mContext.getFilesDir(), "libtencentloc-v7a.so");    
+}else if (DeviceInfo.getDeviceCpu().equals("armeabi")) {   
+     soFile = new File(mContext.getFilesDir(), "libtencentloc-v7a.so"); 
+   } else if (DeviceInfo.getDeviceCpu().equals("x86")) {   
+    soFile = new File(mContext.getFilesDir(), "libtencentloc-x86.so"); 
+   }  if (soFile.exists()) {  
+      System.load(soFile.getAbsolutePath()); 
+       startLocation();    
+} else { 
+       copySoFileToLocal(soFile);    }}
+
+上边就是先判断CPU的架构，然后不同的架构，拷贝不同的.so文件，.So文件我是放在assets目录下
+
+/** * 拷贝.so文件 * * 
+@param soFile
+ */
+private void copySoFileToLocal(final File soFile) {   
+ new Thread(new Runnable() { 
+       @Override        
+     public void run() {           
+             try {                
+ InputStream inputStream = mContext.getResources().getAssets().open(soFile.getName());                           
+ FileOutputStream fos = mContext.openFileOutput(soFile.getName(), Context.MODE_PRIVATE);                
+ IOUtils.in2out(inputStream, fos);               
+ System.load(soFile.getAbsolutePath());               
+ LogUtils.d("had load " + soFile.getAbsolutePath());                
+KyxSDKGlobal.runOnMainThread(new Runnable() {                    
+@Override                   
+ public void run() {   
+          startLocation(); }
+  }); } catch (IOException e) {  
+              e.printStackTrace(); 
+               LogUtils.d("error");  
+          } }}).start();}
+
+OK，这样就可以把.so加载成功了。然后就可以继续执行腾讯SDK的相关方法
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+JNI （Java Native Interface），Java的本地接口
+
+      JNI是Java众多开发技术中的一门，意在利用本地代码，为Java程序提供 更高效，更灵活的拓展。应用场景包括：对运行效率敏感的算法实现、跨平台应用移植、调用系统的底层驱动、调用硬件等。尽管Java一贯以其良好的跨平台性 而著称，但真正的跨平台之王，应该是C/C++，因为当前世上90%的系统都是基于C/C++编写的。Java的跨平台，是以牺牲效率换来对多种平台的兼 容性，因而JNI可以说是Java短板的补充！举一例子说明，当前流行的移动操作系统Android，一直被说系统操作的流畅性不如IOS，原因在于 Android的App是基于Java开发的，IOS的是基于Object-C开发的，区别在于同样的操作，在IOS上一条指令完成，在Android上 则需要多大三条指令才能完成（数据来自于网络，不一定准确）！于是在Android JellyBean版本中，Google为其引入ProjectButter（黄油计划），在应用层大量使用了本地库，并优化了系统的架构，以提升 Android系统整体的操作反应！
+
+总之，JNI是一门技术，是Java Code和C/C++ Code联系的桥梁！
+
+ 
+
+JNI开发的流程
+
+1、编写Java Code，如下面的例子：
+
+public class MainActivity extends Activity {
+
+ @Override
+ protected void onCreate(Bundle savedInstanceState) {
+   super.onCreate(savedInstanceState);
+   setContentView(R.layout.activity_main);
+
+  Toast.makeText(getApplicationContext(), sayHellow(), Toast.LENGTH_LONG).show();
+ }
+
+ public native String sayHellow();  //调用本地方法
+
+ static {
+               System.loadLibrary("Scgps_Client");  //加载本地共享库
+        }
+
+}
+
+2、编写C/C++ Code，如下面的例子：
+
+#include
+ #include 
+
+JNIEXPORT jstring JNICALL Java_com_scgps_client_MainActivity_sayHellow(JNIEnv* env, jobject thiz)
+ {
+ const char * ret = "Hellow Form Ndk";
+         return (*env)->NewStringUTF(env, ret);
+ }
+
+3、编译 C/C++ Code，成功并得到本地共享库
+
+    本地共享库是Linux下的叫法，文件扩展名是.so，windows下叫动态链接库，文件扩展名是.dll。前 面说到C/C++才是跨平台之王，这就是其中的道理，面对不同的平台，编译不同的结果。相对于Java的一次编译到处运行的跨平台性牺牲运行效率，C /C++的跨平台性则是牺牲编译时间以及编译的难度。这里的编译难度是指为适应不同平台而做的编译过程的调整，这个活 的难度可大可小，还不一定成功，视乎平台的兼容性以及支持。说到这里，难免会有人喷了：说什么跨平台性，这么复杂还不稳定！的确C/C++的跨平台性是有 局限性的，但是纵观当前的各种平台和系统，有哪家是不支持C/C++本地开发的？只是各自提供的底层API和编译条件不同而已，只需要调整一下C/C++ 的编译代码，通过编译即可运行，难道也不是一件美事?
+
+4、编译并打包Java
+
+    把本地共享库放置到Java项目的指定目录，一般是libs文件件，Android的项目是libs/armeabi(armeabi 是对应的平台，后面会详讲)，然后编译Java的代码即可运行！
+
+ 
+
+NDK，（Native develop kit），本地开发工具包 
+
+    NDK是Google为Android进行本地开发而放出的一个本地开发工具， 包括Android的Native API、公共库以及编译工具， 注意，NDK需要Android 1.5版本以上的支持哦。
+
+    按照上图的解说，NDK处在开发流程的编译环节，对，简单来说，NDK是JNI开发的一个扩展工具包！针对Android平台，其支持的设备型号繁多，单 单就设备的核心CPU而言，都有三大类：ARM、x86和MIPS，况且ARM又分为ARMv5和ARMv7等等，为何Android又能适配如此之多的 设备？接着JNI开发流程的话，利用NDK，我们可以针对不同的手机设备，编译出对应可运行的本地共享库了，至于如何使用NDK进行编译、开 发，我们留作下次再进行探讨。
+
+ 
+
+SDK，（Standard Develop Kit），标准开发包
+
+    SDK是Google提供的Android标准开发工具包，里面包含了完整的 API文档，各Android版本的开发库，Android的虚拟机以及Android的打包工具等。众所周知，Android的应用开发语言是 Java，App的运行时是Delvik Runtime，属于JVM的改良版本，官方说Delvik VM更适用于移动设备。一般而言，由于Google的SDK提供了强大又完善的API，开发一般需求的应用，SDK足矣。然而前面已经说过，Java的运 行效率引发了不少问题，因而才有了JNI技术的存在，那SDK和NDK的关系是怎样的呢？见下图解说，可以说，NDK是SDK的一个补充。
+
+   
+
+SDK，JNI，NDK的开发流程
+
+   这个开发流程大致与JNI的开发流程差不多，下面我再详细说明一下每个环节：
+
+   SDK开发，编写Java代码，调用各种Android的API实现功能，编写含有native关键字的代码开始JNI；
+
+   JNI开发，按照 JNI编码规范，编写与Java交互的本地代码，一般就是数据类型的转换，把 C/C++的数据类转换成Java能识别的，或反过来。也因为这样子，我认为JNI其实就是Adapter，作为数据转换层而存在，具体JNI的一般操 作，我之后再分享；
+
+   C/C++开发，编码实现业务逻辑，或调用NDK提供的本地API或库，完成Android平台上特定功能的开发、封装；
+
+   NDK编译，编写.mk文件，编译调试，最后修改.mk文件，针对特定的平台（ARM/x86）做编译结果的优化；
+
+   最后就是SDK编译、打包，上真机调试了...
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+有两种方式使用so库。
+
+１．android studio默认调用src/main/jniLibs下的so文件；
+２．通过配置，可以使用src/main/libs下的so文件，打开app/build.gradle文件，在android{}内加入：
+    sourceSets {  
+        main() {  
+            jniLibs.srcDirs = ['src/main/libs']  
+            jni.srcDirs = []  
+        }  
+    }  
+    同时，在gradle.properties文件中加入语句：
+    android.useDeprecatedNdk=true  
+    
+    
+Java代码：
+public class MainActivity extends Activity {
+
+ @Override
+ protected void onCreate(Bundle savedInstanceState) {
+   super.onCreate(savedInstanceState);
+   setContentView(R.layout.activity_main);
+
+  Toast.makeText(getApplicationContext(), sayHellow(), Toast.LENGTH_LONG).show();
+ }
+
+ public native String sayHellow();  //调用本地方法
+
+ static {
+               System.loadLibrary("Scgps_Client");  //加载本地共享库,只能加载路径data/app/packageName/libs中的
+               //System.load("data/data/packageName/so_file");  //system.load方法加载绝对路径，只能在data/app/packageName/libs下的 或者 在私有目录(data/data/packageName/...)下的
+        }
+
+}

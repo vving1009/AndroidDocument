@@ -1,0 +1,14 @@
+
+
+在我们Android开发中，ViewPager是我们经常使用的一个组件，而这个组件经常和我们的Fragment结合在一起用，以此来完成滑动来显示不同的Fragment。我们要管理这里面的Fragment的切换，可以使用两种Adapter。FragmentStatePagerAdapter和FragmentPagerAdapter，那么这两种方法有什么区别呢？
+定义
+
+    FragmentStatePagerAdapter
+    顾名思义，我们的这个FragmentStatePagerAdapter，在我们切换不同的Fragment的时候，我们会把前面的Fragment销毁，而我们系统在销毁前，会把我们的我们Fragment的Bundle在我们的onSaveInstanceState(Bundle)保存下来。等用户切换回来的时候，我们的Fragment就会根据我们的instance state恢复出来。
+
+    FragmentPagerAdapter
+    使用这种Adapter，我们的Fragment在切换的时候，不会销毁，而只是调用事务中的detach方法，这种方法，我们只会把我们的Fragment的view销毁，而保留了以前的Fragment对象。所以通过这种方式创建的Fragment一直不会被销毁。
+
+怎么用？
+
+通过上面，我们就可以很容易得出，我们的FragmentPagerAdapter适用于Fragment比较少的情况，因为我们会把每一个Fragment保存在内存中，不用每次切换的时候，去保存现场，切换回来在重新创建，所以用户体验比较好。而对于我们的Fragment比较多的情况，我们需要切换的时候销毁以前的Fragment以释放内存，就可以使用FragmentStatePagerAdapter。

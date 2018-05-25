@@ -1,0 +1,297 @@
+new Thread(new Runnable() {
+    @Override
+    public void run() {
+        refreshEarthquakes();
+    }
+}).start();
+ 
+
+ java并发编程--Runnable Callable及Future
+https://www.cnblogs.com/MOBIN/p/6185387.html
+
+1.Runnable
+Runnable是个接口，使用很简单：
+1. 实现该接口并重写run方法
+2. 利用该类的对象创建线程
+3. 线程启动时就会自动调用该对象的run方法
+通常在开发中结合ExecutorService使用,将任务的提交与任务的执行解耦开,同时也能更好地利用Executor提供的各种特性
+
+ExecutorService executor = Executors.newCachedThreadPool();
+                   executor.submit(new Runnable() { 
+                        public void run() {
+                               //TODO
+                        }
+                    });
+executor.shutdown();
+
+相对于继承Thread来创建线程方式，使用Runnable可以让你的实现类同时实现多个接口，而相对于Callable及Future，Runnable方法并不返回任务执行结果且不能抛出异常
+ 
+2.Callable
+与Runnable不同的是，Callable是个泛型参数化接口，并能返回线程的执行结果，且能在无法正常计算时抛出异常
+
+public interface Callable<V> {
+    V call() throws Exception;
+}
+
+1. Callable并不像Runnable那样通过Thread的start方法就能启动实现类的run方法，所以它通常利用ExecutorService的submit方法去启动call方法自执行任务，而ExecutorService的submit又返回一个Future类型的结果，因此Callable通常也与Future一起使用
+
+ ExecutorService pool = Executors.newCachedThreadPool();
+     Future<String> future = pool.submit(new Callable{
+           public void call(){
+                   //TODO
+           }
+    });
+
+或者利用FutureTask封装Callable再由Thread去启动（少用）
+
+ FutureTask<String> task = new FutureTask(new Callable{
+        public void call(){
+              //TODO
+        }
+  });
+ Thead thread = new Thread(task);
+ thread.start();
+
+2. 通过Executors.callbale(Runnable task,T result)可以执行Runnable并返回"结果"，但是这个结果并不是Runnable的执行结果(Runnable的run方法是void类型)，而是执行者预定义的结果，这点可以从其实现原理RunnableAdpter源码看出
+
+public static <T> Callable<T> callable(Runnable task, T result) {
+     if (task == null)
+          throw new NullPointerException();
+       return new RunnableAdapter<T>(task, result);//通过RunnableAdapter实现
+}
+    
+static final class RunnableAdapter<T> implements Callable<T> {
+     final Runnable task;
+     final T result;
+     RunnableAdapter(Runnable task, T result) {
+            this.task = task;
+            this.result = result;
+     }
+     public T call() {
+        task.run();
+        return result; //将传入的结果的直接返回
+     }
+   }
+
+Runnable与Callable不同点：
+1. Runnable不返回任务执行结果，Callable可返回任务执行结果
+2. Callable在任务无法计算结果时抛出异常，而Runnable不能
+3. Runnable任务可直接由Thread的start方法或ExecutorService的submit方法去执行
+ 
+3.Future
+Future保存异步计算的结果,可以在我们执行任务时去做其他工作，并提供了以下几个方法
+* cancel(boolean mayInterruptIfRunning)：试图取消执行的任务，参数为true时直接中断正在执行的任务，否则直到当前任务执行完成，成功取消后返回true，否则返回false
+* isCancel()：判断任务是否在正常执行完前被取消的，如果是则返回true
+* isDone()：判断任务是否已完成
+* get()：等待计算结果的返回，如果计算被取消了则抛出
+* get(long timeout,TimeUtil unit)：设定计算结果的返回时间，如果在规定时间内没有返回计算结果则抛出TimeOutException
+使用Future的好处：
+1. 获取任务的结果，判断任务是否完成，中断任务
+1. Future的get方法很好的替代的了Thread.join或Thread,join(long millis)
+2. Future的get方法可以判断程序代码(任务)的执行是否超时，如：
+
+ try{
+      future.get(60,TimeUtil.SECOND);
+ }catch(TimeoutException timeout){
+      log4j.log("任务越野，将被取消！！");
+      future.cancel();
+ }
+
+4.FutureTask
+FutureTask实现了RunnableFuture接口，提供了即可以使用Runnable来执行任务，又可以使用Future执行任务并取得结果的构造器，所以可以利用FutureTask去封装Runnable或Callable对象，之后再submit任务
+
+ FutureTask(Callable<V> callable)  
+ FutureTask(Runnable runnable, V result)
+
+5.应用
+查找包含某关键字的文件个数：每个文件启动一个线程去查找关键字
+
+public class FileSearchTask {
+    public static void main(String[] args) throws ExecutionException, InterruptedException {
+        String path = args[0];
+        String keyword = args[1];
+        int c = 0;
+        File[] files = new File(path).listFiles();
+        ArrayList<Future<Integer>> rs = new ArrayList<>();
+        for(File file: files){  //每个文件启动一个task去查找
+            MatchCount count = new MatchCount();
+            count.file = file;
+            count.keyword = keyword;
+            FutureTask<Integer> task = new FutureTask(count);
+            rs.add(task); //将任务返回的结果添加到集合中
+            Thread thread = new Thread(task);
+            thread.start();
+        }
+
+        for(Future<Integer> f: rs){
+            c += f.get(); //迭代返回结果并累加
+        }
+        System.out.println("包含关键字的总文件数为：" + c);
+    }
+}
+
+class  MatchCount implements Callable<Integer>{
+    public File file;
+    public String keyword;
+    private  Integer count = 0;
+
+    public Integer call() throws Exception {   //call封装线程所需做的任务
+        if(search(file))
+              count ++;
+        return count;
+    }
+
+    public boolean search(File file){
+        boolean founded = false;
+        try(Scanner scanner = new Scanner(new FileInputStream(file))){
+            while(!founded && scanner.hasNextLine()){
+                if (scanner.nextLine().contains(keyword))
+                    founded = true;
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return  founded;
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+http://blog.csdn.net/csdn1017355712/article/details/54098157
+
+Java中编写多线程的方法一般分成三种，Thread，Runnable，Callable。
+
+Runable和Callable的区别是：
+(1)Callable规定的方法是call(),Runnable规定的方法是run().
+(2)Callable的任务执行后可返回值，而Runnable的任务没有返回值
+(3)call方法可以抛出异常，run方法不可以
+(4)Callable支持泛型，Runnable不支持；
+(5)运行Callable任务可以拿到一个Future对象，Future 表示异步计算的结果。它提供了检查计算是否完成的方法，以等待计算的完成，并获取计算的结果。计算完成后只能使用 get 方法来获取结果，如果线程没有执行完，Future.get()方法可能会阻塞当前线程的执行；如果线程出现异常，Future.get()会throws InterruptedException或者ExecutionException；如果线程已经取消，会跑出CancellationException。取消由cancel 方法来执行。isDone确定任务是正常完成还是被取消了。一旦计算完成，就不能再取消计算。如果为了可取消性而使用 Future 但又不提供可用的结果，则可以声明Future<?> 形式类型、并返回 null 作为底层任务的结果。
+
+Future概念：
+Future就是对于具体的Runnable或者Callable任务的执行结果进行取消、查询是否完成、获取结果、设置结果操作。
+
+FutureTask
+FutureTask则是一个RunnableFuture<V>，而RunnableFuture实现了Runnbale又实现了Futrue<V>这两个接口。
+
+另外它还可以包装Runnable和Callable<V>， 由构造函数注入依赖。
+
+    public FutureTask(Callable<V> callable) {    
+        if (callable == null)    
+            throw new NullPointerException();    
+        this.callable = callable;    
+        this.state = NEW;       // ensure visibility of callable    
+    }    
+        
+    public FutureTask(Runnable runnable, V result) {    
+        this.callable = Executors.callable(runnable, result);    
+        this.state = NEW;       // ensure visibility of callable    
+    }    
+    
+ 由于FutureTask实现了Runnable，因此它既可以通过Thread包装来直接执行，也可以提交给ExecuteService来执行。
+并且还可以直接通过get()函数获取执行结果，该函数会阻塞，直到结果返回。因此FutureTask既是Future、
+Runnable，又是包装了Callable( 如果是Runnable最终也会被转换为Callable )， 它是这两者的合体。
+
+    package com.example;  
+      
+    import java.util.concurrent.Callable;  
+    import java.util.concurrent.ExecutionException;  
+    import java.util.concurrent.ExecutorService;  
+    import java.util.concurrent.Executors;  
+    import java.util.concurrent.Future;  
+    import java.util.concurrent.FutureTask;  
+      
+    public class CreateThreadMethod {  
+        static ExecutorService mExecutor= Executors.newSingleThreadExecutor();  
+        static class NewThread extends Thread{  
+            @Override  
+            public void run() {  
+                super.run();  
+                System.out.println("继承Thread方法");  
+            }  
+        }  
+        static class NewThread2 implements Runnable{  
+      
+            @Override  
+            public void run() {  
+                System.out.println("实现runnable");  
+            }  
+        }  
+        static class NewThread3 implements Callable<String>{  
+      
+            @Override  
+            public String call() throws Exception {  
+                System.out.println("实现callable");  
+                return null;  
+            }  
+        }  
+        /** 
+         * 其中Runnable实现的是void run()方法，无返回值；Callable实现的是 V 
+         * call()方法，并且可以返回执行结果。其中Runnable可以提交给Thread来包装下 
+         * ，直接启动一个线程来执行，而Callable则一般都是提交给ExecuteService来执行。 
+         */  
+        static void futureDemo() throws ExecutionException {  
+            try {  
+                /** 
+                 * 提交runnable则没有返回值, future没有数据 
+                 */  
+                Future<?> result = mExecutor.submit(new Runnable() {  
+      
+                    @Override  
+                    public void run() {  
+                        System.out.println("Future");  
+                    }  
+                });  
+      
+                System.out.println("future result from runnable : " + result.get());  
+      
+                /** 
+                 * 提交Callable, 有返回值, future中能够获取返回值 
+                 */  
+                Future<Integer> result2 = mExecutor.submit(new Callable<Integer>() {  
+                    @Override  
+                    public Integer call() throws Exception {  
+                        System.out.println("Future");  
+                        return 0;  
+                    }  
+                });  
+      
+                System.out  
+                        .println("future result from callable : " + result2.get());  
+      
+                /** 
+                 * FutureTask则是一个RunnableFuture<V>，即实现了Runnbale又实现了Futrue<V>这两个接口， 
+                 * 另外它还可以包装Runnable(实际上会转换为Callable)和Callable 
+                 * <V>，所以一般来讲是一个符合体了，它可以通过Thread包装来直接执行，也可以提交给ExecuteService来执行 
+                 * ，并且还可以通过v get()返回执行结果，在线程体没有执行完成的时候，主线程一直阻塞等待，执行完则直接返回结果。 
+                 */  
+                FutureTask<Integer> futureTask = new FutureTask<Integer>(  
+                        new Callable<Integer>() {  
+                            @Override  
+                            public Integer call() throws Exception {  
+                                System.out.println("FutureTask");  
+                                return 0;  
+                            }  
+                        });  
+                // 提交futureTask  
+                mExecutor.submit(futureTask) ;  
+                System.out.println("future result from futureTask : "  
+                        + futureTask.get());  
+      
+            } catch (InterruptedException e) {  
+                e.printStackTrace();  
+            } catch (ExecutionException e) {  
+                e.printStackTrace();  
+            }  
+        }  
+        public static void main(String[] args){  
+            new NewThread().start();  
+            new NewThread2().run();  
+            try {  
+                new NewThread3().call();  
+                futureDemo();  
+            } catch (Exception e) {  
+                e.printStackTrace();  
+            }  
+        }  
+    }  

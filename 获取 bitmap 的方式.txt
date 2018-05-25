@@ -1,0 +1,112 @@
+获取bitmap
+1．以文件流的方式，假设在sdcard下有 test.png图片
+FileInputStream fis = new FileInputStream("/sdcard/test.png");
+//InputStream in = getResources().getAssets().open(fileName);  //放在assets时
+Bitmap bitmap  = BitmapFactory.decodeStream(fis);
+
+2. 以R文件的方式，假设 res/drawable下有 test.jpg文件
+Bitmap  bitmap = BitmapFactory.decodeResource(getContext().getResources(), R.drawable.test);
+或
+BitmapDrawable bitmapDrawable = (BitmapDrawable) getResources().getDrawable(R.drawable.test);
+Bitmap bitmap = bitmapDrawable.getBitmap();
+
+3.以ResourceStream的方式，但不用到R文件。
+Bitmap.bitmap=BitmapFactory.decodeStream(getClass().getResourceAsStream(“/res/drawable/test.png”));
+  
+  
+4. 图片在项目的res文件夹下面
+ApplicationInfo appInfo = getApplicationInfo();
+//得到该图片的id(name 是该图片的名字，"drawable" 是该图片存放的目录，appInfo.packageName是应用程序的包)
+int resID = getResources().getIdentifier(fileName, "drawable", appInfo.packageName);
+Bitmap imageBitmap2 = BitmapFactory.decodeResource(getResources(), resID);
+
+5. Bitmap b = Bitmap.createBitmap(100, 100, Bitmap.Config.ARGB_8888);
+=====================================================================================
+转换及变换
+
+4. Bitmap → byte[]
+ByteArrayOutputStream baos = new ByteArrayOutputStream();
+bm.compress(Bitmap.CompressFormat.PNG, 100, baos);
+byte[] b = baos.toByteArray(); 
+
+5.byte[] → Bitmap
+if(byte.length!=0){
+Bitmap b = BitmapFactory.decodeByteArray(byte, 0, byte.length); }
+
+6. Bitmap → File
+CompressFormat format= Bitmap.CompressFormat.JPEG;
+int quality = 100;
+OutputStream stream = null;
+try {
+    stream = new FileOutputStream("/sdcard/" + filename); 
+} catch (FileNotFoundException e) {
+    e.printStackTrace();
+}
+return bmp.compress(format, quality, stream);
+
+
+6.将图片按自己的要求缩放
+// 图片源
+Bitmap bm = BitmapFactory.decodeStream(getResources().openRawResource(R.drawable.dog));
+// 获得图片的宽高
+int width = bm.getWidth();
+int height = bm.getHeight();
+// 设置想要的大小
+int newWidth = 320;
+int newHeight = 480;
+// 计算缩放比例
+float scaleWidth = ((float) newWidth) / width;
+float scaleHeight = ((float) newHeight) / height;
+// 取得想要缩放的matrix参数
+Matrix matrix = new Matrix();
+matrix.postScale(scaleWidth, scaleHeight);
+// 得到新的图片
+Bitmap newbm = Bitmap.createBitmap(bm, 0, 0, width, height, matrix, true);
+// 放在画布上
+canvas.drawBitmap(newbm, 0, 0, paint); 
+
+7.   BitmapFactory.Options option = new BitmapFactory.Options();
+option.inSampleSize = 2;  //图片宽高都为原来的二分之一，即图片为原来的四分一
+//以上代码可以优化内存溢出，但它只是改变图片大小，并不能彻底解决内存溢出。
+Bitmap bm = BitmapFactory.decodeFile("",option);//文件流 
+
+=================================================================================
+http://blog.csdn.net/u012702547/article/details/47678943
+1. 获取
+if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+    // /storage/emulated/0/DCIM/Camera/123.jpg
+    String path = Environment.getExternalStorageDirectory()
+            .getAbsolutePath()
+            + File.separator
+            + "DCIM"
+            + File.separator
+            + "Camera"
+            + File.separator
+            + "123.jpg";
+    /*BitmapFactory.Options 设置
+    inPreferredConfig 指定decode到内存中，手机中所采用的编码，可选值定义在Bitmap.Config中。缺省值是ARGB_8888。
+    inJustDecodeBounds 如果设置为true，并不会把图像的数据完全解码，亦即decodeXyz()返回值为null，但是Options的outAbc中解出了图像的基本信息。可以获得一张图片的缩略图，一个基本思路是先设置inJustDecodeBounds为true，拿到图像的基本信息，比如宽和高，根据基本信息结合缩略图目标宽高，算出inSampleSize ，然后再设置inJustDecodeBounds为false，获得缩略图。
+    inSampleSize 设置decode时的缩放比例。当值大于1时会对图像进行压缩，比如设置为4时，返回的图像宽高都将是原始图像的四分之一，像素是原始图像的十六分之一，如果设置的值小于1，则会被当作1来处理。注意，这里设值必须是2的次幂，其他值会被就近取离2的次幂最近的值。
+    */
+    BitmapFactory.Options option = new BitmapFactory.Options();
+    option.inSampleSize = 1;
+    //方式1：通过完整路径获得Bitmap对象
+    Bitmap bm = BitmapFactory.decodeFile(path,option);
+    //方式2：通过一个输入流获得Bitmap对象
+    FileInputStream is = new FileInputStream(new File(path));
+    Bitmap bm2 = BitmapFactory.decodeStream(is);
+    //方式3：通过本地资源获得一个Bitmap对象
+    Bitmap bm1 = BitmapFactory.decodeResource(getResources(),
+            R.drawable.ic_launcher);
+    iv.setImageBitmap(bm2);
+}
+            
+2. 保存
+拿到了Bitmap之后可以直接显示出来，也可以先保存到本地等待处理，Bitmap可以保存为jpg,png，gif等格式,保存方式也是非常简单:
+Bitmap bp = revitionImageSize(path + "123.jpg");
+FileOutputStream out = new FileOutputStream(path + "456.gif");
+//0意味着压缩到最小，100意味着压缩后的质量最好，PNG是无损图像，会忽略这个参数
+//bp.compress(Bitmap.CompressFormat.JPEG, 100, out);
+bp.compress(Bitmap.CompressFormat.PNG, 0, out);
+out.flush();
+out.close();

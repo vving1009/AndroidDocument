@@ -1,0 +1,35 @@
+http://blog.csdn.net/alcoholdi/article/details/54948058
+http://blog.csdn.net/u013356254/article/details/52463636
+
+1. 静态static内部类持有外部类弱引用，可以解决内存泄漏。如果 Handler 不是以内部类的形式出现，那么 static 是不需要的。
+2. 使用弱引用也可以解决内存泄漏，但是需要等到handler的中任务都执行完，才会释放activity内存，不如直接static释放的快。
+
+网上很多文章都说写Hanlder，需要用static声明为静态的，还需要用弱引用包裹构造函数传来的Activity实例。
+//由于非静态内部类会持有外部类的一个隐式引用,使用静态内部类则不会
+static class MyHandler extends Handler {
+    WeakReference<Activity > mActivityReference; 
+    MyHandler(Activity activity) {
+        mActivityReference= new WeakReference<Activity>(activity);
+    }
+    @Override
+    public void handleMessage(Message msg) {
+        final Activity activity = mActivityReference.get();
+        if (activity != null) {
+            mImageView.setImageBitmap(mBitmap);
+            //不能用一个强引用指向弱引用，否则弱引用也变成强引用
+            //String url = activity.url;
+        }
+    }
+}
+
+private final MyHandler mHandler = new MyHandler(this);  
+
+post，postDelayed这种传Runnable的方法是不会触发handleMessage方法的。
+所以用一下sendEmptyMessageDelayed测试一下.
+//mHandler.postDelayed(sRunnable, 1000 * 60 * 10);  
+mHandler.sendEmptyMessageDelayed(0, 1000L * 30);  
+
+然而有个更好的方法removeCallbacksAndMessages
+只需要在onDestroy里面Handler.removeCallbacksAndMessages(null);，无论runnbale还是message消息全清空，自然也不会关联上Activity。下次GC就能顺利回收了。
+
+建议退出这个Activity时取消这个任务。Thread是没有提供取消任务的方法的。可以用AsyncTask的cancel方法，ExecutorService的shutdown方法，当然一般网络框架volley、okhttp这些也会提供相应的取消请求方法。

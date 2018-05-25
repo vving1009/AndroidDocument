@@ -1,0 +1,238 @@
+https://www.cnblogs.com/fengmingyue/p/6087031.html1
+回顾泛型类
+　　泛型类：具有一个或多个泛型变量的类被称之为泛型类。
+
+class ClassGenericity<T> {  
+    //在类里面可以直接使用T的类型
+    T aa;
+    public void test11(T bb) {
+        //................
+    }
+    //静态方法 在类上面定义的泛型，不能再静态方法里面使用
+    public static <A> void test12(A cc) {
+        //..................
+    }
+}
+public class TestClassGenericity{
+    public static void main(String[] args) {
+        ClassGenericity<String>genericity=new ClassGenericity<String>();
+        genericity.test11("1234");
+        ClassGenericity.test12(6789);
+    }   
+}
+
+2　泛型方法
+　　泛型方法的特点：
+　　　　方法的参数中可以使用泛型变量；
+　　　　方法的返回值中可以使用泛型变量。
+
+public class MethodGenericity {
+    public static void main(String[] args) {
+        String arr[]={"aaa","bbb","ccc","ddd"};
+        System.out.println(Arrays.toString(arr));
+        exchange(arr,0,3);                //交换0,3位置元素
+        System.out.println(Arrays.toString(arr));
+    }
+    private static<T> void exchange(T[] arr, int i, int j) {
+        T temp=arr[i];
+        arr[i]=arr[j];
+        arr[j]=temp;
+    }
+}
+
+public class Test1 {
+    public <T> T get(T[] ts) {
+        return ts[ts.length / 2];
+    }
+    @Test
+    public void test()
+    {
+        String[] names ={"zhangSan", "liSi","wangWu"};
+        System.out.println(get(names));//输出lisi
+    }
+}
+
+　　调用泛型方法时无需指定泛型变量，编译器会通过实际参数的类型来识别泛型变量的类型，上例中传递的参数为String[]类型，那么相当于给泛型类型T赋值为String。
+
+3　继承（实现）泛型类（接口）
+　　继承泛型类需要为父类的泛型变量赋值！就好比创建泛型类的对象时需要给泛型变量赋值一样。
+　　创建泛型类对象：List<String> list = new ArrayList<String>();
+　　继承泛型类1（子类也是泛型类）：public class MyList1<T> extends ArrayList<T> {...}
+　　继承泛型类2（子类不是泛型类）：public class MyList2 extends ArrayList<String> {...}
+
+4　通配符
+　　为了说明通配符的作用，我们先看个例子：
+　　　　List<Object> list1 = new ArrayList<String>();
+　　　　List<Object> list2 = new ArrayList<Integer>();
+
+　　上面的调用都是编译不通过的！这说明想写一个即可以打印list1，又可以打印list2的方法是不可能的！
+
+public static void fun(List<Object> list) {…}
+List<String> list1 = new ArrayList<String>();
+List<Integer> list2 = new ArrayList<Integer>();
+fun(list1);//编译不通过
+fun(list2);//编译不通过
+
+　　如果把fun()方法的泛型参数去除，那么就OK了。即不使用泛型！
+
+public static void fun(List list) {…}//会有一个警告
+List<String> list1 = new ArrayList<String>();
+List<Integer> list2 = new ArrayList<Integer>();
+fun(list1);
+fun(list2);
+
+　　上面代码是没有错了，但会有一个警告。警告的原因是你没有使用泛型！Java希望大家都去使用泛型。你可能会说，这里根本就不能使用泛型!!!!!
+
+　　4.1　通配符概述
+　　　　通配符就是专门处理这一问题的。
+
+public static void fun(List<?> list) {…}
+
+　　　　上面代码中的“?”就是一个通配符，它只能在“<>”中使用。这时你可以向fun()方法传递List<String>、List<Integer>类型的参数了。当传递List<String>类型的参数时，表示给“?”赋值为String；当传递List<Integer>类型的参数给fun()方法时，表示给“?”赋值为Integer。
+
+　　4.2　通配符的缺点
+　　　　带有通配符的参数不能使用与泛型相关的方法，例如：list.add(“hello”)编译不通过。
+　　　　上面的问题是处理了，但通配符也有它的缺点。在上面例子中，List<?> list参数中的通配符可以被赋任何值，但同时你也不知道通配符被赋了什么值。当你不知道“?”是什么时，会使你不能使用任何与泛型相关的方法。也就是说fun()方法的参数list不能再使用它的与泛型相关的方法了。例如：list.add(“hello”)是错误的，因为List类的add()方法的参数是T类型，而现在你不知道T是什么类型，你怎么去添加String的东西给list呢？如果使用者在调用fun()方法时传递的不是List<String>，而是List<Integer>时，你添加String当然是不可以的。当然，还可以调用list的get()方法。就算你不知道“?”是什么类型，但它肯定是Object类型的。所以你可以：Object o = list.get(0);
+
+　　4.3　通配符的限制
+　　　　通配符只能出现在引用的定义中，而不能出现在创建对象中。例如：new ArrayList<?>()，这是不可以的。ArrayList<?> list = null，这是可以的。
+
+　　4.4　带有下边界的通配符
+　　　　List<? extends Number> list;
+　　　　　　其中<? extends Number>表示通配符的下边界，即“?”只能被赋值为Number或其子类型。
+
+public static void fun(List<? extends Number> list) {…}
+fun(new ArrayList<Integer>());//ok
+fun(new ArrayList<Double>());//ok
+fun(new ArrayList<String>());//不ok
+
+　　　　　　当fun()方法的参数为List<? extends Number>后，说明你只能赋值给“?”Number或Number的子类型。虽然这多了一个限制，但也有好处，因为你可以用list的get()方法。就算你不知道“?”是什么类型，但你知道它一定是Number或Number的子类型。所以：Number num = list.get(0)是可以的。但是，还是不能调用list.add()方法！
+
+　　4.5　带有下边界的通配符
+　　　　List<? super Integer> list;
+　　　　　　其中<? super Integer>表示通配符的下边界，即“?”只能被赋值为Integer或其父类型。
+
+public static void fun(List<? super Integer> list) {…}
+fun(new ArrayList<Integer>());//ok
+fun(new ArrayList<Number>());//ok
+fun(new ArrayList<Object>());//ok
+fun(new ArrayList<String>());//不ok
+
+　　　　　　这时再去调用list.get()方法还是只能使用Object类型来接收：Object o = list.get(0)。因为你不知道“?”到底是Integer的哪个父类。但是你可以调用list.add()方法了，例如：list.add(new Integer(100))是正确的。因为无论“?”是Integer、Number、Object，list.add(new Integer(100))都是正确的。
+
+　　4.6　通配符小结
+　　　　1. 方法参数带有通配符会更加通用；
+　　　　2. 带有通配符类型的对象，被限制了与泛型相关方法的使用；
+　　　　3. 下边界通配符：可以使用返回值为泛型变量的方法；
+　　　　4. 上边界通配符：可以使用参数为泛型变量的方法。
+
+　　4.7   通配符应用实例
+
+　　boolean addAll(Collection<? extends E> c)//JDK集合的addAll方法
+
+List<Number> numList = new ArrayList<Number>();
+List<Integer> intList = new ArrayList<Integer>();
+numList.addAll(intList);//正确！！！！！！addAll(Collection<? extends Number> c), 传递的是List<Integer>
+
+　　如果用改成boolean addAll(Collection<E> c)
+
+List<Number> numList = new ArrayList<Number>();
+List<Integer> intList = new ArrayList<Integer>();
+numList.addAll(intList);//错误！！！！！addAll(Collection<Number> c), 传递的是List<Integer>
+
+5　通配符应用实例
+
+import java.util.ArrayList;
+import java.util.List;
+public class Demo2 {
+    public void fun1() {
+        Object[] objArray = new String[10];//正确！！！
+        objArray[0] = new Integer(100);//错误！！！编译器不会报错，但是运行时会抛ArrayStoreException
+        //List<Object> objList = new ArrayList<String>();//错误！！！编译器报错，泛型引用和创建两端，给出的泛型变量必须相同！
+    }
+    
+    
+    public void fun2() {
+        List<Integer> integerList = new ArrayList<Integer>();
+        print(integerList);
+        List<String> stringList = new ArrayList<String>();
+        print(stringList);
+    }
+    /*
+     * 其中的?就是通配符,?它表示一个不确定的类型，它的值会在调用时确定下来
+     * 通配符只能出现在左边！即不能在new时使用通配符！！！
+     * List<?> list = new ArrayList<String>();
+     * 通配符好处：可以使泛型类型更加通用！尤其是在方法调用时形参使用通配符！
+     */
+    public void print(List<?> list) {
+        //list.add("hello");//错误！！！编译器报错，当使用通配符时，对泛型类中的参数为泛型的方法起到了副作用，不能再使用！
+        Object s = list.get(0);//正确！！！但是只是得益于object类是所有类的父类，换成其他任何类编译器都会报错！说明当使用通配符时，泛型类中返回值为泛型的方法，也作废了！
+    }
+    
+    
+    public void fun3() {
+        List<Integer> intList = new ArrayList<Integer>();
+        print1(intList);
+        List<Long> longList = new ArrayList<Long>();
+        print1(longList);
+    }
+    /*
+     * 给通配符添加了限定：
+     *   只能传递Number或其子类型
+     *   子类通配符对通用性产生了影响，但使用形参更加灵活
+     */
+    public void print1(List<? extends Number> list) {
+        //list.add(new Integer(100));//错误！！！编译器报错，说明参数为泛型的方法还是不能使用（因为?也可能为Long型）
+        Number number = list.get(0);//正确！！！返回值为泛型的方法可用了！
+    }
+    
+    
+    public void fun4() {
+        List<Integer> intList = new ArrayList<Integer>();
+        print2(intList);
+        List<Number> numberList = new ArrayList<Number>();
+        print2(numberList);
+        List<Object> objList = new ArrayList<Object>();
+        print2(objList);
+    }
+    /*
+     * 给通配符添加了限定
+     *   只能传递Integer类型，或其父类型
+     */
+    public void print2(List<? super Integer> list) {
+        list.add(new Integer(100));//正确！！！参数为泛型的方法可以使用了
+        Object obj =  list.get(0);//正确！！！但是只是得益于object类是所有类的父类，换成其他任何类编译器都会报错！说明返回值为泛型的方法，还是不能使用
+    }
+}
+
+6　泛型父类获取子类传递的类型参数
+
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import org.junit.Test;
+public class Demo1 {
+    @Test
+    public void fun1() {
+        new B();//输出：class B java.lang.String
+    }
+    @Test
+    public void fun2() {
+        new C();//输出：class C java.lang.Integer
+    }
+}
+class A<T> {
+    public A() {
+        //在这里获取子类传递的泛型信息，要得到一个Class！
+        Class clazz = this.getClass();                        //得到子类的类型
+        System.out.print(clazz+" ");
+        Type type = clazz.getGenericSuperclass();            //获取传递给父类参数化类型
+        ParameterizedType pType = (ParameterizedType) type;    //它就是A<String>
+        Type[] types = pType.getActualTypeArguments();        //它就是一个Class数组
+        Class c = (Class)types[0];                            //它就是String或者Integer
+        //连成一句：Class c = (Class)((ParameterizedType)this.getClass().getGenericSuperclass()).getActualTypeArguments()[0];
+        System.out.println(c.getName());
+    }
+}
+class B extends A<String> {}
+class C extends A<Integer> {}
+

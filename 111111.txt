@@ -1,0 +1,133 @@
+http://blog.csdn.net/birthmarkqiqi/article/details/52860143
+http://blog.csdn.net/ioriogami/article/details/12782141/
+http://blog.csdn.net/jdsjlzx/article/details/48224897
+http://www.cnblogs.com/minyc/p/myc201605231154.html
+http://blog.csdn.net/cai_iac/article/details/51850291
+http://www.cnblogs.com/qianxudetianxia/p/4948499.html
+
+注解：
+http://blog.csdn.net/ideality_hunter/article/details/53128238
+https://www.daidingkang.cc/2017/07/18/java-reflection-annotations/
+http://blog.csdn.net/yehui928186846/article/details/51462597
+
+rxjava：
+http://blog.csdn.net/briblue/article/details/52411707
+http://blog.csdn.net/yehui928186846/article/details/51492571
+http://blog.csdn.net/mynamelijun/article/details/52133630
+http://gank.io/post/560e15be2dca930e00da1083
+
+rxjava2.0:
+http://www.apkbus.com/blog-898535-68185.html
+http://www.cnblogs.com/liushilin/p/7058302.html
+http://www.jianshu.com/p/d149043d103a
+http://www.jianshu.com/p/464fa025229e
+http://blog.csdn.net/aiynmimi/article/details/53382567
+http://blog.csdn.net/wove55678/article/details/53034590
+http://www.jianshu.com/p/850af4f09b61
+http://www.jcodecraeer.com/a/anzhuokaifa/androidkaifa/2016/0907/6604.html
+
+rxjava2 vs rxjava1
+http://www.jianshu.com/p/6d644ca1678f
+
+
+okhttp:
+http://m.2cto.com/net/201605/505364.html
+http://blog.csdn.net/lmj623565791/article/details/47911083
+http://www.jcodecraeer.com/a/anzhuokaifa/androidkaifa/2015/0106/2275.html
+http://blog.csdn.net/lmj623565791/article/details/23781773
+okhttp3:
+http://www.jianshu.com/p/1873287eed87
+http://blog.csdn.net/wwwkp1236/article/details/51374320
+http://blog.csdn.net/u012124438/article/details/54236967
+http://blog.csdn.net/itachi85/article/details/51190687
+
+Retrofit：
+http://www.cnblogs.com/angeldevil/p/3757335.html
+http://www.jianshu.com/p/308f3c54abdd
+http://www.jianshu.com/p/45cb536be2f4
+http://www.jianshu.com/p/69a3aff6bfac
+https://www.zhihu.com/question/35189851
+http://blog.csdn.net/carson_ho/article/details/52171976
+http://gank.io/post/56e80c2c677659311bed9841
+http://blog.csdn.net/u010046908/article/details/50781360
+http://cache.baiducontent.com/c?m=9d78d513d98316e918b0c0254b01d7175809d13a6b91c4523f8a9c12d5221900506790a63a675541c4c50b6750e9144bea87672f681e79e386c88a49dab89235298f2737771d914165895ff095&p=cb769a47c89411a05bed936d175397&newp=8e33c64ad49e1cb908e2977e0a50c9231610db2151d7d31f6b82c825d7331b001c3bbfb423241a0fd5c67b650ba9495aedf03174340527a3dda5c91d9fb4c57479d57a22&user=baidu&fm=sc&query=retrofit+socket&qid=e33b3025000061b2&p1=10
+
+数据持久化：
+http://blog.csdn.net/hudashi/article/details/8037078
+http://blog.csdn.net/itluochen/article/details/52605392
+
+Volley:
+http://blog.csdn.net/guolin_blog/article/details/17482095
+
+http://blog.csdn.net/android_drawing/article/details/49122735
+http://blog.csdn.net/nugongahou110/article/details/46829605
+http://www.androidhive.info/2014/05/android-working-with-volley-library-1/
+http://www.jcodecraeer.com/a/anzhuokaifa/androidkaifa/2015/0720/3209.html
+http://www.jianshu.com/p/b022eed6b427
+
+ AndroidAnnotations:
+ http://blog.csdn.net/xiaowenjie/article/details/50397034
+ 
+
+ 图片加载缓存：
+ http://blog.csdn.net/baidu_23086307/article/details/51272729
+ http://blog.csdn.net/u010335298/article/details/52243769
+ 
+ API JSON Url:
+ http://api.androidhive.info/json/movies.json
+ https://api.douban.com/v2/movie/top250
+ https://developers.douban.com/wiki/?title=api_v2
+ 
+ 设计模式：
+ http://blog.csdn.net/xsl1990/article/details/16359289
+ http://bbs.csdn.net/topics/240058812
+ http://www.cnblogs.com/android-blogs/p/5530239.html
+ http://blog.csdn.net/zhi184816/article/details/51348567
+ 
+ 框架MVC,MVP,MVVM
+ http://blog.csdn.net/jdsjlzx/article/details/51174396
+ 
+ RESTful
+ http://blog.csdn.net/hudan2714/article/details/52355592
+ http://www.ruanyifeng.com/blog/2011/09/restful.html
+ 
+ 
+ Dagger2
+ http://www.jcodecraeer.com/a/anzhuokaifa/androidkaifa/2015/0519/2892.html
+ 
+ Jackson
+ http://www.cnblogs.com/liuning8023/p/3898227.html
+ 
+ Material Design & InstaMaterial概念设计
+ http://jcodecraeer.com/a/anzhuokaifa/androidkaifa/2015/0204/2415.html
+ http://blog.csdn.net/lijinhua7602/article/details/46495581
+ 
+ Android序列化与反序列化   
+ http://blog.csdn.net/axi295309066/article/details/52938422
+ 
+ LRUCACHE
+ http://www.cnblogs.com/tianzhijiexian/p/4248677.html
+ 
+git:
+http://www.jianshu.com/p/072587b47515
+http://blog.csdn.net/u010331406/article/category/5878359
+http://www.yangzhiping.com/tech/github.html
+http://www.oschina.net/p/github/
+http://jingyan.baidu.com/article/f7ff0bfc7181492e27bb1360.html
+http://www.ihref.com/read-16514.html
+http://www.cnblogs.com/linxiaojiang/archive/2013/05/19/3087759.html
+http://www.tuicool.com/articles/V7j6Zfq
+http://www.cnblogs.com/angeldevil/archive/2013/11/26/3238470.html
+http://www.cnblogs.com/cspku/articles/Git_cmds.html
+http://blog.csdn.net/hangyuanbiyesheng/article/details/6731629
+
+
+http://www.cnblogs.com/jiewei915/archive/2010/08/09/1796042.html
+http://www.cnblogs.com/yangecnu/p/introduce-hashtable.html
+http://free.juhe.cn
+http://www.webxml.com.cn
+
+RXjava等库下载
+http://download.csdn.net/detail/sfwangji/9912933
+http://download.csdn.net/detail/fengbianyun/9708262
+http://download.csdn.net/detail/qq_22875583/9868792

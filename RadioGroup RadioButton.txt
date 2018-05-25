@@ -1,0 +1,277 @@
+
+
+实现RadioButton由两部分组成,也就是RadioButton和RadioGroup配合使用.RadioGroup是单选组合框，可以容纳多个RadioButton的容器.在没有RadioGroup的情况下，RadioButton可以全部都选中；当多个RadioButton被RadioGroup包含的情况下，RadioButton只可以选择一个。并用setOnCheckedChangeListener来对单选按钮进行监听
+1 RadioGroup相关属性：
+2 RadioGroup.getCheckedRadioButtonId ();--获取选中按钮的id
+3 RadioGroup.clearCheck ();//---清除选中状态
+4 RadioGroup.check (int id);//---通过参入选项id来设置该选项为选中状态如果传递-1作为指定的选择标识符来清除单选按钮组的勾选状态，相当于调用clearCheck()操作
+5 setOnCheckedChangeListener (RadioGroup.OnCheckedChangeListener listener); //--一个当该单选按钮组中的单选按钮勾选状态发生改变时所要调用的回调函数
+6 addView (View child, int index, ViewGroup.LayoutParams params);//---使用指定的布局参数添加一个子视图
+7 //参数 child 所要添加的子视图    index 将要添加子视图的位置  params 所要添加的子视图的布局参数
+8 RadioButton.getText();//获取单选框的值
+9 //此外，RadioButton的checked属性设置为true，代码里调用RadioButton的check(id)方法，不会触发onCheckedChanged事件
+
+RadioButton和RadioGroup的关系：
+1、RadioButton表示单个圆形单选框，而RadioGroup是可以容纳多个RadioButton的容器
+2、每个RadioGroup中的RadioButton同时只能有一个被选中
+3、不同的RadioGroup中的RadioButton互不相干，即如果组A中有一个选中了，组B中依然可以有一个被选中
+4、大部分场合下，一个RadioGroup中至少有2个RadioButton
+5、大部分场合下，一个RadioGroup中的RadioButton默认会有一个被选中，并建议您将它放在RadioGroup中的起始位置
+
+RadioButton和CheckBox的区别：
+1、单个RadioButton在选中后，通过点击无法变为未选中
+    单个CheckBox在选中后，通过点击可以变为未选中
+2、一组RadioButton，只能同时选中一个
+     一组CheckBox，能同时选中多个
+3、RadioButton在大部分UI框架中默认都以圆形表示
+     CheckBox在大部分UI框架中默认都以矩形表示
+
+http://blog.csdn.net/An_nAl/article/details/77005440
+实现可最基本的导航栏功能，不能左右滑动，只能点击
+1.内嵌的fragment的布局：
+
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:textSize="50sp"
+        android:textColor="@color/colorPrimary"
+        android:text="home"/>
+</LinearLayout>
+
+
+2.fragment的activity代码：
+
+public class FrHome extends Fragment {
+
+    @Nullable
+    @Override
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View view = LayoutInflater.from(getContext()).inflate(R.layout.fragment_home, container, false);
+        return view;
+    }
+
+}
+
+
+以此为例根据需要编写不同的fragment布局等等。
+
+3.装载fragment的界面布局如下（其中使用了selector进行实现点击改变图标和文字颜色）：
+
+点击改变文字颜色：
+
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_checked="true" android:color="#3F51B5"/>
+    <item android:state_checked="false" android:color="#8f8f8f"/>
+</selector>
+
+点击改变图标：
+
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_checked="true" android:drawable="@mipmap/ic_history_checked"/>
+    <item android:state_checked="false" android:drawable="@mipmap/ic_history_unchecked"/>
+</selector>
+
+
+界面布局：
+
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    tools:context="com.lotus.chartspagedemo.ActHome">
+
+    <FrameLayout
+        android:id="@+id/frame_layout"
+        android:layout_width="match_parent"
+        android:layout_above="@+id/card_view"
+        android:layout_height="match_parent"/>
+
+    <android.support.v7.widget.CardView
+        android:id="@+id/card_view"
+        app:cardElevation="25dp"
+        android:layout_alignParentBottom="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <RadioGroup
+            android:paddingTop="5dp"
+            android:id="@+id/tab_bar"
+            android:background="@color/app_white"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+            <RadioButton
+                android:id="@+id/tab_home"
+                android:gravity="center"
+                android:button="@null"
+                android:drawableTop="@drawable/selector_tab_home"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:textColor="@drawable/selector_tab_color"
+                android:text="首页"/>
+            <RadioButton
+                android:id="@+id/tab_health"
+                android:gravity="center"
+                android:button="@null"
+                android:drawableTop="@drawable/selector_tab_health"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:textColor="@drawable/selector_tab_color"
+                android:text="体检测评" />
+            <RadioButton
+                android:id="@+id/tab_personal"
+                android:gravity="center"
+                android:button="@null"
+                android:drawableTop="@drawable/selector_tab_personal"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:textColor="@drawable/selector_tab_color"
+                android:text="个人中心"
+                />
+        </RadioGroup>
+    </android.support.v7.widget.CardView>
+
+</RelativeLayout>
+
+
+4.装载fragment的界面的activity代码（加入双击返回键则退出应用）：
+
+public class ActHome extends FragmentActivity implements RadioGroup.OnCheckedChangeListener {
+
+    @BindView(R.id.frame_layout)
+    FrameLayout frameLayout;
+    @BindView(R.id.tab_home)
+    RadioButton tabHome;
+    @BindView(R.id.tab_health)
+    RadioButton tabHealth;
+    @BindView(R.id.tab_personal)
+    RadioButton tabPersonal;
+    @BindView(R.id.tab_bar)
+    RadioGroup tabBar;
+
+    public final static String ACTION_EXIT_SYSTEM = "sys_exit";
+
+    private FragmentManager manager;
+    private FragmentTransaction transaction;
+    private FrHome frHome;
+    private FrHealth frHealth;
+    private FrPersonal frPersonal;
+    private long mExitTime;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_home);
+        ButterKnife.bind(this);
+        RadioButton tabHome = (RadioButton) tabBar.getChildAt(0);
+        tabHome.setChecked(true);
+        tabBar.setOnCheckedChangeListener(this);
+        initFragment();
+    }
+
+    private void initFragment() {
+        manager = getSupportFragmentManager();
+        transaction = manager.beginTransaction();
+        frHome = new FrHome();
+        transaction.add(R.id.frame_layout,frHome);
+        transaction.commit();
+    }
+
+    @Override
+    public void onCheckedChanged(RadioGroup radioGroup, @IdRes int checkedId) {
+        switch (checkedId) {
+            case R.id.tab_home:
+                FragmentTransaction ft1 = manager.beginTransaction();
+                hideAll(ft1);
+                if (frHome!=null){
+                    ft1.show(frHome);
+                }else {
+                    frHome=new FrHome();
+                    ft1.add(R.id.frame_layout,frHome);
+                }
+                ft1.commit();
+                break;
+            case R.id.tab_health:
+                FragmentTransaction ft2 = manager.beginTransaction();
+                hideAll(ft2);
+                if (frHealth!=null){
+                    ft2.show(frHealth);
+                }else {
+                    frHealth = new FrHealth();
+                    ft2.add(R.id.frame_layout,frHealth);
+                }
+                ft2.commit();
+                break;
+            case R.id.tab_personal:
+                FragmentTransaction ft5 = manager.beginTransaction();
+                hideAll(ft5);
+                if (frPersonal!=null){
+                    ft5.show(frPersonal);
+                }else {
+                    frPersonal = new FrPersonal();
+                    ft5.add(R.id.frame_layout, frPersonal);
+                }
+                ft5.commit();
+                break;
+        }
+    }
+
+    private void hideAll(FragmentTransaction ft){
+        if (ft==null){
+            return;
+        }
+        if (frHome!=null){
+            ft.hide(frHome);
+        }
+        if (frHealth!=null){
+            ft.hide(frHealth);
+        }
+        if (frPersonal!=null){
+            ft.hide(frPersonal);
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if ((System.currentTimeMillis() - mExitTime) > 2000) {
+            Toast.makeText(ActHome.this,"再按一次退出程序",Toast.LENGTH_SHORT).show();
+            mExitTime = System.currentTimeMillis();
+        } else {
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    onExit(ActHome.this);
+                }
+            }, 500);
+        }
+    }
+
+    public static void onExit(final Context context) {
+        try {
+            Intent intent = new Intent();
+            intent.setAction(context.getApplicationContext().getPackageName() + ACTION_EXIT_SYSTEM);
+            context.sendBroadcast(intent);
+            // MobclickAgent.onKillProcess(context);
+            new Handler().postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    System.exit(0);
+                }
+            }, 200);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}

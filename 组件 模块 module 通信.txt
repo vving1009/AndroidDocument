@@ -1,0 +1,237 @@
+http://blog.csdn.net/u010014658/article/details/53791067
+组件间的通信问题
+这也是本文的重点。两个场景：1.组件A需要启动组件B中的Activity，但是组件A根本就获取不到组件B的类，无法启动；2.组件A需要调用组件B的业务方法，还是无法获取到组件B的类。
+解决方法：针对1，可以使用路由的方式来启动。这种方式的好处不仅如此，还支持通过web启动，而且可以和ios维护同一个url，两端统一处理。
+针对2，通过注解，然后在编译器获取对应的注解，生成代码，建立中间代理类来存储需要调用类的全类名，然后通过反射的方式调用对应的业务逻辑。（这种思想来源于网上某人的博客，本人不记得具体什么人了，因为是他们公司的代码，他没有开源，但是提供了思想，还是很感谢。）
+这里推荐本人写的一个简单的组件间通信的框架，原理apt+动态代理的方式。
+
+项目源码地址：https://github.com/xiaoxiaogogo/Qiaoba
+阿里的路由方案，https://github.com/alibaba/ARouter
+
+1.框架支持功能
+1》支持跨组件通过路由启动页面(支持自定义路由的方式)
+2》支持Builder模式设置跳转页面需要传递的参数，启动Activity的flag，设置requestCode以及启动页面回调的支持（onSucess,onError）
+3》借鉴了Retrofit使用外观模式+动态代理的方式，使用这种外观模式实现解耦和java面向对象方式实现路由启动页面
+下面的功能是目前业界没有实现过的，只有本框架才有。
+4》支持跨组件间的业务逻辑api的调用
+5》跨组件业务api的调用，支持api方法的回调参数的支持
+6》支持单业务api被多个组件调用（业务提供者和调用者1对多的支持）
+
+  未来支持功能：
+1》对service跨组件启动支持（另外两个组件目前不打算支持，后续也会支持）
+2》支持启动拦截机制（用于网络身份验证和统计打点等需求）
+3》可能会进行架构重新设计，但是外部调用代码不会改变，只会修改内部实现架构，不会影响到之前版本使用的代码
+
+说明：其中qiaoba module是主要的框架module，protocol-annotation和protocolinterpreter是qiaoba引用的module（一个包含的是对应的注解，一个是对应的apt功能的实现）。其中app module是测试的主工程， secondmudule是对应的一个组件。
+2.框架的使用
+gradle引入方式
+   注意：全部升了版本，注意使用最新版本，因为不仅功能和稳定性提升，最重要是修复了bug。
+最大bug：1.混淆找不到对应业务api；因为之前实现是在编译期记录对应远程api的全类名；但是混淆是在apt之后执行的，因此造成存储的全类名是错的。
+解决方法：不存储全类名，改为存储对应业务api类的字节码，不管怎么混淆，名字可以变，但是累的字节码是不会变的。
+ 2.混淆找不到对应的api方法名；因为调用方和提供方是两个不同类，所以经过混淆之后，两个类中原来的相同的方法名将会不同。
+解决方法：配置混淆规则，方法对应的api方法被混淆.
+
+compile 'com.xiaoxiao.qiaoba:qiaoba:1.0.3' //主要实现业务逻辑的模块
+compile 'com.xiaoxiao.qiaoba:protocol-interpreter:1.0.3'//apt编译期处理代码
+compile 'com.xiaoxiao.qiaoba:protocol-annotation:1.0.3'//apt使用的注解
+在主工程的下build.gradle增加
+classpath 'com.neenbedankt.gradle.plugins:android-apt:1.8'  
+在需要使用的module目录下增加：
+apply plugin: 'com.neenbedankt.android-apt'  
+上面两个配置是用于apt配置的。
+
+混淆规则的配置：
+-keep class com.xiaoxiao.qiaoba.**{*;}  
+-keep @com.xiaoxiao.qiaoba.annotation.communication.Provider class *{  
+     <methods>;  
+}  
+-keep @com.xiaoxiao.qiaoba.annotation.communication.Caller class *{  
+    <methods>;  
+}  
+-keep @com.xiaoxiao.qiaoba.annotation.communication.CallBack class *{  
+    <methods>;  
+}  
+-keep @com.xiaoxiao.qiaoba.annotation.communication.CallbackParam class *{  
+    <methods>;  
+}
+
+如果只想保留用于组件间通信的api方法不被混淆，可以使用新增注解CommuApiMethod添加到对应的方法上。并将上面的混淆规则稍作修改，如下：
+    -keep class com.xiaoxiao.qiaoba.**{*;}  
+    -keep @com.xiaoxiao.qiaoba.annotation.communication.Provider class *{  
+         @com.xiaoxiao.qiaoba.annotation.communication.CommuApiMethod <methods>;  
+    }  
+    -keep @com.xiaoxiao.qiaoba.annotation.communication.Caller class *{  
+        @com.xiaoxiao.qiaoba.annotation.communication.CommuApiMethod <methods>;  
+    }  
+    -keep @com.xiaoxiao.qiaoba.annotation.communication.CallBack class *{  
+        <methods>;  
+    }  
+    -keep @com.xiaoxiao.qiaoba.annotation.communication.CallbackParam class *{  
+        <methods>;  
+    } 
+    
+3.初始化RouterInterpretr，推荐越早越好，只要在使用路由功能跳转页面之前调用就行；建议在你的Application的onCreate()方法中调动 
+RouterInterpreter.init(getApplicationContext());  
+
+4.具体的使用：
+
+功能1：通过路由启动Activity
+
+第一种方式：需要对Activity配置对应的路由信息，比如路由信息如下：xl://main:8888/demo（启动xl：对应scheme， main：host（可以对应你当前的组件的业务功能），8888：端口号，/demo：path（对应具体Activity））
+<activity android:name=".DemoActivity">  
+            <intent-filter>  
+                <data  
+                    android:scheme="xl"  
+                    android:host="main"  
+                    android:path="/demo"  
+                    android:port="8888"/>  
+                <category android:name="android.intent.category.DEFAULT" />  
+                <category android:name="android.intent.category.BROWSABLE" />  
+                <action android:name="android.intent.action.VIEW" />  
+            </intent-filter>  
+        </activity>  
+对应Activity的配置如下：
+通过这个链接，可以在在html中直接打开，例如xl://main:8888/demo
+
+在另外的组件中启动这个页面，首先需要创建一个接口如下：
+    public interface IRouterUri {  
+        @RouterUri("xl://main:8888/demo")//此注解对应的是 url的地址  
+        public void jumpToDemo(@RouterParam("key") String key);//RouterParam 对应的参数，里面值是参数名  
+          
+        //如果增加页面，可以在这里增加对应的方法即可  
+      
+    }  
+    
+启动页面的代码如下：
+RouterInterpreter.getInstance().create(IRouterUri.class).jumpToDemo("second module data");  
+    
+这样的好处：面向接口编程，不关心内部实现，满足依赖倒置原则，使用者只需要知道要启动的uri，设置对应的注解就好了。
+
+
+还可以直接通过uri地址字符串来启动：
+RouterInterpreter.getInstance().openRouterUri("xl://main:8888/linkdemo?key=fuck&ddd=you");  
+
+获取uri中参数的方式如下：
+Uri data = getIntent().getData();  
+final String key = data.getQueryParameter("key");  
+
+使用Builder的方式：
+RouterInterpreter.getInstance()  
+                        .build("xl://main:8888/linkdemo")  
+                        .withString("key","fuck")  
+                        .withString("ddd","you")  
+//                        .addFlags(Intent.FLAG_ACTIVITY_MULTIPLE_TASK)  
+                        .requestCode(12, SecondDemoActivity.this)  
+                        .callback(new RouterCallback() {  
+                            @Override  
+                            public void onSuccess() {  
+                                Toast.makeText(SecondDemoActivity.this, "Router to other page success.", Toast.LENGTH_SHORT).show();  
+                            }  
+  
+                            @Override  
+                            public void onError(Throwable error) {  
+  
+                            }  
+                        })  
+                        .navigation();  
+                        
+支持设置参数；
+
+支持设置requestCode，相当于使用startActviityForResult()的方式启动页面
+支持设置启动Activity的Flag（默认是FLAG_ACTIVITY_NEW_TASK）
+支持设置接口回调，支持成功和失败的回调
+
+
+第二种方式：不想在Acitivity中配置相关的uri的信息，就想通过指定的uri启动对应的页面。
+需要在对应的Activity上添加对应注解，如下： 
+    @RouterLinkUri("xl://main:8888/linkdemo")  
+    public class RouterLinkDemoActivity extends AppCompatActivity {                         
+                        
+启动的方式如上，但是这种方式，因为没有为Activity配置对应的信息，所以通过上面的getIntent().getData()是获取不到，但是我默认的处理是，通过bundle传递，key就是uri中的key，value就是uri中对应的值。获取方式如下：
+Intent intent = getIntent();  
+        String val1 = intent.getStringExtra("key");  
+        String val2 = intent.getStringExtra("ddd");                       
+
+
+功能2：跨组件通信
+比如上面的secondmodule模块想要调用主module app 中下面的业务方法：     
+    public class TestService {  
+        public void doService(Context context, String str){  
+            Toast.makeText(context,"come from main module : "+ str, Toast.LENGTH_SHORT).show();  
+        }  
+    }  
+    
+这个时候需要使用两个注解Provider（提供者） 和 Caller（调用者），对于上面提供业务功能的类需要打上注解Provider。在secondmodule中调用的接口打上注解Caller。示例如下：
+    @Provider("test")  
+    public class TestService {  
+        public void doService(Context context, String str){  
+            Toast.makeText(context,"come from main module : "+ str, Toast.LENGTH_SHORT).show();  
+        }  
+    }  
+      
+    @Caller("test")  
+    public interface TestService {  
+        public void doService(Context context, String str);  
+    }  
+    
+注意：上面的Provider 和 Caller中的值必须相同，因为这是他们之间建立桥梁的关键；并且这个值是不能重复的。还是就是调用方的调用对应的提供放的业务方法的方法名和参数要相同。
+
+支持Provider对Caller 1对多支持；
+Provider注解的value是String数组，可以每一个Caller对应一个单独的value值和Provider对应；
+也可以Provider的value就一个值，所有的Caller的value值都相同（注意：这里所指相同是一个api方法所对应的Provider的值）
+
+调用的业务功能的实现如下：
+    ProtocolInterpreter.getInstance().create(TestService.class).doService(SecondDemoActivity.this, "second activity show toast");  
+
+上面实现的好处：面向接口编程，组件间完全解耦，符合依赖倒置原则。业务功能提供方，只需要提供对应的接口就好，具体联系通过apt动态生成代码，然后具体实现通过动态代理在运行时去执行。
+
+api接口回调参数的支持：
+1.需要使用CallBack 和 CallbackParam两个注解
+2.还是上面的示例，增加回调参数,提供方回调参数对应的回调接口
+    @CallBack("test")  
+    public interface TestCallback {  
+        void showHello(String msg);  
+        int getNum();  
+    }  
+    
+        @Provider({"test", "test2"})  
+    public class TestService {  
+        public void doService(Context context, String str, TestCallback callback){  
+            Toast.makeText(context,"come from main module : "+ str + ";;; num from other mudule : " + callback.getNum(), Toast.LENGTH_SHORT).show();  
+            callback.showHello("hello");  
+        }  
+    }  
+    
+调用方使用CallbackParam注解：
+
+定义回调接口原型
+
+    @CallbackParam("test")  
+    public interface TestCallback {  
+        void showHello(String msg);  
+        int getNum();  
+    }  
+    
+对应Caller的api接口原型 
+    @Caller("test")  
+    public interface Test2Service {  
+        void doService(Context context, String str, TestCallback callback);  
+    }  
+    
+调用方调用提供方api接口： 
+    ProtocolInterpreter.getInstance().create(Test2Service.class).doService(SecondDemoActivity.this,  
+            "second activity show toast", new TestCallback(){  
+                  @Override  
+                  public void showHello(final String msg) {  
+                       new Handler().postDelayed(new Runnable() {  
+                             @Override  
+                             public void run() {  
+                                   Toast.makeText(SecondDemoActivity.this, "say hello : " + msg + " in second activity", Toast.LENGTH_SHORT).show();  
+                             }  
+                       }, 3000);  
+                 }  
+                 @Override  
+                 public int getNum() {  
+                      return 99;  
+                 }  
+     });  

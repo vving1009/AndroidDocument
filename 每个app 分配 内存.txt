@@ -1,0 +1,110 @@
+Android为每个应用分配多少内存？
+privategoprivatego
+22 minutes ago
+
+    熟悉Android内存分配机制的朋友都知道，Android为每个进程分配内存时，采用弹性的分配方式，即刚开始并不会给应用分配很多的内存，而是给每一个进程分配一个“够用”的内存大小。
+
+那Android到底为每个应用分配多少内存呢？我们可以实际测试一下：
+
+以本人手上的努比亚NX510J手机为例：
+
+    private void getMaxMemoryInfo(){
+        Runtime rt = Runtime.getRuntime();
+        long maxMemory = rt.maxMemory();
+        Log.e("MaxMemory:", Long.toString(maxMemory/(1024*1024)));
+        ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        Log.e("MemoryClass:", Long.toString(activityManager.getMemoryClass()));
+        Log.e("LargeMemoryClass:", Long.toString(activityManager.getLargeMemoryClass()));
+    }
+
+输出结果为：
+
+06-06 15:27:22.740 11917-11917/com.suning.myapp E/MaxMemory:: 192
+06-06 15:27:22.740 11917-11917/com.suning.myapp E/MemoryClass:: 192
+06-06 15:27:22.740 11917-11917/com.suning.myapp E/LargeMemoryClass:: 512
+
+把AndroidManifest.xml中的application标签加上
+
+<application
+        ...
+        android:largeHeap="true"
+        ...>
+        ...
+</application>
+
+输出结果为：
+
+06-06 15:32:06.168 21973-21973/com.suningtang.myapp E/MaxMemory:: 512
+06-06 15:32:06.168 21973-21973/com.suningtang.myapp E/MemoryClass:: 192
+06-06 15:32:06.168 21973-21973/com.suningtang.myapp E/LargeMemoryClass:: 512
+
+可以看到，设置largeHeap为true时， 通过rt.maxMemory();获取的值为512M。
+
+因此，对于本人这台手机，系统正常分配的内存最多为192M；当设置largeHeap时，最多可申请512M。当超过这个值时，就会出现OOM了。
+
+这个值是在哪设置的呢？查看/system/build.prop文件内容：
+
+shell@NX510J:/ $ cat /system/build.prop | grep heap
+dalvik.vm.heapsize=36m
+   
+dalvik.vm.heapstartsize=8m    ----起始分配内存
+dalvik.vm.heapgrowthlimit=192m ---- 一般情况app申请的最大内存 dalvik.vm.heapsize=512m   ---- 设置largeheap时，App可用的最大内存dalvik.vm.heaptargetutilization=0.75  ---- GC相关
+dalvik.vm.heapminfree=512k
+dalvik.vm.heapmaxfree=8m     ----- GC机制相关
+
+上面的标注了各参数的含义。
+
+那ActivityManager的getMemoryClass()和getLargeMemoryClass()方法返回的的是哪里的值呢？
+
+//ActivityManager.java
+
+public int getMemoryClass() {
+        return staticGetMemoryClass();
+    }
+    
+    /** @hide */
+    static public int staticGetMemoryClass() {
+       
+        String vmHeapSize = SystemProperties.get("dalvik.vm.heapgrowthlimit", "");
+        if (vmHeapSize != null && !"".equals(vmHeapSize)) {
+            return Integer.parseInt(vmHeapSize.substring(0, vmHeapSize.length()-1));
+        }
+        return staticGetLargeMemoryClass();
+    }
+    
+    /**
+     * Return the approximate per-application memory class of the current
+     * device when an application is running with a large heap.  This is the
+     * space available for memory-intensive applications; most applications
+     * should not need this amount of memory, and should instead stay with the
+     * {@link #getMemoryClass()} limit.  The returned value is in megabytes.
+     * This may be the same size as {@link #getMemoryClass()} on memory
+     * constrained devices, or it may be significantly larger on devices with
+     * a large amount of available RAM.
+     *
+     * <p>The is the size of the application's Dalvik heap if it has
+     * specified <code>android:largeHeap="true"</code> in its manifest.
+     */
+    public int getLargeMemoryClass() {
+        return staticGetLargeMemoryClass();
+    }
+    
+    /** @hide */
+    static public int staticGetLargeMemoryClass() {
+        String vmHeapSize = SystemProperties.get("dalvik.vm.heapsize", "16m");
+        return Integer.parseInt(vmHeapSize.substring(0, vmHeapSize.length() - 1));
+    }
+
+上面的源码表明，getMemoryClass()和getLargeMemoryClass()方法最终读取的仍然是dalvik.vm.heapgrowthlimit和dalvik.vm.heapsize的值。而且，dalvik.vm.heapsize默认值为16M，这也是解释了google的原生OS默认值是16M了。而dalvik.vm.heapgrowthlimit和dalvik.vm.heapsize的值各个手机厂家的OS会对这个值进行修改，所以存在差异。
+在App中获取内存信息
+
+我们在应用中可以通过ActivityManager的MemoryInfo内部类获取内存信息，方法如下：
+
+private void getMemoryInfo() {
+    ActivityManager manager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+    ActivityManager.MemoryInfo info = new ActivityManager.MemoryInfo();
+    manager.getMemoryInfo(info);  
+    Log.e("Memory","系统总内存:"+(info.totalMem / (1024*1024))+"M");
+    Log.e("Memory","系统剩余内存:"+(info.availMem / (1024*1024))+"M");
+    Log.e("Memory","系统是否处于低内存运行："+info.lowMemory );
+    Log.e("Memory","系统剩余内存低于"+( info.threshold  / (1024*1024))+"M时为低内存运行");

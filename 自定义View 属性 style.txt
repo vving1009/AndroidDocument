@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--自定义属性集合:CircleView-->
+    <!--在该集合下,设置不同的自定义属性-->
+    <declare-styleable name="CircleView">
+        <!--在attr标签下设置需要的自定义属性-->
+        <!--此处定义了一个设置图形的颜色:circle_color属性,格式是color,代表颜色-->
+        <!--格式有很多种,如资源id(reference)等等-->
+        <attr name="circle_color" format="color"/>
+
+    </declare-styleable>
+</resources>
+
+<-- 1. reference：使用某一资源ID -->
+<declare-styleable name="名称">
+    <attr name="background" format="reference" />
+</declare-styleable>
+// 使用格式
+<ImageView
+    android:layout_width="42dip"
+    android:layout_height="42dip"
+    android:background="@drawable/图片ID" />
+
+<--  2. color：颜色值 -->
+<declare-styleable name="名称">
+    <attr name="textColor" format="color" />
+</declare-styleable>
+// 格式使用
+<TextView
+    android:layout_width="42dip"
+    android:layout_height="42dip"
+    android:textColor="#00FF00" />
+
+<-- 3. boolean：布尔值 -->
+<declare-styleable name="名称">
+    <attr name="focusable" format="boolean" />
+</declare-styleable>
+// 格式使用
+<Button
+    android:layout_width="42dip"
+    android:layout_height="42dip"
+    android:focusable="true" />
+
+<-- 4. dimension：尺寸值 -->
+<declare-styleable name="名称">
+    <attr name="layout_width" format="dimension" />
+</declare-styleable>
+// 格式使用：
+<Button
+    android:layout_width="42dip"
+    android:layout_height="42dip" />
+
+<-- 5. float：浮点值 -->
+<declare-styleable name="AlphaAnimation">
+    <attr name="fromAlpha" format="float" />
+    <attr name="toAlpha" format="float" />
+</declare-styleable>
+// 格式使用
+<alpha
+    android:fromAlpha="1.0"
+    android:toAlpha="0.7" />
+
+<-- 6. integer：整型值 -->
+<declare-styleable name="AnimatedRotateDrawable">
+    <attr name="frameDuration" format="integer" />
+    <attr name="framesCount" format="integer" />
+</declare-styleable>
+// 格式使用
+<animated-rotate
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:frameDuration="100"
+    android:framesCount="12"
+ />
+
+<-- 7. string：字符串 -->
+<declare-styleable name="MapView">
+    <attr name="apiKey" format="string" />
+</declare-styleable>
+// 格式使用
+<com.google.android.maps.MapView
+ android:apiKey="0jOkQ80oD1JL9C6HAja99uGXCRiS2CGjKO_bc_g" />
+
+<-- 8. fraction：百分数 -->
+<declare-styleable name="RotateDrawable">
+    <attr name="pivotX" format="fraction" />
+    <attr name="pivotY" format="fraction" />
+</declare-styleable>
+// 格式使用
+<rotate
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:pivotX="200%"
+    android:pivotY="300%"
+ />
+
+
+<-- 9. enum：枚举值 -->
+<declare-styleable name="名称">
+    <attr name="orientation">
+        <enum name="horizontal" value="0" />
+        <enum name="vertical" value="1" />
+    </attr>
+</declare-styleable>
+// 格式使用
+<LinearLayout
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+/>
+
+<-- 10. flag：位或运算 -->
+<declare-styleable name="名称">
+    <attr name="windowSoftInputMode">
+        <flag name="stateUnspecified" value="0" />
+        <flag name="stateUnchanged" value="1" />
+        <flag name="stateHidden" value="2" />
+        <flag name="stateAlwaysHidden" value="3" />
+        <flag name="stateVisible" value="4" />
+        <flag name="stateAlwaysVisible" value="5" />
+        <flag name="adjustUnspecified" value="0x00" />
+        <flag name="adjustResize" value="0x10" />
+        <flag name="adjustPan" value="0x20" />
+        <flag name="adjustNothing" value="0x30" />
+    </attr>
+</declare-styleable>、
+// 使用
+<activity
+    android:name=".StyleAndThemeActivity"
+    android:label="@string/app_name"
+    android:windowSoftInputMode="stateUnspecified | stateUnchanged　|　stateHidden" >
+
+    <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+    </intent-filter>
+</activity>
+
+
+
+<-- 特别注意：属性定义时可以指定多种类型值 -->
+<declare-styleable name="名称">
+    <attr name="background" format="reference|color" />
+</declare-styleable>
+// 使用
+<ImageView
+    android:layout_width="42dip"
+    android:layout_height="42dip"
+    android:background="@drawable/图片ID|#00FF00" />
+    
+    
+    public CircleView(Context context, AttributeSet attrs, int defStyleAttr) {
+        super(context, attrs, defStyleAttr);
+
+        // 加载自定义属性集合CircleView
+        TypedArray a = context.obtainStyledAttributes(attrs,R.styleable.CircleView);
+
+        // 解析集合中的属性circle_color属性
+        // 该属性的id为:R.styleable.CircleView_circle_color
+        // 将解析的属性传入到画圆的画笔颜色变量当中（本质上是自定义画圆画笔的颜色）
+        // 第二个参数是默认设置颜色（即无指定circle_color情况下使用）
+        mColor = a.getColor(R.styleable.CircleView_circle_color,Color.RED);
+
+        // 解析后释放资源
+        a.recycle();
+
+        init();

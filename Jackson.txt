@@ -1,0 +1,413 @@
+要用于测试学习用jackson包实现json、对象、Map之间的转换。
+
+1、准备测试用的Java类
+
+（1）Link类
+Java代码  收藏代码
+
+    package test;  
+      
+    /**  
+     * Description: 联系方式，被user使用 
+     */  
+    public class Link  
+    {  
+        private String phone; //移动电话  
+        private String address; //地址  
+        private String qq; //QQ  
+          
+        public String getPhone()  
+        {  
+            return phone;  
+        }  
+        public void setPhone(String phone)  
+        {  
+            this.phone = phone;  
+        }  
+        public String getAddress()  
+        {  
+            return address;  
+        }  
+        public void setAddress(String address)  
+        {  
+            this.address = address;  
+        }  
+        public String getQq()  
+        {  
+            return qq;  
+        }  
+        public void setQq(String qq)  
+        {  
+            this.qq = qq;  
+        }  
+    }  
+
+ 
+
+（2）User类
+
+ 
+
+ 
+
+ 
+Java代码  收藏代码
+
+    package test;  
+      
+    import java.util.Date;  
+    import java.util.List;  
+    import java.util.Map;  
+    import java.util.Set;  
+      
+    /**  
+     * Description: 用户，测试模型类 
+     */  
+    public class User  
+    {  
+        private String id; //标识  
+        private String name;    //姓名  
+        private int age;    //年龄  
+        private double pay; //工资   
+        private boolean valid;  //是否有效  
+        private char one; //一个字符  
+        private Date birthday;  //生日  
+          
+        private Link link; //联系方式，自定义  
+          
+        private Map map; //测试用  
+        private List list; //测试用  
+        private Set set; //测试用  
+        public String getId()  
+        {  
+            return id;  
+        }  
+        public void setId(String id)  
+        {  
+            this.id = id;  
+        }  
+        public String getName()  
+        {  
+            return name;  
+        }  
+        public void setName(String name)  
+        {  
+            this.name = name;  
+        }  
+        public int getAge()  
+        {  
+            return age;  
+        }  
+        public void setAge(int age)  
+        {  
+            this.age = age;  
+        }  
+        public double getPay()  
+        {  
+            return pay;  
+        }  
+        public void setPay(double pay)  
+        {  
+            this.pay = pay;  
+        }  
+        public boolean isValid()  
+        {  
+            return valid;  
+        }  
+        public void setValid(boolean valid)  
+        {  
+            this.valid = valid;  
+        }  
+        public char getOne()  
+        {  
+            return one;  
+        }  
+        public void setOne(char one)  
+        {  
+            this.one = one;  
+        }  
+        public Date getBirthday()  
+        {  
+            return birthday;  
+        }  
+        public void setBirthday(Date birthday)  
+        {  
+            this.birthday = birthday;  
+        }  
+        public Link getLink()  
+        {  
+            return link;  
+        }  
+        public void setLink(Link link)  
+        {  
+            this.link = link;  
+        }  
+        public Map getMap()  
+        {  
+            return map;  
+        }  
+        public void setMap(Map map)  
+        {  
+            this.map = map;  
+        }  
+        public List getList()  
+        {  
+            return list;  
+        }  
+        public void setList(List list)  
+        {  
+            this.list = list;  
+        }  
+        public Set getSet()  
+        {  
+            return set;  
+        }  
+        public void setSet(Set set)  
+        {  
+            this.set = set;  
+        }  
+    }  
+
+ 
+
+2、测试类，没用Junit，用Main()方法输出。
+Java代码  收藏代码
+
+    package test;  
+      
+    import java.io.IOException;  
+    import java.util.ArrayList;  
+    import java.util.Date;  
+    import java.util.HashMap;  
+    import java.util.HashSet;  
+    import java.util.List;  
+    import java.util.Map;  
+    import java.util.Set;  
+    import org.codehaus.jackson.JsonGenerationException;  
+    import org.codehaus.jackson.map.JsonMappingException;  
+    import org.codehaus.jackson.map.ObjectMapper;  
+      
+    /**  
+     * Description: 主要用于测试学习用jackson包实现json、对象、Map之间的转换 
+     *  
+     * Date: 2016年6月6日 
+     * Time: 下午3:23:23 
+     */  
+    public class JsonTest  
+    {  
+      
+        public static void main(String[] args) throws JsonGenerationException, JsonMappingException, IOException  
+        {  
+            User user=new User();  
+            user.setId("01");  
+            user.setName("张三");  
+            user.setAge(33);  
+            user.setPay(6666.88);  
+            user.setValid(true);  
+            user.setOne('E');  
+            user.setBirthday(new Date(20l*366*24*3600*1000)); //1990年  
+              
+            Link link = new Link();  
+            link.setAddress("河南省济源市");  
+            link.setPhone("13899995555");  
+            link.setQq("123456");  
+            user.setLink(link);  
+              
+            Map map=new HashMap();  
+            map.put("aa", "this is aa");  
+            map.put("bb", "this is bb");  
+            map.put("cc", "this is cc");  
+            user.setMap(map);  
+              
+            List list=new ArrayList(){};  
+            list.add("普洱");  
+            list.add("大红袍");  
+            user.setList(list);  
+              
+            Set set=new HashSet();  
+            set.add("篮球");  
+            set.add("足球");  
+            set.add("乒乓球");  
+            user.setSet(set);  
+              
+            ObjectMapper mapper = new ObjectMapper(); //转换器  
+              
+            //测试01：对象--json  
+            String json=mapper.writeValueAsString(user); //将对象转换成json  
+            System.out.println(json);  
+            /* 结果如下： 
+            {"id":"01","name":"张三","age":33,"pay":6666.88,"valid":true,"one":"E","birthday":1465185448998, 
+            "link":{"phone":"13899995555","address":"河南省济源市","qq":"123456"}, 
+            "map":{"aa":"this is aa","bb":"this is bb","cc":"this is cc"}, 
+            "list":["普洱","大红袍"], 
+            "set":["乒乓球","足球","篮球"]} 
+             
+            注意点：（1） 日期--长整型 （2）List、Set均转成数组 
+             */  
+              
+            //测试02：json--map  
+            Map m = mapper.readValue(json, Map.class); //json转换成map  
+              
+            System.out.println("pay："+m.get("pay").getClass().getName()); //java.lang.Double  
+            System.out.println("valid："+m.get("valid").getClass().getName()); //java.lang.Boolean  
+            System.out.println("birthday："+m.get("birthday").getClass().getName()); //java.lang.Long  
+            System.out.println("link："+m.get("link").getClass().getName()); //java.util.LinkedHashMap  
+            System.out.println("map："+m.get("map").getClass().getName()); //java.util.LinkedHashMap  
+            System.out.println("list："+m.get("list").getClass().getName()); //java.util.ArrayList  
+            System.out.println("set："+m.get("set").getClass().getName()); //java.util.ArrayList  
+            /*  结果如下： 
+                pay：java.lang.Double 
+                valid：java.lang.Boolean 
+                birthday：java.lang.Long 
+                link：java.util.LinkedHashMap 
+                map：java.util.LinkedHashMap 
+                list：java.util.ArrayList 
+                set：java.util.ArrayList 
+                 
+                注意点：（1） 日期--长整型  （2）map、子对象均转换成了LinkedHashMap （3）List、Set均转成ArrayList 
+             */  
+              
+            //测试03：map--json  
+            json=mapper.writeValueAsString(m); //map转json  
+            System.out.println(json); //与之前格式完全相同，说明经过map转换后，信息没有丢失  
+              
+            //测试04：json--对象  
+            User u=mapper.readValue(json, User.class); //json转java对象。经测，转成对象后，一切恢复正常  
+            System.out.println("pay："+u.getPay());  
+            System.out.println("valid："+u.isValid());  
+            System.out.println("birthday："+u.getBirthday());  
+            System.out.println("link："+u.getLink());  
+            System.out.println("map："+u.getMap());  
+            System.out.println("list："+u.getList());  
+            System.out.println("set："+u.getSet());  
+              
+            //测试05：其他转换  
+            byte[] data=mapper.writeValueAsBytes(u); //对象转成二进制数组  
+              
+              
+        }  
+      
+    }  
+
+ 
+
+3、输出结果
+Other代码  收藏代码
+
+    {"id":"01","name":"张三","age":33,"pay":6666.88,"valid":true,"one":"E","birthday":632448000000,"link":{"phone":"13899995555","address":"河南省济源市","qq":"123456"},"map":{"aa":"this is aa","bb":"this is bb","cc":"this is cc"},"list":["普洱","大红袍"],"set":["乒乓球","足球","篮球"]}  
+    pay：java.lang.Double  
+    valid：java.lang.Boolean  
+    birthday：java.lang.Long  
+    link：java.util.LinkedHashMap  
+    map：java.util.LinkedHashMap  
+    list：java.util.ArrayList  
+    set：java.util.ArrayList  
+    {"id":"01","name":"张三","age":33,"pay":6666.88,"valid":true,"one":"E","birthday":632448000000,"link":{"phone":"13899995555","address":"河南省济源市","qq":"123456"},"map":{"aa":"this is aa","bb":"this is bb","cc":"this is cc"},"list":["普洱","大红袍"],"set":["乒乓球","足球","篮球"]}  
+    pay：6666.88  
+    valid：true  
+    birthday：Tue Jan 16 08:00:00 CST 1990  
+    link：test.Link@350385f1  
+    map：{aa=this is aa, bb=this is bb, cc=this is cc}  
+    list：[普洱, 大红袍]  
+    set：[足球, 乒乓球, 篮球]  
+
+以前解析json用的惯的就是Google的gson了，用惯了基本就用它了，一直也没发现什么大问题，因为都是解析简单的json数据。但是最近学习springboot，要解析一个比较复杂的json数据。就照之前的用gsonformat自动生成实体类，让gson直接解析，本想着一切ok了，可是确报错了，刚开始以为gsonformat生成的类有错误，因为毕竟json数据较为复杂，于是多生成几次，可是还是不行。面对这样复杂的数据，我可不想手动写实体类，于是想着又换了自动生成实体类的工具，可是结果还是未能如愿。于是想着能从错误的日志中发现点什么，可是无奈gson没有打印具体的出错的地方，后来捣鼓了好久，想着不如换个解析工具吧。于是上网找了找，觉得Jackson不错，赶紧试用，发现还真不错，虽然也没能解析成功，但是它打印出了详细的出错信息，照着出错的信息改了马上就解析成功了。
+
+说说出错的原因：平时解析json呢基本接口提供的json都是很明确的，所以用gson解析一般不会有啥大问题。但是此次情况不同，接口的数据我无法完全的预知，所以实体类字段有可能不完整。所以当返回的json数据里包含了实体类没有的字段时gson就有可能出错，但是对于这种情况用gson解析我是没找到相应的解决办法，如果谁知道麻烦告知一下，谢谢。
+
+当然用Jackson解决就非常容易了，只需要在实体类上加上注解就可以。
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+class ExtraBean {
+    private boolean is_museuser;
+
+    public boolean isIs_museuser() {
+        return is_museuser;
+    }
+
+    public void setIs_museuser(boolean is_museuser) {
+        this.is_museuser = is_museuser;
+    }
+}
+
+@JsonIgnore注解用来忽略某些字段，可以用在Field或者Getter方法上，用在Setter方法时，和Filed效果一样。这个注解只能用在POJO存在的字段要忽略的情况，不能满足现在需要的情况。
+
+@JsonIgnoreProperties(ignoreUnknown = true)，将这个注解写在类上之后，就会忽略类中不存在的字段，可以满足当前的需要。这个注解还可以指定要忽略的字段。使用方法如下：
+
+@JsonIgnoreProperties({ "internalId", "secretKey" })
+指定的字段不会被序列化和反序列化。
+
+到此顺利解决。（还有Gson有类似的实现请告知一下，本人只知道gson转string忽略字段的方法，谢谢）
+
+(原文地址:http://www.jianshu.com/p/f6884331d366)
+
+ 
+
+同时参考了:
+jackson反序列化时忽略不需要的字段
+
+有时候，如果数据库表中增加一个字段，但返回的JSON字符串中含有我们并不需要的字段，那么当对应的实体类中不含有该字段时，会抛出一个异常，告诉你有些字段没有在实体类中找到。解决办法很简单，在声明ObjectMapper之后，加上上述代码：
+
+objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+
+==============================================================================================
+
+
+https://www.cnblogs.com/java-zhao/p/5590054.html
+第二章 Jackson属性名转换+属性忽略
+@Data
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class MyRecord {
+    private boolean succeed;
+    private String  recordId;
+    @JsonProperty("error_code")
+    private int     errorCode;
+    @JsonProperty("error_msg")
+    private String  errorMsg;
+}
+
+一、Jackson转换属性
+
+场景：json串传过来的属性名为error_code，但是我的模型User的属性为errorCode
+
+    @JsonProperty("error_code")
+    private int     errorCode;
+
+二、Jackson忽略属性
+
+场景：json串传来了20个属性，但是我只要其中的4个。
+
+解决方案：在类上添加如下属性
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+
+三、Jackson类型转换model需要空构造器
+
+注意：注意这就说明，我们对于接收的model不要使用@Builder构造器模式（该注解是没有空构造器的）
+
+=================================================================================================
+
+ Jackson将json字符串转换成泛型List
+
+    Jackson，我感觉是在Java与Json之间相互转换的最快速的框架，当然Google的Gson也很不错，但是参照网上有人的性能测试，看起来还是Jackson比较快一点
+    Jackson处理一般的JavaBean和Json之间的转换只要使用ObjectMapper 对象的readValue和writeValueAsString两个方法就能实现。但是如果要转换复杂类型Collection如 List<YourBean>，那么就需要先反序列化复杂类型 为泛型的Collection Type。
+如果是ArrayList<YourBean>那么使用ObjectMapper 的getTypeFactory().constructParametricType(collectionClass, elementClasses);
+如果是HashMap<String,YourBean>那么 ObjectMapper 的getTypeFactory().constructParametricType(HashMap.class,String.class, YourBean.class);
+
+public final ObjectMapper mapper = new ObjectMapper(); 
+ 
+public static void main(String[] args) throws Exception{  
+    JavaType javaType = getCollectionType(ArrayList.class, YourBean.class); 
+    List<YourBean> lst =  (List<YourBean>)mapper.readValue(jsonString, javaType); 
+}   
+   /**   
+    * 获取泛型的Collection Type  
+    * @param collectionClass 泛型的Collection   
+    * @param elementClasses 元素类   
+    * @return JavaType Java类型   
+    * @since 1.0   
+    */   
+public static JavaType getCollectionType(Class<?> collectionClass, Class<?>... elementClasses) {   
+    return mapper.getTypeFactory().constructParametricType(collectionClass, elementClasses);   
+}   

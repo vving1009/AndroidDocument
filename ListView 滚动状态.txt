@@ -1,0 +1,141 @@
+判断listview的滚动状态及在滚动中item显示位置的方法
+https://www.cnblogs.com/hwgt/p/5414396.html
+在写listview的下拉刷新和上拉加载时，会遇到如下问题：
+怎样判断listview滑动到了顶部或是底部？
+下拉刷新时，一般只有当第一个item完全可见时，才处理下拉的逻辑，而上拉加载则处理方式比较多，可以在手指已经离开屏幕但listview由于惯性作用滑动到底部时自动加载，也可以在最底部显示一个按钮，点击加载，加载完成后，又将按钮置于新加载内容的最底部，还可以在最后一个item完全可见时处理手指滑动上拉的逻辑来进行加载，等等。
+那么，再细化一点，第一个item完全可见和能见到一部分、最后一个item完全可见和仅仅能见到一部分分别需要怎么判断？如果一个listview的item数目很少，都不足以充满整个屏幕，显然第一个和最后一个item都是完全可见的，这时候，还需要处理下拉和上拉的逻辑吗？如果（不）需要，又该如何判断？本文将对listview的item显示状态做个简单总结，相信除了应用于下拉刷新和上拉加载之外，还会有其他价值。
+demo非常简单，就是一个listview界面，主要来看自定义的HwgtListView这个类：
+HwgtListView.java:
+
+public class HwgtListView extends ListView implements OnScrollListener {
+	public HwgtListView(Context context, AttributeSet attrs) {  
+		super(context, attrs); 
+		setOnScrollListener(this); 
+	 }
+	@Override
+	public void onScrollStateChanged(AbsListView view, int scrollState) {
+		switch (scrollState) {
+			case OnScrollListener.SCROLL_STATE_IDLE:
+				Log.d("HWGT", "SCROLL_STATE_IDLE........");
+			  break;
+			case OnScrollListener.SCROLL_STATE_TOUCH_SCROLL:
+				Log.d("HWGT", "SCROLL_STATE_TOUCH_SCROLL........");
+			break;
+			case OnScrollListener.SCROLL_STATE_FLING:
+				Log.d("HWGT", "SCROLL_STATE_FLING........");
+			break;
+		}
+	}
+	@Override
+	public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+		Log.d("HWGT", "firstVisibleItem..=.."+firstVisibleItem +
+				      "  visibleItemCount..=.."+visibleItemCount +
+				        "  totalItemCount..=.."+totalItemCount);
+		
+	}
+}
+
+由于我们主要是分析listview的滚动状态，所以只需要实现OnScrollListener接口，复写onScroll 和 onScrollStateChanged 两个方法。
+首先看onScrollStateChanged方法，它有一个scrollState参数，表示listview的三种滚动状态：
+1、手指接触屏幕并开始滑动listview ，这个时候会打印 log：SCROLL_STATE_TOUCH_SCROLL。   
+2、手指离开屏幕，listview由于惯性还在滚动中，这个时候打印 log：SCROLL_STATE_FLING。 
+3、listview 停止滚动，这个时候打印 log：SCROLL_STATE_IDLE。
+由于是滚动状态的变化，StateChanged，所以，只是在三种状态切换时打印一次log，手指刚接触屏幕，还没有滑动时，在onScrollStateChanged 方法中是不会打印log的。
+以上是listview的item比较多，在屏幕上显示不完的情况，如果item非常少，比如只有3个，连一屏幕都占不满，则上述log的打印只会出现第一和第三种情况，不会出现SCROLL_STATE_FLING 的 log。在实际需求中，item比较少，连一屏幕都占不满时，一般就不支持上拉加载了，因为没意义，所以，这种情况只需要在case OnScrollListener.SCROLL_STATE_FLING:中做一个标识，用来判断要不要响应手指上滑的逻辑。
+
+再来看onScroll方法，该方法是listview正在滚动时触发，不管手指是否在屏幕上。
+onScroll 和 onScrollStateChanged 这两个方法中相关的log打印顺序是这样的：
+SCROLL_STATE_TOUCH_SCROLL    // 首先是手指滑动屏幕引起onScrollStateChanged （从静止到滚动的改变）
+onScroll 
+onScroll 
+... ...          // 然后，一堆onScroll ，说明正在滚动，到底一秒打印几次，不是那么重要
+SCROLL_STATE_TOUCH_SCROLL    // 表示手指离开屏幕
+onScroll 
+onScroll 
+... ...          // 然后，又是一堆onScroll ，这次是手指已离开屏幕，只不过listview由于惯性作用而处于滚动状态
+SCROLL_STATE_IDLE    // listview停止滚动了
+有一种比较特殊的情况，手指轻点屏幕，并未触发滚动时，会在打印 SCROLL_STATE_TOUCH_SCROLL log之前打印少量的 onScroll  log信息，具体原因不太清楚，但是貌似不太影响平时的使用，有空再研究。
+
+至此，onScroll 和 onScrollStateChanged 这两个方法的作用和 listview 相关状态的监听响应顺序已经清楚了，再来看onScroll 方法的参数，主要是3个int类型的参数，int firstVisibleItem、int visibleItemCount 和 int totalItemCount，顾名思义，
+totalItemCount 指的是所有item的数量，
+firstVisibleItem 代表的是屏幕上第一个可见的item的索引，不管它是完全可见还是只有很小的一部分可见。
+visibleItemCount 则稍微有点特殊，它指的是屏幕上可见的item的数量，在屏幕被充满时，这个值有时候会有差别，比如屏幕上最上边和最下边的item都只有非常小一部分可见时，稍微滑动listview让屏幕上最上边或是最下边的item不可见，可能会导致 visibleItemCount 的数量减少1.所以，在使用这个参数时，需要留意这种特殊情况可能带来的隐患。
+
+接下来，结合上文总结的东西，看一下实际的应用：
+1、判断listview是否滑动到顶部
+
+//在onScroll方法中判断：
+if (firstVisibleItem == 0) { // 只要第一个item有一小部分可见都会满足条件
+	View firstView = view.getChildAt(firstVisibleItem);
+	if (firstView != null) {
+		if(firstView.getTop()==0){ // 判断第一个item到顶部的距离
+			Log.d("HWGT", "滑动到顶部了，卧槽！");
+		}
+	}
+}
+
+上文已经分析过，仅仅只是判断if (firstVisibleItem == 0)是不太准确的，因为只要是第一个item只有很小的一部分可见，都会导致这个条件成立，所以还需要判断第一个item到屏幕顶部的距离，即(firstView.getTop()==0)。
+2、判断listview是由于惯性作用而到达底部的
+
+//首先在onScroll方法中判断listview到达底部：
+if ((firstVisibleItem + visibleItemCount) == totalItemCount) {
+    View lastVisibleItemView = view.getChildAt(view.getChildCount() - 1);
+    if (lastVisibleItemView != null) {
+    	if(getHeight() == lastVisibleItemView.getBottom()){
+    		Log.d("HWGT", getHeight()+"...滚到底部了...=.."+lastVisibleItemView.getBottom());
+    	}
+    }
+}
+
+同理，仅仅只是判断 ((firstVisibleItem + visibleItemCount) == totalItemCount) 也是不准确的，
+还需要判断 (getHeight() == lastVisibleItemView.getBottom())。
+那么如何判断是由于惯性作用而不是手指拖动listview到达底部的呢？
+上文已经分析过onScroll 和 onScrollStateChanged 这两个方法的作用和 listview 相关状态的监听响应顺序了，
+在listview由于惯性作用滑动到底部的情况下，log的打印顺序是这样的：
+
+SCROLL_STATE_TOUCH_SCROLL........
+
+SCROLL_STATE_FLING........
+
+1845...滚到底部了...=..1845
+
+SCROLL_STATE_IDLE........
+
+而listview在手指拖动下到达底部的情况下，log的打印顺序是这样的：
+
+SCROLL_STATE_TOUCH_SCROLL........
+
+1845...滚到底部了...=..1845
+
+SCROLL_STATE_FLING........
+
+SCROLL_STATE_IDLE........
+
+所以在onScrollStateChanged 方法中增加相应的标识再结合onScroll方法中的判断，就可以准确判断listview是由于惯性作用而到达底部的了。
+3、判断listview是手指滑动过程中到达底部的
+... ...  //上文已经分析过了，参考 2、判断listview是由于惯性作用而到达底部的
+4、item的数量非常少，listview占不满屏幕的情况
+在这种情况下，下拉刷新还是有必要的，但是上拉加载就不一定了，那怎样判断item非常少时，listview要不要响应手指的滑动事件呢？
+listview占不满屏幕时，log的打印上有几个比较特殊的地方：
+A、刚一进入界面时，在onScroll方法中就会打印类似
+
+滑动到顶部了
+
+607...滚到底部了...=..607
+这样的log（测试时有3个item）
+B、在手指滑动过程中，onScrollStateChanged 方法中则
+只有
+
+SCROLL_STATE_TOUCH_SCROLL........
+
+SCROLL_STATE_IDLE........
+
+没有
+
+SCROLL_STATE_FLING........
+
+其实，在item很多且屏幕都显示不完的情况下，刚进入界面时也会在onScroll方法中打印log
+
+滑动到顶部了
+
+把这些特点利用起来，完成普通的需求，还是比较容易的。

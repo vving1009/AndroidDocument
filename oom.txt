@@ -1,0 +1,126 @@
+ http://blog.csdn.net/alcoholdi/article/details/54948058
+ 在Android中，长时间运行的任务和Acyivity生命周期进行协调会有点困难，如果你不加以小心的话会导致内存泄漏。关于如何处理这个棘手的问题，下面有几个基本的技巧供参考
+
+      1、使用静态内部类/匿名类，不要使用非静态内部类/匿名类.非静态内部类/匿名类会隐式的持有外部类的引用，外部类就有可能发生泄漏。而静态内部类/匿名类不会隐式的持有外部类引用，外部类会以正常的方式回收，如果你想在静态内部类/匿名类中使用外部类的属性或方法时，可以显示的持有一个弱引用。
+    private static class MyAsyncTask extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... params) {
+            while (true) ;
+        }
+    }
+    
+    
+2、使用一个静态的Handler内部类，Handler持有的对象要使用弱引用，并且在Activity的Destroy方法中移除MessageQueue中的消息
+private static class MyHandler extends Handler {
+    private final WeakReference<HandlerActivity> mActivity;
+    public MyHandler(HandlerActivity activity) {
+        mActivity = new WeakReference<HandlerActivity2>(activity);
+    }
+    @Override
+    public void handleMessage(Message msg) {
+        if (mActivity != null && mActivity.get() == null) {
+            mActivity.get().show();
+        }
+    }
+}
+
+@Override
+public void onDestroy() {
+    if (myHandler != null) {
+        myHandler.removeCallbacksAndMessages(null);
+    }
+    super.onDestroy();
+} 
+    
+2、对于不是必须使用Activity Context的情况（Dialog的Context就必须是Activity Context），我们可以考虑使用Application Context来代替Activity的Context，这样可以避免Activity泄露。生命周期会长于Activity的activity context引用。当进行屏幕旋转时，默认情况下，系统会销毁当前Activity，但引用到了Activity Context，使得Activity被一个实例持有，导致垃圾收集器无法回收，进而产生了内存泄露。
+mAppContext = context.getApplicationContext(); 
+     
+3、使用静态View可以避免每次启动Activity都去读取并渲染View，但是静态View会持有Activity的引用，导致Activity无法被回收，解决的办法就是在onDestory方法中将静态View置为null。     
+     
+资源对象比如Cursor、File等，往往都用了缓冲，不使用的时候应该关闭它们。把他们的引用置为null，而不关闭它们，往往会造成内存泄漏。因此，在资源对象不使用时，一定要确保它已经关闭，通常在finally语句中关闭，防止出现异常时，资源未被释放的问题。     
+     
+临时创建的某个相对比较大的bitmap对象，在经过变换得到新的bitmap对象之后，应该尽快回收原始的bitmap，这样能够更快释放原始bitmap所占用的空间。
+避免静态变量持有比较大的bitmap对象或者其他大的数据对象，如果已经持有，要尽快置空该静态变量。
+
+通常把一些对象的引用加入到了集合中，当不需要该对象时，如果没有把它的引用从集合中清理掉，这样这个集合就会越来越大。如果这个集合是static的话，那情况就会更加严重。
+
+
+WebView都会存在内存泄漏的问题，在应用中只要使用一次WebView，内存就不会被释放掉。通常的解决办法就是为WebView单开一个进程，使用AIDL与应用的主进程进行通信。WebView进程可以根据业务需求，在合适的时机进行销毁。
+
+很多系统服务（比如TelephonyMannager、SensorManager）需要register和unregister监听器，我们需要确保在合适的时候及时unregister那些监听器。自己手动add的Listener，要记得在合适的时候及时remove这个Listener。
+
+2、不要以为Java永远会帮你清理回收正在运行的threads.在上面的代码中，我们很容易误以为当Activity结束销毁时会帮我们把正在运行的thread也结束回收掉，但事情永远不是这样的！Java threads会一直存在，只有当线程运行完成或被杀死掉，线程才会被回收。所以我们应该养成为thread设置退出逻辑条件的习惯。
+
+     3、适当的考虑下是否应该使用线程.Android应用框架设计了许多的类来简化执行后台任务，我们可以使用与Activity生命周期相关联的Loaders来执行简短的后台查询任务。如果一个线程不依赖与Activity，我们还可以使用Service来执行后台任务，然后用BroadcastReceiver来向Activity报告结果。另外需要注意的是本文讨论的thread同样使用于AsyncTasks，AsyncTask同样也是由线程来实现，只不过使用了Java5.0新增并发包中的功能，但同时需要注意的是根据官方文档所说，AsyncTask适用于执行一些简短的后台任务
+     
+///////////////////////////////////////////////////////////////////////////////////////////
+
+    通过内存泄漏检测工具先定位是哪里内存泄漏，内存泄漏的检测有两种比较便捷的方式：
+
+       1）使用开源项目Leakcanary，需要添加到代码中，运行后生成分析结果
+
+       2）使用adb shell dumpsys meminfo packagename-d命令在进入一个界面之前查看一遍Activity和View的数量，在退出这个界面之后再查看一遍Activity和View的数量，对比进入前和进入后Activity和View数量的变化情况，如果有差异，则说明存在内存泄漏(在使用命令查看Activity和View的数量之前记得要手动触发GC)；
+
+   避免内存泄漏的解决方案：
+
+       1）将线程的内部类改成静态内部类(因为非静态内部类持有外部类的强引用，而静态内部类则没有)
+
+       2）在线程内部采用弱引用保存Context引用；
+       
+       
+///////////////////////////////////////////////////////////////////////////////////////////////
+https://www.cnblogs.com/taoweiji/p/5760537.html
+使用Android Studio Monitor + MAT（Memory Analyzer Tool）分析
+
+1. 强制GC：点击Initate GC按钮，建议点击后等待几秒后再次点击，尝试多次，让GC更加充分。然后点击Dump Java Heap按钮，生成hprof然后在新窗口打开。在右边的Analyzer Tasks点击绿箭头会分析出泄露的根源，如：MainActivity。
+2. 在左边的Captures(或者选择 View > Tools Windows > Captures)中选择刚才保存的hprof文件，右键Export to standard .hprof选择保存的位置，即可生成一个标准的hprof文件。使用MAT打开这个文件。点击Histogram按键，输入刚才泄露的MainActivity，搜索到目标后，右击搜索出来的类名，选择Merge Shortest Paths to GC Roots的exclude all phantom/weak/soft etc. references，来到这一步，就可以看到内存泄漏的原因，我们就需要根据内存泄漏的信息集合我们的代码去分析原因。
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+https://www.cnblogs.com/xgjblog/p/6084388.html
+Java堆展示如下信息：
+    按类展示实例对象的内存使用情况；
+    每次垃圾回收事件的样本数据，不管是系统触发还是你手动触发的垃圾回收事件；
+    帮助分析哪些对象类型也许会导致内存泄漏。
+
+但是，HPROF文件只是展示了某一时刻Java堆的使用情况，如果你需要了解某段时间内Java堆使用情况的， 你需要通过分析不同时间点生成的HPROF文件来找出其中的变化。HPROF分析工具可以自动分析出以下两种类型的问题：
+    所有已经被销毁，但是不能回收的Activity的实例；
+    重复定义的字符串。
+
+HPROF文件查看工具显示了如下信息：
+名称	          描述
+Class name 	类名
+Total Count 	该类的实例总数
+Heap Count 	所选择的堆中该类的实例的数量
+Sizeof 	单个实例所占空间大小（如果每个实例所占空间大小不一样则显示0）
+Shallow Size 	堆里所有实例大小总和（Heap Count * Sizeof）
+Retained Size 	该类所有实例所支配的内存大小
+Instance 	具体的实例
+Reference Tree 	所选实例的引用，以及指向该引用的引用。
+Depth 	GC根节点到所选实例的最短路径的深度
+Shallow Size 	所选实例的大小
+Dominating Size 	所选实例所支配的内存大小
+
+选择你想查看的堆
+    App heap - 当前app使用的堆
+    Image heap - 当前app在硬盘上的内存映射
+    Zygote heap - zygote 复制时继承来的库、运行时类和常量的数据集。zygote空间设备启动时创建，从不分配这里的空间。
+
+选择你想查看的视图选项：
+    Class List View
+    Package Tree View
+
+以下步骤是典型工作流程：
+    在HPROF文件查看工具中选择一个类名；
+    选择该类的一个实例；
+    查看引用树；
+    当需要的时候可以右键引用树种的条目跳转到源码或者实例。
+用HPROF分析工具可以检测到泄漏的activities、分析出重复定义的字串。
+
+数据排序
+在HPROF文件查看工具中，点击表格的顶部，可以让表格中数据升序或者将序排列。
+
+展示Java源码
+在HPROF文件查看工具中展示的部分项可以直接跳转到源码，右键项目点击Jump to Source就可以在代码编辑器中打开源码。
+
+类名：MainActivity$1 代表匿名内部类
+类名：MainActivity$1 代表匿名内部类

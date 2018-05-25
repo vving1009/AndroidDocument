@@ -1,0 +1,37 @@
+private static RetrofitFactory retrofitFactory;
+
+public static RetrofitFactory getInstance() {
+    if (retrofitFactory == null) {
+        synchronized (RetrofitFactory.class) {
+            if (retrofitFactory == null) {
+                retrofitFactory = new RetrofitFactory();
+            }
+        }
+    }
+    return retrofitFactory;
+}
+
+
+public class Singleton{
+    private volatile static Singleton instance;
+    //将默认的构造函数私有化，防止其他类手动new
+    private Singleton(){};
+    public static Singleton getInstance(){
+        if(instance==null){
+            sychronized(Singleton.class){
+                if(instance==null)
+                    instance=new Singleton();
+            }
+        }
+        return instatnce;
+    }
+}
+
+instance=new Singleton();这段代码上。这段代码会编译成多条指令，大致上做了3件事:
+    （1）给Singleton实例分配内存
+    （2）调用Singleton()构造函数，初始化成员字段
+    （3）将instance对象指向分配的内存（此时instance就不是null啦~）
+
+上面的（2）和（3）的顺序无法得到保证的，也就是说，JVM可能先初始化实例字段再把instance指向具体的内存实例，也可能先把instance指向内存实例再对实例进行初始化成员字段。考虑这种情况：一开始，第一个线程执行instance=new Singleton();这句时，JVM先指向一个堆地址，而此时，又来了一个线程2，它发现instance不是null，就直接拿去用了，但是堆里面对单例对象的初始化并没有完成，最终出现错误~ 。 
+
+关键字volatile关键字的作用是：线程每次使用到被volatile关键字修饰的变量时，都会去堆里拿最新的数据。换句话说，就是每次使用instance时，保证了instance是最新的。注意：volatile关键字并不能解决并发的问题，关于volatile请查看其它相关文章。但是volatile能解决我们这里的问题。
