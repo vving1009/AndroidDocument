@@ -1,0 +1,47 @@
+在实际的开发中，虽然Glide解决了快速加载图片的问题，但还有一个问题悬而未决：比如用户的头像，往往用户的头像是从服务器端读出的一个普通矩形图片，但是现在的设计一般要求在APP端的用户头像显示成圆形头像，那么此时虽然Glide可以加载，但加载出来的是一个矩形，如果要Glide在加载过程中就把矩形图转换成圆形的，则需要在Glide之上引入一个开源项目：glide-transformations
+glide-transformations在github上的项目主页是：https://github.com/wasabeef/glide-transformations
+写一个例子说明。
+
+package zhangphil.app;
+
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.widget.ImageView;
+
+import com.bumptech.glide.Glide;
+
+import jp.wasabeef.glide.transformations.BlurTransformation;
+import jp.wasabeef.glide.transformations.CropCircleTransformation;
+import jp.wasabeef.glide.transformations.RoundedCornersTransformation;
+
+public class MainActivity extends AppCompatActivity {
+
+    //我csdn博客头像
+    String url = "http://avatar.csdn.net/9/7/A/1_zhangphil.jpg";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        //原图，是我博客的头像
+        ImageView image1 = (ImageView) findViewById(R.id.image1);
+        Glide.with(this).load(url).crossFade(1000).into(image1);
+
+        //原图 -> 圆图
+        ImageView image2 = (ImageView) findViewById(R.id.image2);
+        Glide.with(this).load(url).bitmapTransform(new CropCircleTransformation(this)).crossFade(1000).into(image2);
+
+        //原图的毛玻璃、高斯模糊效果
+        ImageView image3 = (ImageView) findViewById(R.id.image3);
+        Glide.with(this).load(url).bitmapTransform(new BlurTransformation(this, 25)).crossFade(1000).into(image3);
+
+        //原图基础上复合变换成圆图 +毛玻璃（高斯模糊）
+        ImageView image4 = (ImageView) findViewById(R.id.image4);
+        Glide.with(this).load(url).bitmapTransform(new BlurTransformation(this, 25), new CropCircleTransformation(this)).crossFade(1000).into(image4);
+
+        //原图处理成圆角，如果是四周都是圆角则是RoundedCornersTransformation.CornerType.ALL
+        ImageView image5 = (ImageView) findViewById(R.id.image5);
+        Glide.with(this).load(url).bitmapTransform(new RoundedCornersTransformation(this, 30, 0, RoundedCornersTransformation.CornerType.BOTTOM)).crossFade(1000).into(image5);
+    }
+}

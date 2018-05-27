@@ -1,0 +1,34 @@
+      1、以下是保留两位小数，同时四舍五入，然后小数点前从右到作，3位一个逗号分隔符 
+                float   scale  =   (float) 3434567;   
+		DecimalFormat   fnum  =   new  DecimalFormat("###,##0.00"); 
+		String   dd=fnum.format(scale);       
+		System.out.println(dd);//3,434,567.00
+
+           2、以下是各种保留几位小数的情况
+
+      public static String fmtMicrometer(String text){  
+        DecimalFormat df = null;  
+        if(text.indexOf(".") > 0)  
+        {  
+            if(text.length() - text.indexOf(".")-1 == 0)  
+            {  
+                df = new DecimalFormat("###,##0.");  
+            }else if(text.length() - text.indexOf(".")-1 == 1)  
+            {  
+                df = new DecimalFormat("###,##0.0");  
+            }else  
+            {  
+                df = new DecimalFormat("###,##0.00");  
+            }  
+        }else   
+        {  
+            df = new DecimalFormat("###,##0");  
+        }  
+        double number = 0.0;  
+        try {  
+             number = Double.parseDouble(text);  
+        } catch (Exception e) {  
+            number = 0.0;  
+        }  
+        return df.format(number);  
+    }

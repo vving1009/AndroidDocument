@@ -1,0 +1,19 @@
+//两个多项式的系数f分别存在x[]和y[]中，下标即为次数，*Max表示本多项式最高次数
+int MX_double( double x[], int xMax, double y[], int yMax, double result[], int *resultMax )
+{
+    int i=0, k=0;
+
+    *resultMax = xMax + yMax;//获取最新的s最高次数
+    memset(result, 0, (1+*resultMax)*sizeof(double));
+
+    for(i=0; i<=xMax; i++)//两个多项式相乘
+    {
+        for(k=0; k<=yMax; k++)
+        {//下标即为变量的次数
+            result[i+k] += x[i] * y[k];
+        }
+    }
+    //运算完成后,result[]即为结果的系数,其下标为次数;(*resultMax)即为result[]的最高次数
+
+    return 0;
+}

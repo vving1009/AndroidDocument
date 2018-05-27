@@ -1,0 +1,75 @@
+ android中?attr/**与@drawable/**或@color/**等的区别
+2016-10-08 17:38 3298人阅读 评论(1) 收藏 举报
+分类：
+技术分享（234）
+
+今天在写一个Demo的时候，突然遇到?attr/colorPrimary这个用法，一百度，竟然全网都是同一篇文章，
+
+我苦思冥想，最终还搬出了Android源码，终于知道了意思，暂且记下来，作为备忘录吧。
+
+一、?attr/**
+
+   这个google叫预定义样式
+
+   这个是用在多主题时的场景，属性值会随着主题而改变。
+
+但并不是一上来就可以用的，必须做足以下准备工作：
+
+1，如果是自定义控件，请在style.xml中或attrs.xml中声明属性：
+
+<declare-styleable name="SunnyAttr">
+    <attr name="sunnyTextColor" format="reference"/>
+    <attr name="sunnyBgColor" format="reference"/>
+    <attr name="sunnyTextColorWhite" format="color"/>
+    <attr name="sunnyTextColorRed" format="reference"/>
+    <attr name="textColor" format="reference"></attr>
+</declare-styleable>
+
+
+如红色字体所示，必须指明format为reference
+
+
+2,因为attr/是跟随Theme来变化的，所以对attr跟随的属性必须在Theme里面声明：
+
+<!-- Base application theme. -->
+<style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+    <!-- Customize your theme here. -->
+    <item name="colorPrimary">@color/colorPrimary</item>
+    <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+    <item name="colorAccent">@color/colorAccent</item>
+    <item name="sunnyTextColorRed">@color/sunnyTextColorYellow</item>
+</style>
+
+
+3，在对应的属性color,drawable等里面加入相应的资源
+
+<color name="sunnyTextColorRed">#FFFF0000</color>
+
+
+4，这样我就可以在xml中使用自定义控件的自定义属性，来随着主题而改变：
+
+<com.smartbracelet.sunny.sunnydemo3.SunnyTextView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_centerInParent="true"
+    android:text="设置界面"
+    app:sunnyTextColor="?attr/sunnyTextColorRed"
+    />
+
+
+
+二、@color,@drawable等
+
+  这个就是我们平时最常用的，就是指定资源，不是动态的，不会随着主题变化
+
+  
+
+<TextView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentBottom="true"
+    android:text="红色"
+    android:textColor="@color/sunnyTextColorRed"
+    />
+
+以上，就是?attr/与@color,@drawable的一个小总结。。。。

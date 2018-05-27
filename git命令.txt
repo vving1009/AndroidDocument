@@ -25,7 +25,7 @@ git diff  //工作区与暂存区比较
 git diff HEAD  //工作区与提交区比较
 git diff –cached  //暂存区和提交区比较
 
-git status //查看暂存区变更
+git status //查看暂存区变更，只能查看未传送提交的次数
 git cherry -v  //只能查看未传送提交的描述/说明
 git log master ^origin/master则可以查看未传送提交的详细信息
 
@@ -37,7 +37,7 @@ HEAD指向的版本就是当前版本，因此，Git允许我们在版本的历史之间穿梭，使用命令git r
 4. 修改commit的内容
 修改还未push的注释：
 git commit --amend
-修改后保存退出。
+进入修改页面修改注释信息，修改后:wq保存退出。
 刚刚push到远端还没有人其他人下载或改动的：
 再使用git push --force-with-lease origin master
 如果其他人已经下载或改动：

@@ -1,0 +1,8 @@
+http://blog.csdn.net/briblue/article/details/75093382
+
+http://blog.csdn.net/WiseClown/article/details/51605124
+1.控制反转(Inversion of Control)与依赖注入(Dependency Injection)
+
+         控制反转即IoC (Inversion of Control)，它把传统上由程序代码直接操控的对象的调用权交给容器，通过容器来实现对象组件的装配和管理。所谓的“控制反转”概念就是对组件对象控制权的转移，从程序代码本身转移到了外部容器。
+
+         IoC是一个很大的概念，可以用不同的方式来实现。其主要实现方式有两种：<1>依赖查找（Dependency Lookup）：容器提供回调接口和上下文环境给组件。EJB和Apache Avalon都使用这种方式。<2>依赖注入（Dependency Injection）：组件不做定位查询，只提供普通的Java方法让容器去决定依赖关系。后者是时下最流行的IoC类型，其又有接口注入（Interface Injection），设值注入（Setter Injection）和构造子注入（Constructor Injection）三种方式。

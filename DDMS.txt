@@ -1,0 +1,170 @@
+Android中的DDMS进行调试 
+
+
+
+原文链接：http://docs.eoeandroid.com/tools/debugging/ddms.html
+
+安卓附带了一个叫Dalvik调试跟踪服务（DDMS）的调试工具它提供端口转发服务，屏幕截屏，线程和堆栈信息，日志，进程，电话状态信息，模拟来电和短信，模拟本地数据，等等。本页提供DDMS最新的功能概述；但不是所有功能和要点的详尽介绍。
+
+运行DDMS
+
+DDMS集成在Eclipse中，同时也附带在SDK下的tools目录下。DDMS既可以在模拟器中工作也可以在已连接的设备上工作。如果同时连接了设备和运行了模拟器，DDMS默认在模拟器中运行。
+
+?从Eclipse打开：点击* Window > Open Perspective > Other... > DDMS* 。
+
+
+?从命令行打开：在tools目录下输入ddms（或./ddms在Mac/Linux）
+
+
+DDMS怎样与调试器交互
+
+在安卓平台上，每个应用都运行在自己的进程上，同时每个应用也都运行在自己的虚拟机(VM)上。每个VM公布了唯一的端口号以供调试器连接。
+
+当DDMS启动后，会连接到adb。当有设备连接上，VM监测服务就在adb和DDMS之间创建，它会通知DDMS 设备上的VM是启动了还是终止了。一旦VM是运行的，DDMS就获取VM的进程ID（pid），通过adb和设备上的adb守护进程（adbd）建立到 VM调试器的连接。到此，DDMS就可以使用约定的线协议与VM通信。
+
+DDMS给设备上的每个VM分配一个调试端口。通常，DDMS分配的第一个可调试端口号是8600，下一个是8601，依次往下类推。当调试器连接 到已分配的一个端口时，VM上的所有通信都会被关联到调试器。一个调试器只能连接一个单独的端口，但是DDMS同时可以处理多个连接的调试器。
+
+默认的，DDMS也会监听DDMS的“基本端口”（默认为8700）。基本端口是一个端口转发端口，可以通过8700端口接受来自VM所有调试端口 的通信并可以发送信息到调试器。这就允许你将调试器连接到8700端口，然后可以调试所有设备上的虚拟机。在DDMS设备视图下，转发的通信可以被当前所 选进程终止。
+
+接下来的屏幕截图会在Eclipse中显示标准的DDMS屏幕视图。如果你是从命令行启动的DDMS，截图会略有不同，但绝大部分功能是相同的。注 意这个特殊进程，com.android.email它在模拟器上运行时的调试端口是8700，而分配给它的端口是8606。这就表明DDMS当前将 8606端口转发到静态调试端口8700。
+
+http://docs.eoeandroid.com/images/debug-ddms.png
+图1.DDMS截图
+
+如果你不用Eclipse和ADT，请阅读 Configuring your IDE to attach to the debugging port来获取更多连接到调试器的信息。
+
+提示：你可以在File > Preferences中设置一系列的个人使用配置。配置保存在$HOME/.android/ddms
+?了解Dalvik的调试问题* 
+
+在Dalvik虚拟机中调试的应用和在其他虚拟机中的应用一样运行。然而，当单步跳出同步代码时，“当前位置”指针可能一下跳到方法中的最后位置
+
+使用DDMS
+
+下一部分讲述怎么使用DDMS和DDMS图形用户界面中的各个选项和面板。Eclipse版本和命令行版本界面有较小的不同，但是功能上是相同的。要获得运行中的DDMS的信息，参见前一部分的文档，Running DDMS. 
+
+查看进程的堆使用情况
+
+DDMS允许查看进程堆内存的使用情况。在程序的特定执行时间跟踪堆使用情况是非常有用的信息。
+
+查看堆使用的步骤：
+
+1.在设备选项，选择要查看堆使用信息的进程。
+2.点击 Update Heap 按钮获取进程的堆信息。
+3.在堆选项中，点击Cause GC来激活垃圾收集，它会让堆数据收集变得可用。当操作完成，会看到一组对象类型和每种类型已分配的内存。再次点击Cause GC就可以刷新数据。
+4.点击一个对象类型列表中看到一个条形图显示对象的数量分配给一个特定的内存字节大小。
+
+跟踪对象的内存分配
+
+DDMS提供一个很有用的功能，它跟踪正在分配内存的对象和查看那些类和线程正分配对象。这样，在应用中执行特定操作时你就可以实时跟踪哪些对象正在被分配资源。分析影响到应用性能的内存使用是很有价值的信息。
+
+跟踪内存的对象分配：
+
+1.在设备选项，选择需要跟踪内存分配的进程。
+2.在分配内存选项，点击Start Tracking按钮开始分配跟踪。这时，任何在应用中的操作都会被跟踪。
+3.点击Get Allocations来查看从点击Start Tracking按钮以来已经分配了的对象列表。再点击Get Allocations就会将已分配的新对象添加到列表中。
+4.如果要停止跟踪或清除数据后重新开始，点击Stop Tracking按钮。
+5.点击列表中的特定行就可以看到更详细的信息，比如已分配的对象的方法和代码行号。
+
+使用模拟器或设备的文件系统
+
+DDMS提供了文件系统选项，它允许查看、复制和删除设备上的文件。这个功能对于检查应用创建的文件或向设备中导入文件和从设备导出文件来说，非常有用。
+
+使用模拟器或设备文件系统：
+
+1.在设备选项，选择要查看文件系统的模拟器。
+2.要从设备中复制文件，先在文件浏览中定位文件，然后点击Pull file按钮。
+3.要把文件复制到设备中，点击文件浏览选项中的Push file按钮
+
+查看线程信息
+
+DDMS中的线程选项显示了所选进程中正在运行的线程信息。
+
+1.在设备选项，选择要查看的线程所在的进程。
+2.点击Update Threads按钮。
+3.在线程选项就可以看到所选进程的线程信息了
+
+开始方法分析
+
+方法分析是一种对方法的某些数据进行跟踪的手段，例如：调用次数、执行时间和执行方法所用时间。如果想更精确的控制在那些地方收集分析数据，使用 startMethodTracing()和stopMethodTracing()方法。要获得更多关于产生跟踪日志的信息，请查看Profiling and Debugging UIs.
+
+在DDMS中开始方法分析之前，注意以下限制情况：
+?安卓1.5版本的设备不支持
+?安卓2.1和更早的版本必须已插入SD卡，并且应用有写SD卡的权限
+?安卓2.2和以后的设备不需要已插入SD卡。跟踪日志文件直接输出到开发设备上。
+
+开始方法分析：
+
+1.在设备选项，选择要进行方法分析的进程
+2.点击Start Method Profiling按钮。
+3.与应用进行交互，开始要分析的方法
+4.点击 Stop Method Profiling按钮。DDMS停止分析应用并打开Traceview，它包含了在点击Start Method Profiling和Stop Method Profiling之间方法分析收集到的信息.
+
+使用网络通信工具
+
+在安卓4.0中，DDMS（Dalvik调试监控服务）包含了详细的网络使用选项，可以跟踪应用的网络请求。使用这个工具，可以监测应用何时以及如何传输数据，并且能根据这个适当的优化底层代码。在使用前，也可以通过添加标签到网络套接口来区分不同的通信类型。
+
+在DDMS中，这些标签代表的堆栈信息以图表形式显示，如图2：
+
+http://docs.eoeandroid.com/images/developing/ddms-network.png
+
+图2.网络使用表
+
+监测每次连接数据传输的频率和传输的数据量，可以确定应用的那些地方可以优化以至于可以更省电。通常，应该找可以延迟的短的峰值或者会导致传输延迟，提前清空它们。
+
+为了更好的确认导致传输峰值的原因，TrafficStats API 允许使用 setThreadStatsTag()方法在线程中标识数据传输，接着用tagSocket()和untagSocket()可以手动标识（或去标识）不同的套接口。例如：
+
+TrafficStats.setThreadStatsTag(0xF00D);
+ TrafficStats.tagSocket(outputSocket);
+ // Transfer data using socket
+ TrafficStats.untagSocket(outputSocket);
+
+或者，平台中的Apache HttpClient 和URLConnection 的API在活动的标识（被getThreadStatsTag()确定过的标识）上会自动标识内部套接口。当通过活动池回收时，这些API会正确的标识/去标识套接口。
+
+TrafficStats.setThreadStatsTag(0xF00D);
+ try {
+ // Make network request using HttpClient.execute()
+ } finally {
+ TrafficStats.clearThreadStatsTag();
+ }
+
+在安卓4.0上支持套接口标识，但显示套接口标识的实时状态只在安卓4.0.3或更高版本的设备上才支持。
+
+使用日志
+
+LogCat集成在DDMS中，可以输出使用 Log 类打印的消息和其它系统的消息，例如异常抛出时的堆栈跟踪消息。参阅Reading and Writing Log Messages 获得更多关于将消息记录到LogCat的信息。
+
+当设置完日志后，使用下列按钮就可以用LogCat来过滤特定消息：
+?Verbose 
+?Debug 
+?Info 
+?Warn 
+?Error
+
+也可以通过自定义设置的过滤器来获得更详细的信息，例如可以用日志标签或进程ID来生成日志信息。使用过滤器的增、删和改按钮来管理自定义的过滤器。
+
+模拟电话操作和位置
+
+模拟器控制选项可以模拟手机的语音和数据网络状态。如果你想在不同网络环境下测试应用的健壮性，这会很有用。
+
+改变网络状态、网速和网络延迟
+
+模拟器控制选项卡的电话状态部分可以改变手机的网络状态、网速和网络延迟。下列选项可供使用并且设置后立即有效：
+?Voice - unregistered home roaming searching denied 
+?Data - unregistered home roaming searching denied 
+?Speed - Full GSM HSCSD GPRS EDGE UMTS HSDPA 
+?Latency - GPRS EDGE UMTS
+
+模拟来电或短信
+
+模拟器控制选项卡的电话部分可以模拟电话和短信。这对测试应用在回应来电和短信方面的健壮性很有用。有如下操作：
+?Voice - 在 Incoming number 框输入号码，点击Call就给模拟器或电话设备拨打电话。点击Hang up按钮就挂掉电话。
+?SMS - 在 Incoming number 框输入号码在Message 输入短信内容，点击Send按钮发送短信。
+
+设置电话位置
+
+如果应用需要使用电话位置，使用DDMS可以给电话设备或AVD（安卓虚拟设备）设置模拟位置。如果想测试应用不同方面的跟位置有关的特性又不必实际改变物理位置，这会很有用。下面是可用的定位数据类型：
+?Manual - 通过手动指定的十进制或六十进制的经度和纬度值来设置位置
+?GPX - GPS 交互文件
+?KML - Keyhole 标记语言文件
+
+要获得更详细的模拟位置数据的信息，请查看Location Strategies

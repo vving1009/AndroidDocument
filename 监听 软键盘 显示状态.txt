@@ -1,0 +1,359 @@
+
+安卓开发监听软键盘的显示状态和获取软键盘的高度
+
+  有时候在开发过程中需要监听软键盘的显示状态，在显示和隐藏键盘时对UI做出相应的调整。Android官方没有提供获取软键盘高度和状态的方法，但是可以通过监听当前应用的高度变化计算 
+ 
+出软键盘的高度。
+
+ 
+首先获取到activity布局的最外层layout，通过调用getWindowVisibleDisplayFrame获取到整个应用可以显示的区域，这其中包括ActionBar和状态栏，但不含设备底部的虚拟按键。
+
+再通过调用getRootView().getHeight()，获取整个屏幕的高度。同样，这个高度也不含虚拟按键的高度。
+
+ 
+通过比较这两个高度，可以推断出软键盘是否显示，并且获取到软键盘的高度。
+
+ 
+
+需要注意的是，这种方法前提是软键盘会影响界面布局，所以需要在AndroidManifest里给activity添加android:windowSoftInputMode="adjustResize"。
+
+ 
+
+具体实现代码如下：
+
+private LinearLayout layout_main;
+
+private TextView text;
+
+ 
+
+// 状态栏的高度
+
+private int statusBarHeight;
+
+// 软键盘的高度
+
+private int keyboardHeight;
+
+// 软键盘的显示状态
+
+private boolean isShowKeyboard;
+
+ 
+
+@Override
+
+protected void onCreate(Bundle savedInstanceState) {
+
+    super.onCreate(savedInstanceState);
+
+    setContentView(R.layout.activity_main);
+
+ 
+
+    statusBarHeight = getStatusBarHeight(getApplicationContext());
+
+ 
+
+    text = (TextView) findViewById(R.id.text);
+
+    layout_main = (LinearLayout) findViewById(R.id.layout_main);
+
+ 
+
+    layout_main.getViewTreeObserver().addOnGlobalLayoutListener(globalLayoutListener);
+
+}
+
+ 
+
+private ViewTreeObserver.OnGlobalLayoutListener globalLayoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
+
+ 
+
+    @Override
+
+    public void onGlobalLayout() {
+
+        // 应用可以显示的区域。此处包括应用占用的区域，
+
+        // 以及ActionBar和状态栏，但不含设备底部的虚拟按键。
+
+        Rect r = new Rect();
+
+        layout_main.getWindowVisibleDisplayFrame(r);
+
+ 
+
+        // 屏幕高度。这个高度不含虚拟按键的高度
+
+        int screenHeight = layout_main.getRootView().getHeight();
+
+ 
+
+        int heightDiff = screenHeight - (r.bottom - r.top);
+
+ 
+
+        // 在不显示软键盘时，heightDiff等于状态栏的高度
+
+        // 在显示软键盘时，heightDiff会变大，等于软键盘加状态栏的高度。
+
+        // 所以heightDiff大于状态栏高度时表示软键盘出现了，
+
+        // 这时可算出软键盘的高度，即heightDiff减去状态栏的高度
+
+        if(keyboardHeight == 0 && heightDiff > statusBarHeight){
+
+            keyboardHeight = heightDiff - statusBarHeight;
+
+        }
+
+ 
+
+        if (isShowKeyboard) {
+
+            // 如果软键盘是弹出的状态，并且heightDiff小于等于状态栏高度，
+
+            // 说明这时软键盘已经收起
+
+            if (heightDiff <= statusBarHeight) {
+
+                isShowKeyboard = false;
+
+                onHideKeyboard();
+
+            }
+
+        } else {
+
+            // 如果软键盘是收起的状态，并且heightDiff大于状态栏高度，
+
+            // 说明这时软键盘已经弹出
+
+            if (heightDiff > statusBarHeight) {
+
+                isShowKeyboard = true;
+
+                onShowKeyboard();
+
+            }
+
+        }
+
+    }
+
+};
+
+ 
+
+private void onShowKeyboard() {
+
+    // 在这里处理软键盘弹出的回调
+
+    text.setText("onShowKeyboard : keyboardHeight = " + keyboardHeight);
+
+}
+
+ 
+
+private void onHideKeyboard() {
+
+    // 在这里处理软键盘收回的回调
+
+    text.setText("onHideKeyboard");
+
+}
+
+ 
+
+@Override
+
+protected void onDestroy() {
+
+    super.onDestroy();
+
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+
+        layout_main.getViewTreeObserver().removeGlobalOnLayoutListener(globalLayoutListener);
+
+    } else {
+
+        layout_main.getViewTreeObserver().removeOnGlobalLayoutListener(globalLayoutListener);
+
+    }
+
+}
+
+ 
+
+// 获取状态栏高度
+
+public static int getStatusBarHeight(Context context) {
+
+    try {
+
+        Class<?> c = Class.forName("com.android.internal.R$dimen");
+
+        Object obj = c.newInstance();
+
+        Field field = c.getField("status_bar_height");
+
+        int x = Integer.parseInt(field.get(obj).toString());
+
+        return context.getResources().getDimensionPixelSize(x);
+
+    } catch (Exception e) {
+
+        e.printStackTrace();
+
+    }
+
+    return 0;
+
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+Android中获取软键盘状态和软键盘高度  
+http://blog.csdn.net/ccpat/article/details/46730771
+ 
+
+标签： 获取软键盘高度Android软键盘获取软键盘状态  
+
+2015-07-02 20:32 7800人阅读 评论(9) 收藏 举报 
+.
+
+  
+
+ 分类： 
+
+Android软键盘（3）   
+
+
+ . 
+
+版权声明：本文为博主原创文章，未经博主允许不得转载。
+
+
+
+目录(?)[+]
+
+
+
+
+
+
+
+
+
+
+应用场景
+
+在Android应用中有时会需要获取软键盘的状态（即软键盘是显示还是隐藏）和软键盘的高度。这里列举了一些可能的应用场景。
+1.场景一 
+ 当软键盘显示时，按下返回键应当是收起软键盘，而不是回退到上一个界面，但部分机型在返回键处理上有bug，按下返回键后，虽然软键盘会自动收起，但不会消费返回事件，导致Activity还会收到这次返回事件，执行回退操作，这时就需要判断，如果软键盘刚刚由显示变为隐藏状态，就不执行回退操作。
+2.场景二 
+ 当软键盘弹出后，会将界面底部到中间的一大部分全部挡住，如果用户要查看、操作被覆盖的区域，必须先收起软键盘，这会影响用户交互。所以通常需要在软键盘弹出后，将底部的一些View，例如Button，移到软键盘的上方，方便用户操作。
+
+API的困境
+
+Android SDK中没有提供任何API来直接获取软键盘的状态和软键盘的高度，网上很多资料说InputMethodManager的isActive()方法可以获取软键盘状态，不过实际测试发现，这个方法并没有什么用，如果它返回false，可以判断软键盘一定是隐藏的，但如果它返回true，软键盘既可能是显示的，也可能是隐藏的。所以并不能通过isActive()方法来判断软键盘究竟是显示还是隐藏的。要想获取软键盘的状态和软键盘的高度，只能通过间接方法实现。
+
+注册布局变化监听
+
+在Android中当软键盘由隐藏变为显示，或由显示变为隐藏时，会触发当前布局中View的全局布局变化。通过监听全局布局的变化就可以得知软键盘的状态。 
+Android框架提供了一个ViewTreeObserver类，它是一个View视图树的观察者类。ViewTreeObserver类中定义了一系列的公共接口（public interface）。当一个View attach到一个窗口上时就会创建一个ViewTreeObserver对象，这样当一个View的视图树发生改变时，就会调用该对象的某个方法，将事件通知给每个注册的监听者。 
+OnGlobalLayoutListener是ViewTreeObserver中定义的众多接口中的一个，它用来监听一个视图树中全局布局的改变或者视图树中的某个视图的可视状态的改变。当软键盘由隐藏变为显示，或由显示变为隐藏时，都会调用当前布局中所有存在的View中的ViewTreeObserver对象的dispatchOnGlobalLayout()方法，此方法中会遍历所有已注册的OnGlobalLayoutListener，执行相应的回调方法，将全局布局改变的消息通知给每个注册的监听者。 
+ 向一个View中的ViewTreeObserver注册OnGlobalLayoutListener的方法如下。
+
+view.getViewTreeObserver().addOnGlobalLayoutListener(listener);1
+
+
+1
+
+注册OnGlobalLayoutListener时有一些需要注意的地方。
+1.注册的监听在不使用时需要调用removeOnGlobalLayoutListener或removeGlobalOnLayoutListener来移除监听，不然可能会导致内存泄露。通常可以在Activity的onCreate()方法中注册监听，在onDestory()方法中移除监听。
+2.并不是只有显示和隐藏软键盘会触发OnGlobalLayoutListener中的回调，一个View在绘制完成，或者消失时都会触发OnGlobalLayoutListener中的回调（由于在onCreate中无法获取一个View的宽度和高度，很多时候就是通过注册OnGlobalLayoutListener，在OnGlobalLayoutListener的回调中来获取一个View的宽度和高度）。
+
+为了在OnGlobalLayoutListener的回调中准确的判断是否是由于软键盘状态改变引起的，以及获取软键盘的高度，还需要另外一个接口。
+
+获取当前窗口可见的显示区域大小
+
+在View中提供了一个方法getWindowVisibleDisplayFrame()，此方法会返回该view所附着的窗口的可见区域大小。当软键盘显示时，窗口的可见区域大小会被压缩，当软键盘隐藏时，窗口的可见区域大小会还原。不过并不是只有软键盘的显示和隐藏会影响窗口的可见区域大小，像大多数的平板和部分手机上有一排虚拟按键（虚拟的返回键，Home键等），虚拟按键的显示和隐藏也会引起窗口可见区域的变化。不过好在除了软键盘外，其他操作对窗口可见区域的影响占整个屏幕大小的比例都不是很大，通过设置一个合理的阈值，就可以较准确的判断出是否是软键盘显示和隐藏引起的布局变化。 
+ 此外，getWindowVisibleDisplayFrame()会返回窗口的可见区域高度，通过和屏幕高度相减，就可以得到软键盘的高度了。
+
+监听软键盘的状态变化
+
+在获取到软键盘的状态和高度后就可以执行需要的操作了。如重新布局按钮位置，设置变量，记录当前软键盘状态和上次软键盘隐藏时间等。不过如果有多个类需要根据软键盘状态来执行一些操作，如果每个类中都去这样做一遍就很麻烦，而且也没有必要。这时在可以自行定义一个接口，在主Activity中对软键盘状态变化进行监听，其他对软键盘状态感兴趣的类，向主Activity中注册软键盘状态变化监听。在主Activity中，当软键盘状态发生改变时通知监听者。
+
+完整示例代码
+
+完整的示例代码如下。
+
+public interface OnSoftKeyboardStateChangedListener {
+    public void OnSoftKeyboardStateChanged(boolean isKeyBoardShow, int keyboardHeight);
+}
+
+//注册软键盘状态变化监听
+public void addSoftKeyboardChangedListener(OnSoftKeyboardStateChangedListener listener) {
+    if (listener != null) {
+        mKeyboardStateListeners.add(listener);
+    }
+}
+//取消软键盘状态变化监听
+public void removeSoftKeyboardChangedListener(OnSoftKeyboardStateChangedListener listener) {
+    if (listener != null) {
+        mKeyboardStateListeners.remove(listener);
+    }
+}
+
+private ArrayList<OnSoftKeyboardStateChangedListener> mKeyboardStateListeners;      //软键盘状态监听列表
+private OnGlobalLayoutListener mLayoutChangeListener;
+private boolean mIsSoftKeyboardShowing;
+
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_login);
+    mIsSoftKeyboardShowing = false;
+    mKeyboardStateListeners = new ArrayList<OnSoftKeyboardStateChangedListener>();
+    mLayoutChangeListener = new OnGlobalLayoutListener() {
+        @Override
+        public void onGlobalLayout() {
+            //判断窗口可见区域大小
+            Rect r = new Rect();
+            getWindow().getDecorView().getWindowVisibleDisplayFrame(r);
+            //如果屏幕高度和Window可见区域高度差值大于整个屏幕高度的1/3，则表示软键盘显示中，否则软键盘为隐藏状态。
+            int heightDifference = screenHeight - (r.bottom - r.top);
+            boolean isKeyboardShowing = heightDifference > screenHeight/3;
+
+            //如果之前软键盘状态为显示，现在为关闭，或者之前为关闭，现在为显示，则表示软键盘的状态发生了改变
+            if ((mIsSoftKeyboardShowing && !isKeyboardShowing) || (!mIsSoftKeyboardShowing && isKeyboardShowing)) {
+                mIsSoftKeyboardShowing = isKeyboardShowing;
+                for (int i = 0; i < mKeyboardStateListeners.size(); i++) {
+                    OnSoftKeyboardStateChangedListener listener = mKeyboardStateListeners.get(i);
+                    listener.OnSoftKeyboardStateChanged(mIsSoftKeyboardShowing, heightDifference);
+                }
+            }
+        }
+    };
+    //注册布局变化监听
+    getWindow().getDecorView().getViewTreeObserver().addOnGlobalLayoutListener(mLayoutChangeListener);
+}
+
+@SuppressWarnings("deprecation")
+@SuppressLint("NewApi")
+@Override
+protected void onDestroy() {
+    //移除布局变化监听
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+        getWindow().getDecorView().getViewTreeObserver().removeOnGlobalLayoutListener(mLayoutChangeListener);
+    } else {
+        getWindow().getDecorView().getViewTreeObserver().removeGlobalOnLayoutListener(mLayoutChangeListener);
+    }
+    super.onDestroy();
+};
+
+其中screenHeight 是屏幕高度，关于屏幕高度的获取方法，网上有很多，这里就不介绍了。

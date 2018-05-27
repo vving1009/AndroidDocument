@@ -1,0 +1,3 @@
+方法（如：get...）依赖于上下文环境的，也就是context，所以不管你在哪个类中，一定要通过activity类的context才能调用。你可以这样，比如activity中实例化的你类，在new这个自定义类的时候，将activity的this当做参数传入，类型是context，然后在自定义类中记录下来，context.getSharedPreferences()就可以在你的类中这样调用了。
+
+PS:在activity的setContextView之后再实例化自己的类，这样activity.this才不是空。

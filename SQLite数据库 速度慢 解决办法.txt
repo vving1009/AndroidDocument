@@ -1,0 +1,60 @@
+在写之前的阅读器时，就发现数据库写入的速度有些不如人意，一千条左右数据，需要十秒以上的时间才能完成写入，当时未深究原因，只当是disk写入速度缓慢导致的，大概代码如下：
+public void insert(final List<Book> books, final InsertCallback callback){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+               for(int i=0;i<books.size();i++){
+                   insert(books.get(i));
+                   if(i % 100 == 0){
+                       callback.onInsert(i);
+                   }
+               }
+                callback.inserted();
+            }
+        }).start();
+    }
+    
+每一百次的插入回调之间的间隔超过了一秒。
+
+近来在学习一些Android trick的过程中发现stack overflow上也有人提到类似的问题，看了下高赞答案并尝试后，果然很大程度上得到了解决。 
+ 先说原因： 
+SQLiteDatabase的每个命令（statement）都会被封装成一个Transaction，并获得锁，重复调用insert事实上执行了多个Transaction。
+
+现在我们为重复执行的代码段手动设置TransAction：
+public void insert(final List<Book> books, final InsertCallback callback){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                //begin transaction
+                db.beginTransaction();
+               for(int i=0;i<books.size();i++){
+                   insert(books.get(i));
+                   if(i % 100 == 0){
+                       callback.onInsert(i);
+                   }
+               }
+                //end transaction
+                db.endTransaction();
+                callback.inserted();
+            }
+        }).start();
+    }
+    
+public void insert(final List<Book> books, final InsertCallback callback){
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                //begin transaction
+                db.beginTransaction();
+               for(int i=0;i<books.size();i++){
+                   insert(books.get(i));
+                   if(i % 100 == 0){
+                       callback.onInsert(i);
+                   }
+               }
+                //end transaction
+                db.endTransaction();
+                callback.inserted();
+            }
+        }).start();
+    }

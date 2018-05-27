@@ -1,0 +1,15 @@
+Intellij IDEA 为优秀的Java开发环境，但是有很多人知道利用此工具可以编译成class文件，而不知道如何在intellij IDEA工具如何将所有的class打包成jar文件，现在将方法介绍如下：
+
+1.选择菜单File->Project Structure，将弹出Project Structure的设置对话框。
+
+2.选择左边的Artifacts后点击上方的“+”按钮
+
+3.在弹出的框中选择jar->from moduls with dependencies..
+
+4.选择要启动的类，然后 确定
+
+5.应用之后选择菜单Build->Build Artifacts,选择Build或者Rebuild后即可生成，生成的jar文件位于工程项目目录的out/artifacts下。
+
+
+'F:/Workspace/temp_0220/new_method/TestScriptGenerator/src/META-INF/MANIFEST.MF' already exists in VFS
+出现这个提示的原因是之前在IDEA中对这个module打过jar包了，所以module中会有一个MANIFEST.MF文件夹，提示的错误即时这个文件夹及其中的文件已经存在，所以把这个文件夹删除掉，再重新build打包即可。

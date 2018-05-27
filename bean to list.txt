@@ -1,0 +1,6 @@
+List<Bean> datalist = new ArrayList<Bean>();
+for(){
+Bean bean = new Bean();
+bean.setName("name");
+datalist.add(bean);
+}

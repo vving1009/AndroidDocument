@@ -1,0 +1,287 @@
+
+mysql database manual[mysql数据库手册] 
+Posted on 2011-12-07 16:46 鹤唳九天 阅读(119) 评论(0) 编辑 收藏  
+
+
+
+ 
+
+2.1登入到mysql控制台[用户名为root,密码缺省为空]
+切换到mysql的bin目录cd d:/wamp/mysql/bin
+登入到mysql控制台
+语法:mysql -h hostname -u username -p
+连接到另一台主机
+代码:mysql -h 192.168.1.1 -u root -p
+password:直接按回车
+连接到本机
+代码:mysql -h 127.0.0.1 -u root -p
+password:直接按回车
+出现mysql>表示登陆到mysql控制台成功
+2.2退出mysql控制台
+mysql>exit;
+/***********************************************************/
+3.1检查所有mysql数据库清单;
+语法:mysql> show databases;
+代码:mysql> show databases;
+
+3.2显示数据库中所有表的清单
+查看当前数据库中的表
+语法1:mysql> show tables;
+代码1:mysql> show tables;
+
+3.3查看其它数据库jxc中的表
+语法1:mysql> show tables from databasename;
+代码1:mysql> show tables from jxc;
+/***********************************************************/
+4.创建/删除/选择数据库
+创建jxc数据库:
+语法:mysql> create database databasename;
+代码:mysql> create database jxc;
+删除jxc数据库:
+语法:mysql> drop database databasename;
+代码:mysql> create database abc;
+代码:mysql> drop database abc;
+选择jxc数据库:
+语法:mysql> use database;
+代码:mysql> use jxc;
+/***********************************************************/
+
+5查看一个表的数据结构
+5.1 describte查看表customers结构
+语法1:mysql> describe tablename;
+代码1:mysql> describe customers;
+5.2.show columns查看表customers;结构
+语法1:mysql> show columns from tablename;
+代码1:mysql> show columns from customers;
+
+5.3.查看一个表的指定列名的数据结构
+语法1:mysql> show index from tablename column;
+代码1:mysql> show index from customers name;
+
+5.4.查看一个表customers的索引
+语法1:mysql> show index from tablename;
+代码1:mysql> show index from customers;
+
+6.数据常用操作(select,insert,update,delete)
+6.1 select选择：
+语法:select * from [表名1,表名1,,,] where [条件范围]
+代码:select * from orders where orderid>100;
+
+6.2 insert插入
+语法:insert into table1(column1,column,,,) values(value1,value2,,,);
+代码:insert into books(isbn,author,title,price) values('iso-902126','jahn.D','mysql6.0',99.0);
+
+6.3 update 更新：
+语法:update table1 set [列名]=[新数据] where [条件范围]
+代码:update books  set title="Thinking in Java" where isbn='iso-902126';
+
+6.4删除：
+语法:delete from [表名] where [条件范围]
+代码:delete from books  where isbn='iso-902126';
+
+6.5其它方法
+查找：select * from table1 where field1 like ’%value1%’ ---like的语法很精妙
+排序：select * from table1 order by field1,field2 [desc]
+总数：select count as totalcount from table1
+求和：select sum(field1) as sumvalue from table1
+平均：select avg(field1) as avgvalue from table1
+最大：select max(field1) as maxvalue from table1
+最小：select min(field1) as minvalue from table1
+
+/***********************************************************/
+
+7.用grant创建数据库的用户和权限
+GRANT命令语法:
+GRANT [许可权列表1],[许可权列表2]
+ON [数据库.表名]
+TO [用户名@主机名] 
+IDENTIFIED BY '密码';
+
+代码实现1:
+grant select,insert,delete,update
+on discuz.* to jake@localhost 
+identified by '201314';
+功能说明
+把在数据库discuz所有表的select,insert,delete,update这4个权限
+添加到新用户jake,密码为'201314';
+
+代码实现2:
+grant all
+on discuz.* to tom@localhost 
+identified by '123456';
+把在数据库discuz全部权限所有表添加到新用户tom,密码为'123456';
+
+[许可权列表1]选项如下
+select 表，列
+insert 表，列
+udpate 表，列
+delete 表
+index  表
+alter  表
+create 数据库，表
+drop   数据库，表
+
+
+[许可权列表2]选项如下
+create temporary tables 允许使用temporary关键字
+file   允许数据库导入和导出到文件
+lock tables  允许使用lock talbes命令
+reload   允许重新载入授权表
+show databases  允许查看所有的数据库清单
+shutdown  允许使用关闭MYSQL
+
+all       上面所以权限
+usage   允许只登录，但不允许任何操作
+
+[数据库.表名]选项如下
+数据库.表名 选择数据库中一个表给XX用户
+数据库.* 选择数据库中所有表给XX用户
+
+/***********************************************************/
+8.revoke取消用户和用户权限
+revoke格式:
+revoke [许可权列表1],[许可权列表2] privileges,[columns]
+ON [数据库.表名]
+FROM [用户名@主机名] 
+
+代码:
+先授权给laoliu(老刘)
+grant all 
+on books.* 
+to laoliu 
+identified by 'laoliu11';
+
+撒去一部分权限
+revoke alter,create,drop
+on books.*
+from laoliu;
+撒去laoliu的所有权限
+revoke all 
+on books.* 
+from laoliu;
+
+/***********************************************************/
+9.添加MYSQL用户其它方法
+shell> mysql -u root -p1234 mysql
+mysql> insert into user(Host,User,Password) values ('localhost','backup','databse');
+添加一个来自本机的mysql 用户backup,口令为：1234
+
+shell>mysql –u root –p
+mysql>GRANT FILE ON *.* TO backup@192.168.1.200 IDENTIFIED BY '1234';
+mysql>/exit
+开放一个账号backup密码1234给来自IP:192.168.1.200有档案处理的权限
+
+
+/***********************************************************/
+10.创建表/修改表/删除表//优化表
+
+10.1创建表
+语法:create table tablename(columns,...)
+代码:
+create table order_items
+(orderid int unsigned not null,
+isbn char(13) not null,
+quantity tinyint unsigned,
+primary key (orderid,isbn)
+);
+
+10.2修改表
+10.2.1添加/删除一列
+语法:alter table [表名] add  column [列名] [类型];
+在表中添加一列remark
+代码:alter table order_items add column remark char(50);
+删除一列
+语法:alter table [表名] drop  column [列名];
+从表中删除一列remark
+alter table order_items drop column remark;
+
+10.2.2添加/删除主键
+添加orderid,isbn为主键
+语法:alter table [表名] add primary key [列名1,列名1];
+代码:alter table order_items add primary key (orderid,isbn);
+删除主键
+语法:alter table [表名] drop primary key
+代码:Alter table tabname drop primary key
+
+10.2.3建立/删除索引
+建立索引
+语法:create index [索引名] on [表名] (列名);
+代码:create index orderid_ix on orders (orderid);
+删除索引
+语法:drop index [索引名] on [表名] (列名);
+代码:drop index orderid_ix on orders;
+
+10.3删除表:
+删除表
+语法:drop table  [表名] 
+代码:drop table orders;
+
+10.4优化表:
+当一个表的数据有上万行，访问速度变慢，就必须为它们进行优化
+通常的方式是做出一个optmize.sql文件，
+直接导入这个优化脚本文件进行批量优化一些关键的表，以提高访问速度
+
+优化表customers数据(customers)
+语法:mysql>optmize table tablename;
+代码:mysql>optmize table customers;
+
+10.5 用命令行加载一个new_tb.sql文件
+从而让MYSQL一次批量执行上*SQL文件中的在量的sql语句
+1.文本文件做好sql命令集合，然后复制到命令行一个个的执行
+2.如果表太多的话，直接存为*.sql文件，然后用命令装入文件
+
+格式: mysql -h [主机IP] -u [用户名] -D [数据库名] -p < [此目录中的*.sql文件名]
+运行cmd
+cd d:/wamp/mysql/bin
+mysql -h 127.0.0.1 -u root -D pubs -p <new_tb.sql;
+上面就是用mysql把d:/wamp/mysql/bin/new_tb.sql文件加载到books数据库,
+注意：数据库pubs必须存在和-D要大写
+
+new_tb.sql文件内容(此文件的SQL命令是可以存1000条以上的)
+create table customers
+(customerid int unsigned not null auto_increment primary key,
+name char(50) not null,
+address char(100) not null,
+city char(30) not null
+);
+
+create table orders
+(orderid int unsigned not null auto_increment primary key,
+customerid int unsigned not null,
+amount float(6,2),
+date date not null
+);
+
+create table books
+(isbn char(13) not null primary key,
+author char(50),
+title char(100),
+price float(6,2)
+);
+
+create table order_items
+(orderid int unsigned not null,
+isbn char(13) not null,
+quantity tinyint unsigned,
+primary key (orderid,isbn)
+);
+
+create table book_reviews
+(isbn char(13) not null primary key,
+review text
+);
+
+执行OK后，再进行检查表是否自动建立OK?
+c:>mysql -h 127.0.0.1 -u root -p
+mysql>show tables from pubs;
+结果显示以上5个表都已经建立OK;
+/***********************************************************/
+
+11.表的视图建立与删除
+建立视图
+语法:create iview [视图名] as [select 语句);
+代码:create view v_orders as select * from orders;
+删除视图
+语法:drop iview [视图名] 
+代码:create view v_orders
+/***********************************************************/

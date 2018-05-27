@@ -1,0 +1,34 @@
+%[index]$[type]这个是占位符的编写格式
+%n$ms：代表输出的是字符串，n代表是第几个参数，设置m的值可以在输出之前放置空格 
+%n$md：代表输出的是整数，n代表是第几个参数，设置m的值可以在输出之前放置空格，也可以设为0m,在输出之前放置m个0 
+%n$mf：代表输出的是浮点数，n代表是第几个参数，设置m的值可以控制小数位数，如m=2.2时，输出格式为00.00  
+也可简单写成：
+%d   （表示整数）
+%f    （表示浮点数）
+%s   （表示字符串）
+
+String text = String.format(getResources().getString(R.string.welcome_messages), username, mailCount);
+mTextView.setText(getResources().getString(R.string.xxx, "xxx");
+
+如果你需要使用 String.format(String, Object...) 来格式化你的字符串，你可以把格式化参数放在你的字符串中，参见下面的例子：
+ 
+<string name="welcome_messages">Hello, %1$s! You have %2$d new messages.</string>
+ 
+In this example, the format string has two arguments: %1$s is a string and %2$d is a decimal number. You can format the string with arguements from your application like this:
+ 
+在这个例子中，这个格式化的字符串有2个参数， %1$s是个字符串 %2$d 是个浮点数，你可以在你的程序中按照下面的方法来根据参数来格式化字符串：
+ 
+Resources res = getResources();
+ 
+String text = String.format(res.getString(R.string.welcome_messages), username, mailCount);
+ 
+那么根据例子上说的我需要把%s换成%1$s才行了，修改后编译通过，程序成功启动。
+ 
+问题补充：
+ 
+有读者问如何在<string></string>中使用%号
+ 
+有两个办法可供选择
+1. 用%%来表示1个%，和转意符号 / 的用法相同
+
+2.如果你的字符串不需要格式化，可以在你的<string 标签上增加一个属性:formatted="false"例如 <string name="test" formatted="false">% test %</string> 即可。

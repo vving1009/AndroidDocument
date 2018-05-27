@@ -1,0 +1,35 @@
+使用newInstance()来实例化fragment 
+
+
+
+
+我最近读到StackOverflow上面关于Fragment实例化的一个问题，觉得挺有趣的。
+
+
+new MyFragment()和MyFragment.newInstance()之间的差别是什么？应该用哪个呢？
+
+好问题。答案就是这篇文章的题目所建议的，这是一种合理的设计。在这种情况下,newInstance()方法是一种“静态工厂方法",让我们在初始化和设置一个新的fragment的时候省去调用它的构造函数和额外的setter方法。为你的Fragment提供静态工厂方法是一种好的做法,因为它封装和抽象了在客户端构造对象所需的步骤。例如,考虑下面的代码:
+
+
+复制代码
+ 1 public class MyFragment extends Fragment {
+ 2 
+ 3     /**
+ 4      * 静态工厂方法需要一个int型的值来初始化fragment的参数，
+ 5      * 然后返回新的fragment到调用者 
+ 6      */
+ 7     public static MyFragment newInstance(int index) {
+ 8         MyFragment f = new MyFragment();
+ 9         Bundle args = new Bundle();
+10         args.putInt("index", index);
+11         f.setArguments(args);
+12         return f;
+13     }
+14 }
+
+复制代码
+
+    不要让客户端去调用默认的构造函数，然后手动地设置fragment的参数。我们直接为它们提供一个静态工厂方法。这样做比调用默认构造方法好，有两个原因：一个是，它方便别人的调用。另一个是，保证了fragment的构建过程不会出错。通过提供一个静态工厂方法，我们避免了自己犯错--我们再也不用担心不小心忘记初始化fragmnet的参数或者没正确设置参数。
+    总的来说，虽然两者的区别只在于设计，但是他们之间的差别非常大。因为提供静态工厂方法有向上抽象了一个级别，让代码更容易懂。
+
+    译者注：其实提供静态工厂而不是使用默认构造函数或者自己定义一个有参的构造函数还有至关重要一点。fragmnet经常会被销毁重新实例化，Android framework只会调用fragment无参的构造函数。在系统自动实例化fragment的过程中，你没有办法干预。一些需要外部传入的参数来决定的初始化就没有办法完成。使用静态工厂方法，将外部传入的参数可以通过Fragment.setArgument保存在它自己身上，这样我们可以在Fragment.onCreate(...)调用的时候将这些参数取出来。

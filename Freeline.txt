@@ -1,0 +1,62 @@
+FreeLine实现Android的秒级编译
+
+一、使用步骤
+1.安装plugin:
+
+安装完后AS上就有一个freeline的编译按钮了。
+
+2.配置Project以及Module的gradle
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.antfortune.freeline:gradle:0.8.3'
+    }
+}
+
+ apply plugin: 'com.antfortune.freeline'
+
+ android {
+     ...
+     freeline {
+         hack true
+     }
+ }
+
+ dependencies {
+    debugCompile 'com.antfortune.freeline:runtime:0.8.3'
+    releaseCompile 'com.antfortune.freeline:runtime-no-op:0.8.3'
+    testCompile 'com.antfortune.freeline:runtime-no-op:0.8.3'
+ }
+
+3.自定义的Application
+
+ public class App extends Application {
+     @Override
+     public void onCreate() {
+         super.onCreate();
+         FreelineCore.init(this);
+     }
+ }
+
+4.使用gradle初始化一下freeLine
+
+ ./gradlew initFreeline
+
+然后就可以愉快的玩耍了！例如，我这次修改了Java代码之后，重新编译下，耗时如下：
+
+3秒即可重新编译安装新的app到手机上！！！
+比Instant Run稳定且更快！！！
+
+    温馨提示：
+    1.初次安装可能耗时比较久，因为其实FreeLine也是基于增量更新的机制。
+    2.adb断开连接后，重连之后的再次编译，等价于初次安装
+
+二、常见问题
+
+    1.编译时找不到文件：freeline_project_description.json
+
+
+按照提示：执行./gradlew checkBeforeCleanBuild，然后它就自动帮你生成了一个project_description.json文件

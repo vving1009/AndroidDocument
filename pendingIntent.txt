@@ -1,0 +1,199 @@
+Android中pendingIntent的深入理解
+
+pendingIntent字面意义：等待的，未决定的Intent。
+要得到一个pendingIntent对象，使用方法类的静态方法 getActivity(Context, int, Intent, int),getBroadcast(Context, int, Intent, int),getService(Context, int, Intent, int)  分别对应着Intent的3个行为，跳转到一个activity组件、打开一个广播组件和打开一个服务组件。
+参数有4个，比较重要的事第三个和第一个，其次是第四个和第二个。可以看到，要得到这个对象，必须传入一个Intent作为参数，必须有context作为参数。
+pendingIntent是一种特殊的Intent。主要的区别在于Intent的执行立刻的，而pendingIntent的执行不是立刻的。pendingIntent执行的操作实质上是参数传进来的Intent的操作，但是使用pendingIntent的目的在于它所包含的Intent的操作的执行是需要满足某些条件的。
+主要的使用的地方和例子：通知Notificatio的发送，短消息SmsManager的发送和警报器AlarmManager的执行等等。
+
+Android的状态栏通知(Notification)
+
+如果需要查看消息，可以拖动状态栏到屏幕下方即可查看消息。
+
+步骤：
+
+1获取通知管理器NotificationManager，它也是一个系统服务
+
+2建立通知Notification notification = new Notification(icon, null, when);
+
+3为新通知设置参数(比如声音，震动，灯光闪烁)
+
+4把新通知添加到通知管理器
+
+发送消息的代码如下：
+
+//获取通知管理器
+
+NotificationManager mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)
+
+int icon = android.R.drawable.stat_notify_chat;
+
+long when = System.currentTimeMillis();//通知发生的时间为系统当前时间
+
+//新建一个通知，指定其图标和标题
+
+Notification notification = new Notification(icon, null, when);//第一个参数为图标,第二个参数为短暂提示标题,第三个为通知时间
+
+notification.defaults = Notification.DEFAULT_SOUND;//发出默认声音
+
+notification.flags |= Notification.FLAG_AUTO_CANCEL;//点击通知后自动清除通知
+
+Intent openintent = new Intent(this, OtherActivity.class);
+
+PendingIntent contentIntent = PendingIntent.getActivity(this, 0, openintent, 0);//当点击消息时就会向系统发送openintent意图
+
+notification.setLatestEventInfo(this, “标题”, “我是内容", contentIntent);
+
+mNotificationManager.notify(0, notification);//第一个参数为自定义的通知唯一标识
+
+ 
+
+重点是setLatestEventInfo( )方法的最后一个参数！！！！它是一个PendingIntent!!!!!!!!!
+
+这里使用到了PendingIntent(pend本意是待定，不确定的意思)
+
+PendingIntent可以看作是对Intent的包装。PendingIntent主要持有的信息是它所包装的Intent和当前Application的Context。正由于PendingIntent中保存有当前Application的Context，使它赋予带他程序一种执行的Intent的能力，就算在执行时当前Application已经不存在了，也能通过存在PendingIntent里的Context照样执行Intent。
+
+ 
+
+PendingIntent的一个很好的例子：
+
+SmsManager的用于发送短信的方法：
+
+sendTextMessage(destinationAddress, scAddress, text, sentIntent, deliveryIntent);
+
+第一个参数：destinationAddress对方手机号码
+
+第二个参数：scAddress短信中心号码一般设置为空
+
+第三个参数：text短信内容
+
+第四个参数：sentIntent判断短信是否发送成功，如果你没有SIM卡，或者网络中断，则可以通过这个itent来判断。注意强调的是“发送”的动作是否成功。那么至于对于对方是否收到，另当别论
+
+第五个参数：deliveryIntent当短信发送到收件人时，会收到这个deliveryIntent。即强调了“发送”后的结果
+
+就是说是在"短信发送成功"和"对方收到此短信"才会激活 sentIntent和deliveryIntent这两个Intent。这也相当于是延迟执行了Intent
+
+
+上面两个例子可以理解，PendingIntent就是一个可以在满足一定条件下执行的Intent，它相比于Intent的优势在于自己携带有Context对象，这样他就不必依赖于某个activity才可以存在。
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+本文主要介绍PendingIntent的作用和举例以及和Intent的区别，本文中代码见AndroidDemo@GoogleCode。
+
+1、PendingIntent作用
+
+根据字面意思就知道是延迟的intent，主要用来在某个事件完成后执行特定的Action。PendingIntent包含了Intent及Context，所以就算Intent所属程序结束，PendingIntent依然有效，可以在其他程序中使用。
+常用在通知栏及短信发送系统中。
+
+PendingIntent一般作为参数传给某个实例，在该实例完成某个操作后自动执行PendingIntent上的Action，也可以通过PendingIntent的send函数手动执行，并可以在send函数中设置OnFinished表示send成功后执行的动作。
+
+2、PendingIntent举例
+
+a. 系统通知栏
+复制代码
+
+NotificationManager nm = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+int icon = android.R.drawable.stat_notify_chat;
+long when = System.currentTimeMillis() + 2000;
+Notification n = new Notification(icon, "通知栏demo提醒", when);
+n.defaults = Notification.DEFAULT_SOUND;
+n.flags |= Notification.FLAG_AUTO_CANCEL;
+
+Intent openintent = new Intent(this, DemoList.class);
+PendingIntent pi = PendingIntent.getActivity(this, 0, openintent, PendingIntent.FLAG_CANCEL_CURRENT);
+n.setLatestEventInfo(this, "通知栏demo提醒title", "通知栏demo提醒text", pi);
+nm.notify(0, n);
+
+复制代码
+
+setLatestEventInfo表示设置点击该通知的事件
+
+b. 短信系统举例
+短信系统举例代码
+
+private final static String SEND_ACTION      = "send";
+private final static String DELIVERED_ACTION = "delivered";
+
+private void sendSms(String receiver, String text) {
+    SmsManager s = SmsManager.getDefault();
+    PendingIntent sentPI = PendingIntent.getBroadcast(this, 0, new Intent(SEND_ACTION),
+                                                      PendingIntent.FLAG_CANCEL_CURRENT);
+    PendingIntent deliveredPI = PendingIntent.getBroadcast(this, 0, new Intent(DELIVERED_ACTION),
+                                                           PendingIntent.FLAG_CANCEL_CURRENT);
+    // 发送完成
+    registerReceiver(new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            switch (getResultCode()) {
+                case Activity.RESULT_OK:
+                    Toast.makeText(getBaseContext(), "Send Success!", Toast.LENGTH_SHORT).show();
+                    break;
+                case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
+                    Toast.makeText(getBaseContext(), "Send Failed because generic failure cause.",
+                                   Toast.LENGTH_SHORT).show();
+                    break;
+                case SmsManager.RESULT_ERROR_NO_SERVICE:
+                    Toast.makeText(getBaseContext(), "Send Failed because service is currently unavailable.",
+                                   Toast.LENGTH_SHORT).show();
+                    break;
+                case SmsManager.RESULT_ERROR_NULL_PDU:
+                    Toast.makeText(getBaseContext(), "Send Failed because no pdu provided.", Toast.LENGTH_SHORT).show();
+                    break;
+                case SmsManager.RESULT_ERROR_RADIO_OFF:
+                    Toast.makeText(getBaseContext(), "Send Failed because radio was explicitly turned off.",
+                                   Toast.LENGTH_SHORT).show();
+                    break;
+                default:
+                    Toast.makeText(getBaseContext(), "Send Failed.", Toast.LENGTH_SHORT).show();
+                    break;
+            }
+        }
+    }, new IntentFilter(SEND_ACTION));
+
+    // 对方接受完成
+    registerReceiver(new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            switch (getResultCode()) {
+                case Activity.RESULT_OK:
+                    Toast.makeText(getBaseContext(), "Delivered Success!", Toast.LENGTH_SHORT).show();
+                    break;
+                default:
+                    Toast.makeText(getBaseContext(), "Delivered Failed!", Toast.LENGTH_SHORT).show();
+                    break;
+            }
+        }
+    }, new IntentFilter(DELIVERED_ACTION));
+
+    // 发送短信，sentPI和deliveredPI将分别在短信发送成功和对方接受成功时被广播
+    s.sendTextMessage(receiver, null, text, sentPI, deliveredPI);
+}
+
+以上的两个PendingIntent sentPI和deliveredPI将分别在短信发送成功和对方接受成功时被广播
+
+3、Intent和PendingIntent的区别
+
+a. Intent是立即使用的，而PendingIntent可以等到事件发生后触发，PendingIntent可以cancel
+b. Intent在程序结束后即终止，而PendingIntent在程序结束后依然有效
+c. PendingIntent自带Context，而Intent需要在某个Context内运行
+d. Intent在原task中运行，PendingIntent在新的task中运行
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+PendingIntent用于描述Intent及其最终的行为. 
+        你可以通过getActivity(Context context, int requestCode, Intent intent, int flags)系列方法从系统取得一个用于启动一个Activity的PendingIntent对象,
+
+       可以通过getService(Context context, int requestCode, Intent intent, int flags)方法从系统取得一个用于启动一个Service的PendingIntent对象
+
+        可以通过getBroadcast(Context context, int requestCode, Intent intent, int flags)方法从系统取得一个用于向BroadcastReceiver的Intent广播的PendingIntent对象
+
+         返回的PendingIntent可以递交给别的应用程序，然后继续处理。这里的话你可以稍后才处理PendingIntent中描述的Intent及其最终行为。
+
+        当你把PendingIntent递交给别的程序进行处理时,PendingIntent仍然拥有PendingIntent原程序所拥有的权限(with the same permissions and identity).当你从系统取得一个PendingIntent时，一定要非常小心才行。比如，通常，如果Intent目的地是你自己的component（Activity/Service/BroadcastReceiver）的话，你最好采用在Intent中显示指定目的component名字的方式，以确保Intent最终能发到目的，否则Intent最后可能不知道发到哪里了。一个PendingIntent就是Android系统中的一个token（节点，这个应该是Linux或C\C++用语）的一个对象引用，它描述了一些将用于retrieve的数据（这里，这些数据描述了Intent及其最终的行为）。
+
+        这就意味着即使PendingIntent原进程结束了的话, PendingIntent本身仍然还存在，可在其他进程（PendingIntent被递交到的其他程序）中继续使用.如果我在从系统中提取一个PendingIntent的，而系统中有一个和你描述的PendingIntent对等的PendingInent, 那么系统会直接返回和该PendingIntent其实是同一token的PendingIntent，而不是一个新的token和PendingIntent。然而你在从提取PendingIntent时，通过FLAG_CANCEL_CURRENT参数，让这个老PendingIntent的先cancel()掉，这样得到的pendingInten和其token的就是新的了。
+
+       通过FLAG_UPDATE_CURRENT参数的话，可以让新的Intent会更新之前PendingIntent中的Intent对象数据，例如更新Intent中的Extras。另外，我们也可以在PendingIntent的原进程中调用PendingIntent的cancel ()把其从系统中移除掉。

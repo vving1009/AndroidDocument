@@ -1,0 +1,136 @@
+java通过InputStream读取和写入文件操作实例代码
+
+1. File to InputStream
+File file = new File("file.xml");
+InputStream inputStream = new FileInputStream(file);
+
+2.InputStream to File
+InputStream inputStream = new FileInputStream("file.xml");
+
+OutputStream  outputStream = new FileOutputStream("file-new.xml");
+
+int bytesWritten = 0;
+int byteCount = 0;
+
+byte[] bytes = new byte[1024];
+
+while ((byteCount = inputStream.read(bytes)) != -1)
+{
+          outputStream.write(bytes, bytesWritten, byteCount);
+           bytesWritten += byteCount;
+}
+inputStream.close();
+outputStream.close();
+
+----------------------------------------------------------------------------------------------
+
+
+//普通IO耗时1.3s
+    public static String openStringFileIO(String path, String fileName) {
+        long time = System.currentTimeMillis();
+        String result = null;
+        File f = new File(path, fileName);
+        try {
+            FileInputStream fileInputStream = new FileInputStream(f);
+            StringBuilder buffer = new StringBuilder();
+            String line;
+            BufferedReader in = new BufferedReader(new InputStreamReader(fileInputStream));
+            while ((line = in.readLine()) != null) {
+                buffer.append(line);
+            }
+            result = buffer.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Logger.d("openStringFileIO " + (System.currentTimeMillis() - time));
+        return result;
+    }
+
+    //NIO耗时 2.5s
+    public static String openStringFileNIO(String path, String fileName) {
+        long time = System.currentTimeMillis();
+        FileInputStream in = null;
+        StringBuilder result = new StringBuilder();
+        try {
+            File f = new File(path, fileName);
+            in = new FileInputStream(f);
+            FileChannel fc = in.getChannel();
+            ByteBuffer byteBuffer = ByteBuffer.allocate(1024); // 定义字节缓冲区
+            CharBuffer charBuffer = CharBuffer.allocate(1024); // 定义解码后字符存储缓冲区
+            CharsetDecoder decoder = Charset.forName("UTF-8").newDecoder();// 定义合适的字符集解码器
+
+            while ((fc.read(byteBuffer)) != -1) { // 读取字符串到缓冲区
+                byteBuffer.flip();
+                charBuffer.clear();
+
+                // 对byteBuffer进行解码
+                if (fc.position() < fc.size()) {
+                    decoder.decode(byteBuffer, charBuffer, false);
+                } else {
+                    // 最后一次解码
+                    decoder.decode(byteBuffer, charBuffer, true);
+                    decoder.flush(charBuffer);
+                }
+
+                byteBuffer.compact(); // 注意此处调用compact方法，而不是clear方法
+                charBuffer.flip();
+                // 将charBuffer放入返回结果中
+                char[] chars = new char[charBuffer.remaining()];
+                charBuffer.get(chars, 0, charBuffer.remaining());
+                result.append(chars);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            CloseUtil.close(in);
+        }
+        Logger.d("openStringFileNIO " + (System.currentTimeMillis() - time));
+        return result.toString();
+    }
+
+    //OKIO 耗时0.9s
+    public static String openStringFile(String path, String fileName) {
+        long time = System.currentTimeMillis();
+        BufferedSource bufferedSource = null;
+        String result = null;
+        try {
+            File file = new File(path, fileName);
+            Source source = Okio.source(file);
+            bufferedSource = Okio.buffer(source);
+            result = bufferedSource.readUtf8();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            CloseUtil.close(bufferedSource);
+        }
+        Logger.d("openStringFileOkio " + (System.currentTimeMillis() - time));
+        return result;
+    }
+
+    //第二种NIO耗时 2s
+    public static String openStringFileNIO2(String path, String fileName) {
+
+        long time = System.currentTimeMillis();
+        File file = new File(path, fileName);
+        RandomAccessFile raf;
+        StringBuffer sb = new StringBuffer();
+        try {
+            raf = new RandomAccessFile(file, "rw");
+            FileChannel cha = raf.getChannel();
+            ByteBuffer buf = ByteBuffer.allocate(1024);
+            int size;
+            while ((size = cha.read(buf)) != -1) {
+                buf.flip();
+                byte[] buff = new byte[size];
+                buf.get(buff);
+                sb.append(new String(buff, 0, size));
+
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        Logger.d("openStringFileNIO2 " + (System.currentTimeMillis() - time));
+
+        return sb.toString();
+    }

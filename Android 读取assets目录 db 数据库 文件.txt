@@ -1,0 +1,139 @@
+Android 读取assets目录下的db文件 
+
+最近准备打算写一个关于天气预报的app，偶然的机会在一大神的博客上看到了一个获取天气的api，获取天气是通过城市的cityID，项目中准备通过读取weather_city.db数据库来查询cityID，这篇文章写怎么读取assets目录下的db文件，其实方法也挺简单的就是把assets目录下的db文件复制一份到”/data/data/” + packName + “/”目录下而已。
+
+public class DBManager {
+    private String DB_NAME = "weather_city.db";
+    private Context mContext;
+
+    public DBManager(Context mContext) {
+        this.mContext = mContext;
+    }
+    //把assets目录下的db文件复制到dbpath下
+    public SQLiteDatabase DBManager(String packName) {
+        String dbPath = "/data/data/" + packName
+                + "/databases/" + DB_NAME;
+        if (!new File(dbPath).exists()) {
+            try {
+                FileOutputStream out = new FileOutputStream(dbPath);
+                InputStream in = mContext.getAssets().open("weather_city.db");
+                byte[] buffer = new byte[1024];
+                int readBytes = 0;
+                while ((readBytes = in.read(buffer)) != -1)
+                    out.write(buffer, 0, readBytes);
+                in.close();
+                out.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return SQLiteDatabase.openOrCreateDatabase(dbPath, null);
+    }
+    //查询
+    public City query(SQLiteDatabase sqliteDB, String[] columns, String selection, String[] selectionArgs) {
+        City city = null;
+        try {
+            String table = "city";
+            Cursor cursor = sqliteDB.query(table, columns, selection, selectionArgs, null, null, null);
+            if (cursor.moveToFirst()) {
+                String parentCity = cursor.getString(cursor
+                        .getColumnIndex("parent"));
+                String phoneCode = cursor.getString(cursor.getColumnIndex("phone_code"));
+                String name = cursor.getString(cursor.getColumnIndex("name"));
+                String pinyin = cursor.getString(cursor.getColumnIndex("pinyin"));
+                String cityID = cursor.getString(cursor.getColumnIndex("posID"));
+                String areaCode = cursor.getString(cursor.getColumnIndex("area_code"));
+                city = new City(parentCity, name, pinyin, phoneCode, cityID, areaCode);
+                cursor.moveToNext();
+                cursor.close();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return city;
+    }
+}
+
+为了方便数据的使用，我们建一个City类，对应City表中的字段，如下：
+
+public class City {
+    private String parentCity;
+    private String childCity;
+    private String pinyin;
+    private String phoneCode;
+    private String cityID;
+    private String areaCode;
+
+    public City(String parentCity, String childCity, String pinyin, String phoneCode, String cityID, String areaCode) {
+        this.parentCity = parentCity;
+        this.childCity = childCity;
+        this.pinyin = pinyin;
+        this.phoneCode = phoneCode;
+        this.cityID = cityID;
+        this.areaCode = areaCode;
+    }
+
+    public String getParentCity() {
+        return parentCity;
+    }
+
+    public void setParentCity(String parentCity) {
+        this.parentCity = parentCity;
+    }
+
+    public String getAreaCode() {
+        return areaCode;
+    }
+
+    public void setAreaCode(String areaCode) {
+        this.areaCode = areaCode;
+    }
+
+    public String getCityID() {
+        return cityID;
+    }
+
+    public void setCityID(String cityID) {
+        this.cityID = cityID;
+    }
+
+    public String getPhoneCode() {
+        return phoneCode;
+    }
+
+    public void setPhoneCode(String phoneCode) {
+        this.phoneCode = phoneCode;
+    }
+
+    public String getPinyin() {
+        return pinyin;
+    }
+
+    public void setPinyin(String pinyin) {
+        this.pinyin = pinyin;
+    }
+
+    public String getChildCity() {
+        return childCity;
+    }
+
+    public void setChildCity(String childCity) {
+        this.childCity = childCity;
+    }
+}
+
+测试代码：
+
+@Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        contentTextView = (TextView) findViewById(R.id.content);
+        dbManager = new DBManager(this);
+        sqLiteDatabase = dbManager.initDBManager(getPackageName());
+        String[] columns = new String[]{"parent", "name", "posID", "pinyin", "phone_code", "area_code"};
+        String selection = "parent=?" + "AND" + " name=?";
+        String[] selectionArgs = new String[]{"北京", "丰台"};
+        City city = dbManager.query(sqLiteDatabase, columns, selection, selectionArgs);
+        contentTextView.setText("邮编：" + city.getAreaCode() + "拼音：" + city.getPinyin() + "电话区号" + city.getPhoneCode() + "cityID:" + city.getCityID());
+    }

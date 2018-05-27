@@ -1,0 +1,1376 @@
+
+linux下解压命令大全 
+
+.tar 
+解包：tar xvf FileName.tar
+打包：tar cvf FileName.tar DirName
+（注：tar是打包，不是压缩！）
+———————————————
+.gz
+解压1：gunzip FileName.gz
+解压2：gzip -d FileName.gz
+压缩：gzip FileName
+
+.tar.gz 和 .tgz
+解压：tar zxvf FileName.tar.gz
+压缩：tar zcvf FileName.tar.gz DirName
+———————————————
+.bz2
+解压1：bzip2 -d FileName.bz2
+解压2：bunzip2 FileName.bz2
+压缩： bzip2 -z FileName
+
+.tar.bz2
+解压：tar jxvf FileName.tar.bz2
+压缩：tar jcvf FileName.tar.bz2 DirName
+———————————————
+.bz
+解压1：bzip2 -d FileName.bz
+解压2：bunzip2 FileName.bz
+压缩：未知
+
+.tar.bz
+解压：tar jxvf FileName.tar.bz
+压缩：未知
+———————————————
+.Z
+解压：uncompress FileName.Z
+压缩：compress FileName
+ .tar.Z
+
+解压：tar Zxvf FileName.tar.Z
+压缩：tar Zcvf FileName.tar.Z DirName
+———————————————
+.zip
+解压：unzip FileName.zip
+压缩：zip FileName.zip DirName
+———————————————
+.rar
+解压：rar x FileName.rar
+压缩：rar a FileName.rar DirName
+———————————————
+.lha
+解压：lha -e FileName.lha
+压缩：lha -a FileName.lha FileName
+———————————————
+.rpm
+解包：rpm2cpio FileName.rpm | cpio -div
+———————————————
+.deb
+解包：ar p FileName.deb data.tar.gz | tar zxf -
+———————————————
+.tar .tgz .tar.gz .tar.Z .tar.bz .tar.bz2 .zip .cpio .rpm .deb .slp .arj .rar .ace .lha .lzh .lzx .lzs .arc .sda .sfx .lnx .zoo .cab .kar .cpt .pit .sit .sea
+解压：sEx x FileName.*
+压缩：sEx a FileName.* FileName
+
+sEx只是调用相关程序，本身并无压缩、解压功能，请注意！
+
+gzip 命令 
+ 减少文件大小有两个明显的好处，一是可以减少存储空间，二是通过网络传输文件时，可以减少传输的时间。gzip 是在 Linux 系统中经常使用的一个对文件进行压缩和解压缩的命令，既方便又好用。 
+
+语法：gzip [选项] 压缩（解压缩）的文件名该命令的各选项含义如下： 
+
+-c 将输出写到标准输出上，并保留原有文件。-d 将压缩文件解压。-l 对每个压缩文件，显示下列字段：     压缩文件的大小；未压缩文件的大小；压缩比；未压缩文件的名字-r 递归式地查找指定目录并压缩其中的所有文件或者是解压缩。-t 测试，检查压缩文件是否完整。-v 对每一个压缩和解压的文件，显示文件名和压缩比。-num 用指定的数字 num 调整压缩的速度，-1 或 --fast 表示最快压缩方法（低压缩比），-9 或--best表示最慢压缩方法（高压缩比）。系统缺省值为 6。指令实例： 
+
+gzip *% 把当前目录下的每个文件压缩成 .gz 文件。gzip -dv *% 把当前目录下每个压缩的文件解压，并列出详细的信息。gzip -l *% 详细显示例1中每个压缩的文件的信息，并不解压。gzip usr.tar% 压缩 tar 备份文件 usr.tar，此时压缩文件的扩展名为.tar.gz。
+
+---------------------------------------------------------------------------------------------------------------------
+
+对 Linux 新手非常有用的 20 个命令 【已翻译100%】 
+
+
+你打算从Windows换到Linux上来，还是你刚好换到Linux上来？哎哟！！！我说什么呢，是什么原因你就出现在我的世界里了。从我以往的经验来说，当我刚使用Linux，命令，终端啊什么的，吓了我一跳。我担心该记住多少命令，来帮助我完成所有任务。毫无疑问，在线文档，书籍，man pages以及社区帮了我一个大忙，但是我还是坚信有那么一篇文章记录了如何简单学习和理解命令的秘籍。这激发了我掌握Linux和使它容易使用的积极性。本文就是通往那里的阶梯。 
+
+1. ls命令 
+
+ls命令是列出目录内容(List Directory Contents)的意思。运行它就是列出文件夹里的内容，可能是文件也可能是文件夹。 
+root@tecmint:~# ls
+
+Android-Games                     Music
+Pictures                          Public
+Desktop                           Tecmint.com
+Documents                         TecMint-Sync
+Downloads                         Templates
+
+“ls -l”命令以详情模式(long listing fashion)列出文件夹的内容。 
+root@tecmint:~# ls -l
+
+total 40588
+drwxrwxr-x 2 ravisaive ravisaive     4096 May  8 01:06 Android Games
+drwxr-xr-x 2 ravisaive ravisaive     4096 May 15 10:50 Desktop
+drwxr-xr-x 2 ravisaive ravisaive     4096 May 16 16:45 Documents
+drwxr-xr-x 6 ravisaive ravisaive     4096 May 16 14:34 Downloads
+drwxr-xr-x 2 ravisaive ravisaive     4096 Apr 30 20:50 Music
+drwxr-xr-x 2 ravisaive ravisaive     4096 May  9 17:54 Pictures
+drwxrwxr-x 5 ravisaive ravisaive     4096 May  3 18:44 Tecmint.com
+drwxr-xr-x 2 ravisaive ravisaive     4096 Apr 30 20:50 Templates
+
+"ls -a"命令会列出文件夹里的所有内容，包括以"."开头的隐藏文件。 
+root@tecmint:~# ls -a
+
+.			.gnupg			.dbus			.goutputstream-PI5VVW		.mission-control
+.adobe                  deja-dup                .grsync                 .mozilla                 	.themes
+.gstreamer-0.10         .mtpaint                .thumbnails             .gtk-bookmarks          	.thunderbird
+.HotShots               .mysql_history          .htaccess		.apport-ignore.xml      	.ICEauthority           
+.profile                .bash_history           .icons                  .bash_logout                    .fbmessenger
+.jedit                  .pulse                  .bashrc                 .liferea_1.8             	.pulse-cookie            
+.Xauthority		.gconf                  .local                  .Xauthority.HGHVWW		.cache
+.gftp                   .macromedia             .remmina                .cinnamon                       .gimp-2.8
+.ssh                    .xsession-errors 	.compiz                 .gnome                          teamviewer_linux.deb          
+.xsession-errors.old	.config                 .gnome2                 .zoncolor
+
+注意：在Linux中，文件以“.”开头的就是隐藏文件，并且每个文件，文件夹，设备或者命令都是以文件对待。ls -l 命令输出： 
+1. d (代表了是目录). 
+2. rwxr-xr-x 是文件或者目录对所属用户，同一组用户和其它用户的权限。 
+3. 上面例子中第一个ravisaive 代表了文件文件属于用户ravisaive 
+4. 上面例子中的第二个ravisaive代表了文件文件属于用户组ravisaive 
+5. 4096 代表了文件大小为4096字节. 
+6. May 8 01:06 代表了文件最后一次修改的日期和时间. 
+7. 最后面的就是文件/文件夹的名字 
+
+2. lsblk命令 
+
+"lsblk"就是列出块设备。除了RAM外，以标准的树状输出格式，整齐地显示块设备。 
+root@tecmint:~# lsblk
+
+NAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda      8:0    0 232.9G  0 disk 
+├─sda1   8:1    0  46.6G  0 part /
+├─sda2   8:2    0     1K  0 part 
+├─sda5   8:5    0   190M  0 part /boot
+├─sda6   8:6    0   3.7G  0 part [SWAP]
+├─sda7   8:7    0  93.1G  0 part /data
+└─sda8   8:8    0  89.2G  0 part /personal
+sr0     11:0    1  1024M  0 rom
+
+“lsblk -l”命令以列表格式显示块设备(而不是树状格式)。 
+root@tecmint:~# lsblk -l
+
+NAME MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+sda    8:0    0 232.9G  0 disk 
+sda1   8:1    0  46.6G  0 part /
+sda2   8:2    0     1K  0 part 
+sda5   8:5    0   190M  0 part /boot
+sda6   8:6    0   3.7G  0 part [SWAP]
+sda7   8:7    0  93.1G  0 part /data
+sda8   8:8    0  89.2G  0 part /personal
+sr0   11:0    1  1024M  0 rom
+
+注意：lsblk是最有用和最简单的方式来了解新插入的USB设备的名字，特别是当你在终端上处理磁盘/块设备时。 
+
+3. md5sum命令 
+
+“md5sum”就是计算和检验MD5信息签名。md5 checksum(通常叫做哈希)使用匹配或者验证文件的文件的完整性，因为文件可能因为传输错误，磁盘错误或者无恶意的干扰等原因而发生改变。 
+root@tecmint:~# md5sum teamviewer_linux.deb 
+
+47790ed345a7b7970fc1f2ac50c97002  teamviewer_linux.deb
+
+注意：用户可以使用官方提供的和md5sum生成签名信息匹对以此检测文件是否改变。Md5sum没有sha1sum安全，这点我们稍后讨论。 
+
+
+66号公路   
+66号公路
+ 
+翻译于 4年前
+
+12人顶
+ .
+顶   翻译得不错哦！ .
+
+
+
+
+
+
+4. dd命令 
+
+“dd”命令代表了转换和复制文件。可以用来转换和复制文件，大多数时间是用来复制iso文件(或任何其它文件)到一个usb设备(或任何其它地方)中去，所以可以用来制作USB启动器。 
+root@tecmint:~# dd if=/home/user/Downloads/debian.iso of=/dev/sdb1 bs=512M; sync
+
+注意：在上面的例子中，usb设备就是sdb1（你应该使用lsblk命令验证它，否则你会重写你的磁盘或者系统），请慎重使用磁盘的名，切忌。 
+
+dd 命令在执行中会根据文件的大小和类型 以及 usb设备的读写速度，消耗几秒到几分钟不等。 
+
+
+66号公路   
+66号公路
+ 
+翻译于 4年前
+
+10人顶
+ .
+顶   翻译得不错哦！ .
+
+
+
+
+
+
+5. uname命令 
+
+"uname"命令就是Unix Name的简写。显示机器名，操作系统和内核的详细信息。 
+root@tecmint:~# uname -a
+
+Linux tecmint 3.8.0-19-generic #30-Ubuntu SMP Wed May 1 16:36:13 UTC 2013 i686 i686 i686 GNU/Linux
+
+注意： uname显示内核类别， uname -a显示详细信息。上面的输出详细说明了uname -a 
+1. “Linux“: 机器的内核名 
+2. “tecmint“: 机器的节点名 
+3. “3.8.0-19-generic“: 内核发布版本 
+4. “#30-Ubuntu SMP“: 内核版本 
+5. “i686“: 处理器架构 
+6. “GNU/Linux“: 操作系统名 
+
+6. history命令 
+
+“history”命令就是历史记录。它显示了在终端中所执行过的所有命令的历史。 
+root@tecmint:~# history
+
+ 1  sudo add-apt-repository ppa:tualatrix/ppa
+ 2  sudo apt-get update
+ 3  sudo apt-get install ubuntu-tweak
+ 4  sudo add-apt-repository ppa:diesch/testing
+ 5  sudo apt-get update
+ 6  sudo apt-get install indicator-privacy
+ 7  sudo add-apt-repository ppa:atareao/atareao
+ 8  sudo apt-get update
+ 9  sudo apt-get install my-weather-indicator
+ 10 pwd
+ 11 cd && sudo cp -r unity/6 /usr/share/unity/
+ 12 cd /usr/share/unity/icons/
+ 13 cd /usr/share/unity
+
+注意：按住“CTRL + R”就可以搜索已经执行过的命令，它可以在你写命令时自动补全。 
+(reverse-i-search)`if': ifconfig
+
+
+66号公路   
+66号公路
+ 
+翻译于 4年前
+
+6人顶
+ .
+顶   翻译得不错哦！ .
+
+
+
+
+
+
+7. sudo命令 
+
+“sudo”(super user do)命令允许授权用户执行超级用户或者其它用户的命令。通过在sudoers列表的安全策略来指定。 
+root@tecmint:~# sudo add-apt-repository ppa:tualatrix/ppa
+
+注意：sudo 允许用户借用超级用户的权限，然而"su"命令实际上是允许用户以超级用户登录。所以sudo比su更安全。
+并不建议使用sudo或者su来处理日常用途，因为它可能导致严重的错误如果你意外的做错了事，这就是为什么在linux社区流行一句话：
+ 
+
+“To err is human, but to really foul up everything, you need root password.” 
+
+ 
+
+
+ “人非圣贤孰能无过，但是拥有root密码就真的万劫不复了。” # 译 
+8. mkdir命令 
+“mkdir”(Make directory)命令在命名路径下创建新的目录。然而如果目录已经存在了，那么它就会返回一个错误信息"不能创建文件夹，文件夹已经存在了"("cannot create folder, folder already exists") 
+root@tecmint:~# mkdir tecmint
+
+注意：目录只能在用户拥有写权限的目录下才能创建。mkdir：不能创建目录`tecmint`，因为文件已经存在了。（上面的输出中不要被文件迷惑了，你应该记住我开头所说的-在linux中，文件，文件夹，驱动，命令，脚本都视为文件） 
+
+
+66号公路   
+66号公路
+ 
+翻译于 4年前
+
+11人顶
+ .
+顶   翻译得不错哦！ .
+
+
+
+
+
+
+9. touch 命令 
+
+“touch”命令代表了将文件的访问和修改时间更新为当前时间。touch命令只会在文件不存在的时候才会创建它。如果文件已经存在了，它会更新时间戳，但是并不会改变文件的内容。 
+root@tecmint:~# touch tecmintfile
+
+注意：touch 可以用来在用户拥有写权限的目录下创建不存在的文件。 
+
+10. chmod 命令 
+
+“chmod”命令就是改变文件的模式位。chmod会根据要求的模式来改变每个所给的文件，文件夹，脚本等等的文件模式（权限）。 
+
+在文件(文件夹或者其它，为了简单起见，我们就使用文件)中存在3中类型的权限 
+Read (r)=4
+Write(w)=2
+Execute(x)=1
+
+所以如果你想给文件只读权限，就设置为'4';只写权限，设置权限为'2';只执行权限，设置为1; 读写权限，就是4+2 = 6, 以此类推。 
+
+现在需要设置3种用户和用户组权限。第一个是拥有者，然后是用户所在的组，最后是其它用户。 
+rwxr-x--x   abc.sh
+
+这里root的权限是 rwx（读写和执行权限），
+所属用户组权限是 r-x (只有读和执行权限, 没有写权限)，
+ 对于其它用户权限是 -x(只有只执行权限) 
+
+为了改变它的权限，为拥有者，用户所在组和其它用户提供读，写，执行权限。 
+root@tecmint:~# chmod 777 abc.sh
+
+三种都只有读写权限 
+root@tecmint:~# chmod 666 abc.sh
+
+拥有者用户有读写和执行权限，用户所在的组和其它用户只有可执行权限 
+root@tecmint:~# chmod 711 abc.sh
+
+注意：对于系统管理员和用户来说，这个命令是最有用的命令之一了。在多用户环境或者服务器上，对于某个用户，如果设置了文件不可访问，那么这个命令就可以解决，如果设置了错误的权限，那么也就提供了为授权的访问。 
+
+
+66号公路   
+66号公路
+ 
+翻译于 4年前
+
+11人顶
+ .
+顶   翻译得不错哦！ .
+
+
+
+
+
+
+11. chown命令 
+
+“chown”命令就是改变文件拥有者和所在用户组。每个文件都属于一个用户组和一个用户。在你的目录下，使用"ls -l",你就会看到像这样的东西。 
+root@tecmint:~# ls -l 
+
+drwxr-xr-x 3 server root 4096 May 10 11:14 Binary 
+drwxr-xr-x 2 server server 4096 May 13 09:42 Desktop
+
+在这里，目录Binary属于用户"server",和用户组"root",而目录"Desktop"属于用户“server”和用户组"server" 
+
+“chown”命令用来改变文件的所有权，所以仅仅用来管理和提供文件的用户和用户组授权。 
+root@tecmint:~# chown server:server Binary
+
+drwxr-xr-x 3 server server 4096 May 10 11:14 Binary 
+drwxr-xr-x 2 server server 4096 May 13 09:42 Desktop
+
+注意：“chown”所给的文件改变用户和组的所有权到新的拥有者或者已经存在的用户或者用户组。 
+
+
+66号公路   
+66号公路
+ 
+翻译于 4年前
+
+7人顶
+ .
+顶   翻译得不错哦！ .
+
+
+
+
+
+
+12. apt命令 
+
+Debian系列以“apt”命令为基础，“apt”代表了Advanced Package Tool。APT是一个为Debian系列系统（Ubuntu，Kubuntu等等）开发的高级包管理器，在Gnu/Linux系统上，它会为包自动地，智能地搜索，安装，升级以及解决依赖。 
+root@tecmint:~# apt-get install mplayer
+
+Reading package lists... Done
+Building dependency tree       
+Reading state information... Done
+The following package was automatically installed and is no longer required:
+  java-wrappers
+Use 'apt-get autoremove' to remove it.
+The following extra packages will be installed:
+  esound-common libaudiofile1 libesd0 libopenal-data libopenal1 libsvga1 libvdpau1 libxvidcore4
+Suggested packages:
+  pulseaudio-esound-compat libroar-compat2 nvidia-vdpau-driver vdpau-driver mplayer-doc netselect fping
+The following NEW packages will be installed:
+  esound-common libaudiofile1 libesd0 libopenal-data libopenal1 libsvga1 libvdpau1 libxvidcore4 mplayer
+0 upgraded, 9 newly installed, 0 to remove and 8 not upgraded.
+Need to get 3,567 kB of archives.
+After this operation, 7,772 kB of additional disk space will be used.
+Do you want to continue [Y/n]? y
+root@tecmint:~# apt-get update
+
+Hit http://ppa.launchpad.net raring Release.gpg                                           
+Hit http://ppa.launchpad.net raring Release.gpg                                           
+Hit http://ppa.launchpad.net raring Release.gpg                      
+Hit http://ppa.launchpad.net raring Release.gpg                      
+Get:1 http://security.ubuntu.com raring-security Release.gpg [933 B] 
+Hit http://in.archive.ubuntu.com raring Release.gpg                                                   
+Hit http://ppa.launchpad.net raring Release.gpg                      
+Get:2 http://security.ubuntu.com raring-security Release [40.8 kB]   
+Ign http://ppa.launchpad.net raring Release.gpg                                                  
+Get:3 http://in.archive.ubuntu.com raring-updates Release.gpg [933 B]                            
+Hit http://ppa.launchpad.net raring Release.gpg                                                                
+Hit http://in.archive.ubuntu.com raring-backports Release.gpg
+
+注意：上面的命令会导致系统整体的改变，所以需要root密码（查看提示符为"#"，而不是“$”）.和yum命令相比，Apt更高级和智能。 
+
+见名知义，apt-cache用来搜索包中是否包含子包mplayer, apt-get用来安装，升级所有的已安装的包到最新版。 
+
+关于apt-get 和 apt-cache命令更多信息，请查看 25 APT-GET和APT-CACHE命令 
+
+
+66号公路   
+66号公路
+ 
+翻译于 4年前
+
+8人顶
+ .
+顶   翻译得不错哦！ .
+
+
+
+
+
+
+13. tar命令 
+
+“tar”命令是磁带归档(Tape Archive)，对创建一些文件的的归档和它们的解压很有用。 
+root@tecmint:~# tar -zxvf abc.tar.gz (记住'z'代表了.tar.gz)
+root@tecmint:~# tar -jxvf abc.tar.bz2 (记住'j'代表了.tar.bz2)
+root@tecmint:~# tar -cvf archieve.tar.gz(.bz2) /path/to/folder/abc
+
+注意： "tar.gz"代表了使用gzip归档，“bar.bz2”使用bzip压缩的，它压缩的更好但是也更慢。 
+
+了解更多"tar 命令"的例子，请查看 18 Tar命名例子 
+
+14. cal 命令 
+
+“cal”（Calender），它用来显示当前月份或者未来或者过去任何年份中的月份。 
+root@tecmint:~# cal 
+
+May 2013        
+Su Mo Tu We Th Fr Sa  
+          1  2  3  4  
+ 5  6  7  8  9 10 11  
+12 13 14 15 16 17 18  
+19 20 21 22 23 24 25  
+26 27 28 29 30 31
+
+显示已经过去的月份，1835年2月 
+root@tecmint:~# cal 02 1835
+
+   February 1835      
+Su Mo Tu We Th Fr Sa  
+ 1  2  3  4  5  6  7  
+ 8  9 10 11 12 13 14  
+15 16 17 18 19 20 21  
+22 23 24 25 26 27 28
+
+显示未来的月份，2145年7月。 
+root@tecmint:~# cal 07 2145
+
+     July 2145        
+Su Mo Tu We Th Fr Sa  
+             1  2  3  
+ 4  5  6  7  8  9 10  
+11 12 13 14 15 16 17  
+18 19 20 21 22 23 24  
+25 26 27 28 29 30 31
+
+注意： 你不需要往回调整日历50年，既不用复杂的数据计算你出生那天，也不用计算你的生日在哪天到来，[因为它的最小单位是月，而不是日]。
+
+-----------------------------------------------------------------------------------------------------------------
+
+
+linux常用命令大全(转)
+
+ 
+
+
+
+
+
+由于记忆力有限,把平时常用的Linux命令整理出来,以便随时查阅:
+
+ linux 基本命令
+
+ ls     (list 显示当前目录下文件和目录 ls -l 详细显示 =ll )
+ 
+[root@linux ~]# ls [-aAdfFhilRS] 目录名称 
+[root@linux ~]# ls [--color={none,auto,always}] 目录名称 
+[root@linux ~]# ls [--full-time] 目录名称 
+参数： 
+-a ：全部的档案，连同隐藏档( 开头为 . 的档案) 一起列出来～ 
+-A ：全部的档案，连同隐藏档，但不包括 . 与 .. 这两个目录，一起列出来～ 
+-d ：仅列出目录本身，而不是列出目录内的档案数据 
+-f ：直接列出结果，而不进行排序 (ls 预设会以档名排序！) 
+-F ：根据档案、目录等信息，给予附加数据结构，例如： 
+*：代表可执行档； /：代表目录； =：代表 socket 档案； |：代表 FIFO 档案； 
+-h ：将档案容量以人类较易读的方式(例如 GB, KB 等等)列出来； 
+-i ：列出 inode 位置，而非列出档案属性； 
+-l ：长数据串行出，包含档案的属性等等数据； 
+-n ：列出 UID 与 GID 而非使用者与群组的名称 (UID与GID会在账号管理提到！) 
+-r ：将排序结果反向输出，例如：原本档名由小到大，反向则为由大到小； 
+-R ：连同子目录内容一起列出来； 
+-S ：以档案容量大小排序！ 
+-t ：依时间排序 
+--color=never ：不要依据档案特性给予颜色显示； 
+--color=always ：显示颜色 
+--color=auto ：让系统自行依据设定来判断是否给予颜色 
+--full-time ：以完整时间模式 (包含年、月、日、时、分) 输出 
+--time={atime,ctime} ：输出 access 时间或 改变权限属性时间 (ctime) 
+而非内容变更时间 (modification time)      
+
+cat 由第一行开始显示档案内容 
+ 
+[root@linux ~]# cat [-AEnTv] 
+参数： 
+-A ：相当于 -vET 的整合参数，可列出一些特殊字符～ 
+-E ：将结尾的断行字符 $ 显示出来； 
+-n ：打印出行号； 
+-T ：将 [tab] 按键以 ^I 显示出来； 
+-v ：列出一些看不出来的特殊字符      
+
+tac 从最后一行开始显示，可以看出 tac 是 cat 的倒着写！
+nl 显示的时候，顺道输出行号！ 
+ 
+[root@linux ~]# nl [-bnw] 档案 
+参数： 
+-b ：指定行号指定的方式，主要有两种： 
+-b a ：表示不论是否为空行，也同样列出行号； 
+-b t ：如果有空行，空的那一行不要列出行号； 
+-n ：列出行号表示的方法，主要有三种： 
+-n ln ：行号在屏幕的最左方显示； 
+-n rn ：行号在自己字段的最右方显示，且不加 0 ； 
+-n rz ：行号在自己字段的最右方显示，且加 0 ； 
+-w ：行号字段的占用的位数。      
+
+more 一页一页的显示档案内容 
+  空格键 (space)：代表向下翻一页；
+ Enter ：代表向下翻『一行』；
+ /字符串 ：代表在这个显示的内容当中，向下搜寻『字符串』；
+ :f ：立刻显示出文件名以及目前显示的行数；
+ q ：代表立刻离开 more ，不再显示该档案内容。 
+
+less 与 more 类似，但是比 more 更好的是，他可以往前翻页！
+空格键 ：向下翻动一页； 
+[pagedown]：向下翻动一页； 
+[pageup] ：向上翻动一页； 
+/字符串 ：向下搜寻『字符串』的功能； 
+?字符串 ：向上搜寻『字符串』的功能； 
+n ：重复前一个搜寻 (与 / 或 ? 有关！) 
+N ：反向的重复前一个搜寻 (与 / 或 ? 有关！) 
+q ：离开 less 这个程序； 
+
+head 只看头几行 
+ 
+[root@linux ~]# head [-n number] 档案 
+参数： 
+-n ：后面接数字，代表显示几行的意思      
+
+tail 只看尾巴几行   tail -200f logfile2 ( 显示日志最后 200 行 )
+od 以二进制的方式读取档案内容！ 
+ 
+[root@linux ~]# od [-t TYPE] 档案 
+参数： 
+-t ：后面可以接各种『类型 (TYPE)』的输出，例如： 
+a ：利用预设的字符来输出； 
+c ：使用 ASCII 字符来输出 
+d[size] ：利用十进制(decimal)来输出数据，每个整数占用 size bytes ； 
+f[size] ：利用浮点数值(floating)来输出数据，每个数占用 size bytes ； 
+o[size] ：利用八进位(octal)来输出数据，每个整数占用 size bytes ； 
+x[size] ：利用十六进制(hexadecimal)来输出数据，每个整数占用 size bytes ；      
+
+
+ chmod  ( chmod +R filename增加文件读写执行权限,+R 可读,+W 可写,+X 可执行
+        ( chmod 777 filename 增加文件读写执行权限的另一种方式,
+                             7=> 对应8进制的 111 可读可写可执行)
+        
+ chown  ( chown -R haowen .将当前目录下所有文件和目录权限赋给 haowen 
+          ,-R 包括子目录)
+ chgrp -R mysql . (把当前文件夹变更到mysql群组,mysql是已经有的群组)变更文件或目录的所属群组。
+
+ umask 档案预设权限：
+ umask 指定的是『该默认值需要减掉的权限 ！』
+
+chattr (设定档案隐藏属性) 
+lsattr (显示档案隐藏属性) 
+ 
+ find   ( find ./ -name file1 -print ,从当前目录向下查找名为 file1 的文件)
+ mkdir  ( mkdir  dir1 ,新建目录 dir1 ) 
+ 
+mkdir [-mp] 目录名称 
+参数： 
+-m ：设定档案的权限喔！直接设定，不需要看预设权限 (umask) 的脸色～ 
+-p ：帮助你直接将所需要的目录递归建立起来！      
+  
+[root@linux ~]# rmdir [-p] 目录名称 
+参数： 
+-p ：连同上层『空的』目录也一起删除      
+
+ pwd   Print Working Directory  ( pwd  ,显示当前路径 ) pwd -P 显示出确实的路径,而非使用连接(link)路径
+
+ cd     ( cd /usr/local/   进入目录 /usr/local/ , cd ../ 返回到上一级目录  
+                           ./ 当前目录 ../父目录 - 代表前一个工作目录 ~代表[目前使用者身份]所在的家目录  ~account代表account这个使用者的家目录)针对 cd 的使用方法，如果仅输入 cd 时，代表的就是『 cd           ~ 』
+ 
+ mv     ( mv file1  /home/haowen/ ,将文件移动到目录 /home/haowen/下 
+                                  ,相当于 window 剪切 )
+        ( mv file1 filenew1 ,将文件名改为 filenew1 )
+ 
+[root@linux ~]# mv [-fiu] source destination 
+[root@linux ~]# mv [options] source1 source2 source3 .... directory 
+参数： 
+-f ：force 强制的意思，强制直接移动而不询问； 
+-i ：若目标档案 (destination) 已经存在时，就会询问是否覆盖！ 
+-u ：若目标档案已经存在，且 source 比较新，才会更新 (update)      
+
+ cp     ( cp file1 /home/haowen/  ,将文件复制copy到目录 /home/haowen/下  
+          cp -r dir1 /home/haowen/ 
+          cp file1 ./file2 复制文件并改名)
+ 
+[root@linux ~]# cp [-adfilprsu] 来源档(source) 目的檔(destination) 
+[root@linux ~]# cp [options] source1 source2 source3 .... directory 
+参数： 
+-a ：相当于 -pdr 的意思； 
+-d ：若来源文件为连结文件的属性(link file)，则复制连结文件属性而非档案本身； 
+-f ：为强制 (force) 的意思，若有重复或其它疑问时，不会询问使用者，而强制复制； 
+-i ：若目的檔(destination)已经存在时，在覆盖时会先询问是否真的动作！ 
+-l ：进行硬式连结 (hard link) 的连结档建立，而非复制档案本身； 
+-p ：连同档案的属性一起复制过去，而非使用预设属性； 
+-r ：递归持续复制，用于目录的复制行为； 
+-s ：复制成为符号连结文件 (symbolic link)，亦即『快捷方式』档案； 
+-u ：若 destination 比 source 旧才更新 destination ！      
+
+ rm     ( rm file1 ,rm -r dir1,rm -rf dir2 删除文件或目录, f不提示输入y 
+ 
+[root@linux ~]# rm [-fir] 档案或目录 
+参数： 
+-f ：就是 force 的意思，强制移除； 
+-i ：互动模式，在删除前会询问使用者是否动作 
+-r ：递归删除啊！最常用在目录的删除了      
+
+touch 建立一个空的档案,将某个档案日期修订为目前 (mtime 与 atime) 
+ 
+[root@linux ~]# touch [-acdmt] 档案 
+参数： 
+-a ：仅修订 access time； 
+-c ：仅修改时间，而不建立档案；
+-d ：后面可以接日期，也可以使用 --date="日期或时间" 
+-m ：仅修改 mtime ； 
+-t ：后面可以接时间，格式为[YYMMDDhhmm]      
+    
+file 如果你想要知道某个档案的基本数据，例如是属于 ASCII 或者是 data 档案，或者是 binary ， 且其中有没有使用到动态函式库 (share library) 等等的信息，就可以利用 file 这个指令来检阅喔！ 
+
+which (寻找『执行档』) 这个指令是根据『PATH』这个环境变量所规范的路径，去搜寻『执行档』的档名
+ 
+[root@linux ~]# which [-a] command 
+参数： 
+-a ：将所有可以找到的指令均列出，而不止第一个被找到的指令名称      
+
+whereis (从数据库寻找特定档案)
+ 
+[root@linux ~]# whereis [-bmsu] 档案或目录名 
+参数： 
+-b :只找 binary 的档案 
+-m :只找在说明文件 manual 路径下的档案 
+-s :只找 source 来源档案 
+-u :没有说明档的档案！      
+
+功能说明：计算字数。
+语 　 法：wc [-clw][--help][--version][文件名]
+补充说明：利用wc指令我们可以计算文件的Byte数、字数、或是列数，若不指定任何文件名称，或是所给予的文件名为"-"，则wc指令会从标准输入设备读取数据。假设不给予其参数，wc指令会一并显示列数、字数和Byte数
+参 　 数：
+-c 只显示Byte数，亦即字符数；
+-l 只显示列数；
+-w 只显示字数；
+-m 同样显示字符数
+--help 在线帮助；
+--version 显示此软件的版本信息。
+
+
+locate 从数据库列出某个档案的完整档名
+
+find ./ -name index.jsp 查找当前目录下名称为index.jsp的文件
+
+ grep   ( grep "mobile=13712345678"  logfile1 ,在logfile1中 
+          搜索查找内容 "mobile=13712345678" )
+ 
+ ping   ( ping 61.129.78.9 ,ping www.163.com ,测试网络连接是否正常 )
+ ifconfig  ( ifconfig ,查看本机 IP地址，子网掩码等 )
+ 
+ ps    ( ps aux 查看系统中已经启动的进程, ps aux | grep programe1 ,
+         查看程序1是否正在运行
+ kill  ( kill -9  2325 ,杀死进程号为 2325的进程, 
+         killall  programe1 ,杀死programe1进程 )
+ reboot ( 重启系统 )
+ init 0 ( 关机 ,仅 root 用户有权操作 )
+ init 6 ( 重启系统 ,仅 root 用户有权操作 )
+ 
+ gzip   ( gzip file1 ,压缩文件 file1 )
+ gunzip ( gunzip file1.gz  解压缩文件 file1.gz )
+ 
+ tar -zcvf ( tar -zcvf  dir1.tar.gz ./dir1  ,将当前目录下 dir1目录所有内容
+           压缩打包,包名dir1.tar.gz )
+ tar -zxvf ( tar -zxvf  dir1.tar.gz ,解开压缩包 )
+  
+ echo "hello!" >> file1  ( 将 "hello" 添加到文件 file1后面, 
+                           当 file1 不存在就创建 file1
+ 
+ vi file2       ( vi 编即器新建文件 file2)
+                ...输入内容 welcome..
+                ( 按 i 进入 insert 状态 即插入模式 ,按 Esc 退出插入模式
+                  在非插入模式下按 dd 删除光标当前行,按 x 删除当前字,
+                  按 j,n,l移动光标 )
+ :wq  ( 保存退出 ) :q! (不保存退出) 
+ 
+增加环境变量
+ 
+[root@linux ~]# echo $PATH        
+[root@linux ~]# PATH="$PATH":/root      
+ 
+env  显示系统的一些环境变量 
+set  显示系统的所有变量 
+
+ chmod:
+ Linux/Unix 的档案调用权限分为三级 : 档案拥有者、群组、其他。
+ 利用 chmod 可以藉以控制档案如何被他人所调用。   
+ + 表示增加权限、- 表示取消权限、= 表示唯一设定权限。 
+　 r 表示可读取，w 表示可写入，x 表示可执行，
+ 
+ 1. 将档案 file1.txt 设为所有人皆可读取 : 
+　　 chmod ugo+r file1.txt   或  chmod 444 file1.txt
+ 
+ 2. 将文件 file2 设为属主可读写执行,Group,other ,只能读
+   chmod 744 file2   ( 7=> "111" ,4=>"100" 二进制 )
+   
+ 3. 将文件 file3 设为属主可读写执行,Group,other ,无权限操作不能读写执行)
+   chmod 700 file3   ( 7=> "111" ,0=>"000"  )
+   
+   其中a,b,c各为一个数字，分别表示User、Group、及Other的权限。 
+　 
+　 r=4，w=2，x=1 若要rwx属性则4+2+1=7； 若要rw-属性则4+2=6；
+                  若要r-x属性则4+1=5
+　 　
+  tar:
+  tar 调用gzip
+　　gzip是GNU组织开发的一个压缩程序，.gz结尾的文件就是gzip压缩的结果。
+    与gzip相对的解压程序是gunzip。tar中使用-z这个参数来调用gzip。
+　　# tar -czf all.tar.gz *.jpg
+    
+　　这条命令是将所有.jpg的文件打成一个tar包，并且将其用gzip压缩，生成一个
+    gzip压缩过的包，包名为all.tar.gz
+    
+　　# tar -xzf all.tar.gz   这条命令是将上面产生的包解开。
+　　
+date 显示日期的指令： 
+
+cal 显示日历的指令： 
+
+bc 简单好用的计算器： 
+
+[Tab] 按键   (按两次) 命令补全: 
+
+[Ctrl]-c 按键 中断目前程序: 
+
+[Ctrl]-d 按键  (相当于输入 exit) 键盘输入结束: 
+
+info 在线求助  :  
+    
+who 要看目前有谁在在线:  
+    
+finger 显示关于系统用户的信息
+
+netstat -a     看网络的联机状态: 
+
+ntsysv 设置服务随系统启动时同时启动
+    
+shutdown  ,shutdown -h now  惯用的关机指令： 
+
+reboot, halt, poweroff 重新开机，关机： 
+
+--- 系统相关的命令:---
+ dmesg : 例如 dmesg | more  显示系统的诊断信息,操作系统版本号,物理内及其它信息
+ df : 例如 df -h 显示硬盘空间
+ du :   查看目录中各级子目录使用的硬盘空间
+ free:  查看系统内存,虚拟内存(交换空间)的大小占用情况
+ top: 动态实时查看系统内存,CPU,进程
+
+ hostname 查看主机名:
+ 
+ hostname 新主机名 修改主机名(临时的,重启就没了):
+
+man 命令:查看该命令的基础用法 
+info 命令:查看该命令的基础用法
+ls -l /lib/modules/`uname -r`/kernel/fs 查看Linux 支持的档案系统有哪些
+cat /proc/filesystems  查看Linux目前已启用的档案系统
+
+type 查询某个指令是来自于外部指令(指的是其它非 bash 套件所提供的指令) 或是内建在 bash 当中的指令
+ 
+[root@linux ~]# type [-tpa] name 
+参数： 
+：不加任何参数时，则 type 会显示出那个 name 是外部指令还是 bash 内建的指令！ 
+-t ：当加入 -t 参数时，type 会将 name 以底下这些字眼显示出他的意义： 
+file ：表示为外部指令； 
+alias ：表示该指令为命令别名所设定的名称； 
+builtin ：表示该指令为 bash 内建的指令功能； 
+-p ：如果后面接的 name 为指令时，会显示完整文件名(外部指令)或显示为内建指令； 
+-a ：会将由 PATH 变量定义的路径中，将所有含有 name 的指令都列出来，包含 alias      
+
+myname=pqb 变量的设定
+PATH="$PATH":/home/dmtsai/bin  变量的累加
+echo $myname 变量的查看
+unset myname 变量的取消
+
+在来看看关机，关闭系统使用Shutdown命令，确保用户和系统的资料完整。只有root用户才能使用这个命令。
+一般的用户是不允许执行这个命令的。
+我们先看看showdown语法：
+shutdown [options] when [message]
+options:　-r 表示重启，-h表示系统服务停滞(halt)后，立刻关机，-f表示快速重启
+when：　为shutdown指定时间。hh:mm：绝对时间，hh指小时，mm指分钟；如08:30，+m:m分钟后执行，
+now=+0，也就是立刻执行
+message：表示系统的广播信息，一般提示各个用户系统关机或重启，要求用户保存资料后退出。
+我们来看看几个例子：
+shutdown -h now 立刻关机
+shutdown -h 21:30 今天21：30关机
+shutdown -h +10 十分钟后关机
+shutdown -r now 立刻重启
+shutdown -r +10 ‘the system will reboot’ 10分钟后重启，管理员提示用户系统要重启了，便于用户保存工
+作中的资料。只有root用户才能使用这个命令。
+
+创建文件
+创建文件是指创建一个一般的普通文件，并且这个文件为空，我们可以使
+用touch命令来建立一般文件，如下操作：
+[root@Linux two]# touch 111.txt
+
+搜索文件
+我们先来学习一下如何搜索文件，特别是刚开始学习Linux的时候，自己建立的文件不知道放在哪里了，常有发
+生。如果知道文件名，却不知道文件在那个目录下面了，我们就可以使用locate命令来搜索文件。看如下操作
+：
+[root@Linux one]# locate install.log
+/root/install.log
+/root/install.log.syslog
+看一下，我们一下就搜索了两个与install.log相关的文件，他们都在/root目录下，同时我们感觉到，使用这个命
+令搜索文件的速度比较快，其实要使用这个命令，必须配合数据库来使用，因为这个命令是从数据库中来搜索
+文件，这个数据库的更新速度是7天更新一次。如下操作：
+[root@Linux one]# touch 001.txt
+[root@Linux one]# locate 001.txt
+发现这个命令找不到新建立的文件，所以我们要使用这个命令搜索文件之前，必须自己更新一下数据库(更新数据库需要root权限)，如下
+操作：
+[root@Linux one]# updatedb
+[root@Linux one]# locate 001.txt
+/root/one/001.txt
+看看，如果执行updatedb这个命令更新数据库之后，我们就可以找到我们所需要的数据。不过更新数据库的时
+间需要一段时间。
+
+
+locale能看语言环境
+保存语言信息的文件在/etc/sysconfig/i18n中。
+
+/sbin/service xinetd restart|start|stop 启动后台服务， 
+
+/sbin/chkconfig --list |more 显示系统服务启动情况，显示了运行级别0到运行级别6的情况.
+这些服务都是靠系统脚本init启动的。还有一些不是靠系统脚本启动的而下面会看到一些特殊服务，他们不是
+靠init 启动的。是靠xinetd启动的，是一个独立的互联网服务器的服务器是一个超级服务其，可以启动很多的子服
+务器。
+
+大家看到 xinetd这个服务只要他是开启的，就可以运行他下面的服务器，它下面的大部分都是关闭的，只
+有一个是开启的，如果我们想开启一个服务可以使用chkconfig命令，例如我们想开启 rsync服务，我们可以使
+用chkconfig rsync on|off 命令。
+
+mount
+在mount命令不使用任何选项和参数的时候将显示当前linux系统中以挂载的文件系统信息。
+
+mount Cttype dev dir
+光盘文件系统类型是：iso9660；dev表示需要挂载文件系统的设备名称，光盘驱动器的设备名称是/dev/cdrom; dir表示挂载点，即挂载到的文件目录路径。
+首先介绍光盘的挂载方法：
+mount -t iso9660 /dev/cdrom /media/cdrom
+
+列出系统中所有存储设备
+fdisk -l命令
+
+使用“vfat”文件系统类型表示所有的fat文件系统类型，包括fat16和fat32，ntfs还是使用ntfs表示。
+u盘的挂载方法
+mount -t vfat /dev/sdb1 /mnt/
+mount -t ntfs /dev/sdb1 /mnt/
+
+umount命令用于卸载已经挂载的文件系统，基本格式如：umount dir device
+
+对于光盘文件系统的卸载可以使用，以下两条命令中的任意一条
+umount /dev/cdrom
+umount /media/cdrom
+
+u盘的卸载
+umount /dev/sdb1
+
+eject命令
+eject 弹出光盘命令
+eject -t 光盘驱动器自动回收
+
+cut 
+使用权限：所有使用者 
+用法：cut -cnum1-num2 filename 
+说明：显示每行从开头算起 num1 到 num2 的文字。 
+范例： 
+shell>> cat example 
+test2 
+this is test1 
+shell>> cut -c0-6 example 开头算起前 6 个字元 
+test2 
+this i 
+
+指令名称:ln 
+　　使用权限:所有使用者 
+　　使用方式:ln [options] source dist,其中 option 的格式为:
+　　[-bdfinsvF] [-S backup-suffix] [-V {numbered,existing,simple}] 
+　　[--help] [--version] [--] 
+
+　　说明:Linux/Unix 档案系统中,有所谓的连结(link),我们可以将其视为档案的别名,而连结又可分为两种:硬连结(hard link)与软连结(symbolic link),硬连结的意思是一个档案可以有多个名称,而软连结的方式则是产生一个特殊的档案,该档案的内容是指向另一个档案的位置。硬连结是存在同一个档案系统中,而软连结却可以跨越不同的档案系统。 
+
+　　ln source dist 是产生一个连结(dist)到 source,至于使用硬连结或软链结则由参数决定。 
+
+　　不论是硬连结或软链结都不会将原本的档案复制一份,只会占用非常少量的磁碟空间。
+
+　　-f:链结时先将与 dist 同档名的档案删除-d:允许系统管理者硬链结自己的目录-i:在删除与 dist 同档名的档案时先进行询问-n:在进行软连结时,将 dist 视为一般的档案-s:进行软链结(symbolic link)-v:在连结之前显示其档名-b:将在链结时会被覆写或删除的档案进行备份-S SUFFIX:将备份的档案都加上 SUFFIX 的字尾-V METHOD:指定备份的方式--help:显示辅助说明--version:显示版本 
+　　范例:
+　　将档案 yy 产生一个 symbolic link:zz 
+　　ln -s yy zz 
+　　将档案 yy 产生一个 hard link:zz 
+　　ln yy xx 
+
+名称:at 
+　　使用权限:所有使用者 
+　　使用方式:at -V [-q queue] [-f file] [-mldbv] TIME 
+　　说明:at 可以让使用者指定在 TIME 这个特定时刻执行某个程式或指令,TIME 的格式是 HH:MM其中的 HH 为小时,MM 为分钟,甚至你也可以指定 am, pm, midnight, noon, teatime(就是下午 4 点锺)等口语词。 
+　　如果想要指定超过一天内的时间,则可以用 MMDDYY 或者 MM/DD/YY 的格式,其中 MM 是分钟,DD 是第几日,YY 是指年份。另外,使用者甚至也可以使用像是 now + 时间间隔来弹性指定时间,其中的时间间隔可以是 minutes, hours, days, weeks 
+　　另外,使用者也可指定 today 或 tomorrow 来表示今天或明天。当指定了时间并按下 enter 之后,at 会进入交谈模式并要求输入指令或程式,当你输入完后按下 ctrl+D 即可完成所有动作,至于执行的结果将会寄回你的帐号中。
+　　把计:
+　　-V:印出版本编号 
+　　-q:使用指定的伫列(Queue)来储存,at 的资料是存放在所谓的 queue 中,使用者可以同时使用多个 queue,而 queue 的编号为 a, b, c... z 以及 A, B, ... Z 共 52 个 
+　　-m:即使程式/指令执行完成后没有输出结果, 也要寄封信给使用者 
+　　-f file:读入预先写好的命令档。使用者不一定要使用交谈模式来输入,可以先将所有的指定先写入档案后再一次读入 
+　　-l:列出所有的指定 (使用者也可以直接使用 atq 而不用 at -l) 
+　　-d:删除指定 (使用者也可以直接使用 atrm 而不用 at -d) 
+　　-v:列出所有已经完成但尚未删除的指定 
+　　例子:
+　　三天后的下午 5 点锺执行 /bin/ls:
+　　at 5pm + 3 days /bin/ls 
+
+　　三个星期后的下午 5 点锺执行 /bin/ls:
+　　at 5pm + 2 weeks /bin/ls 
+
+　　明天的 17:20 执行 /bin/date:
+　　at 17:20 tomorrow /bin/date 
+　　1999 年的最后一天的最后一分钟印出 the end of world ! 
+　　at 23:59 12/31/1999 echo the end of world ! 
+
+名称：cal 
+　　使用权限：所有使用者 
+　　使用方式：cal [-mjy] [month [year]] 
+　　说明： 
+　　显示日历。若只有一个参数,则代表年份(1-9999),显示该年的年历。年份必须全部写出：``cal 89\ 将不会是显示 1989 年的年历。使用两个参数,则表示月份及年份。若没有参数则显示这个月的月历。 
+　　1752 年 9 月第 3 日起改用西洋新历,因这时大部份的国家都采用新历,有 10 天被去除,所以该月份的月历有些不同。在此之前为西洋旧历。 
+　　匡兜: 
+　　-m:以星期一为每周的第一天方式显示。 
+　　-j:以凯撒历显示,即以一月一日起的天数显示。 
+　　-y:显示今年年历。 
+　　范例： 
+　　cal:显示本月的月历。
+　　[root@mylinux /root]# date 
+　　Tue Aug 15 08:00:18 CST 2000 
+　　[root@mylinux /root]# cal 
+　　...
+
+　　cal 2001:显示公元 2001 年年历。
+　　[root@mylinux /root]# cal 2001 
+　　...
+
+    cal 5 2001:显示公元 2001 年 5 月月历。
+　　[root@mylinux /root]# cal 5 2001 
+
+
+名称:crontab 
+　　使用权限:所有使用者 
+　　使用方式:
+　　crontab [ -u user ] filecrontab [ -u user ] { -l | -r | -e } 
+　　说明:
+　　crontab 是用来让使用者在固定时间或固定间隔执行程式之用,换句话说,也就是类似使用者的时程表。-u user 是指设定指定 user 的时程表,这个前提是你必须要有其权限(比如说是 root)才能够指定他人的时程表。如果不使用 -u user 的话,就是表示设定自己的时程表。 
+　　参数:
+
+　　-e:执行文字编辑器来设定时程表,内定的文字编辑器是 VI,如果你想用别的文字编辑器,则请先设定 VISUAL 环境变数来指定使用那个文字编辑器(比如说 setenv VISUAL joe) 
+　　-r:删除目前的时程表 
+　　-l:列出目前的时程表 
+
+　　时程表的格式如下:
+　　f1 f2 f3 f4 f5 program 
+
+　　其中 f1 是表示分钟,f2 表示小时,f3 表示一个月份中的第几日,f4 表示月份,f5 表示一个星期中的第几天。program 表示要执行的程式。 
+　　当 f1 为 * 时表示每分钟都要执行 program,f2 为 * 时表示每小时都要执行程式,其余类推 
+　　当 f1 为 a-b 时表示从第 a 分钟到第 b 分钟这段时间内要执行,f2 为 a-b 时表示从第 a 到第 b 小时都要执行,其余类推 
+　　当 f1 为 */n 时表示每 n 分钟个时间间隔执行一次,f2 为 */n 表示每 n 小时个时间间隔执行一次,其余类推 
+　　当 f1 为 a, b, c,... 时表示第 a, b, c,... 分钟要执行,f2 为 a, b, c,... 时表示第 a, b, c...个小时要执行,其余类推 
+　　使用者也可以将所有的设定先存放在档案 file 中,用 crontab file 的方式来设定时程表。 
+　　例子:
+　　每月每天每小时的第 0 分钟执行一次 /bin/ls:
+　　0 7 * * * /bin/ls 
+
+　　在 12 月内, 每天的早上 6 点到 12 点中,每隔 20 分钟执行一次 /usr/bin/backup:
+　　0 6-12/3 * 12 * /usr/bin/backup 
+
+　　周一到周五每天下午 5:00 寄一封信给 alex@domain.name:
+　　0 17 * * 1-5 mail -s "hi" alex@domain.name < /tmp/maildata 
+
+　　每月每天的午夜 0 点 20 分, 2 点 20 分, 4 点 20 分....执行 echo "haha" 
+　　20 0-23/2 * * * echo "haha" 
+
+　　注意:
+　　当程式在你所指定的时间执行后,系统会寄一封信给你,显示该程式执行的内容,若是你不希望收到这样的信,请在每一行空一格之后加上 > /dev/null 2>&1 即可。
+
+
+名称:sleep 
+　　使用权限:所有使用者 
+　　使用方式:sleep [--help] [--version] number[smhd] 
+　　说明:sleep 可以用来将目前动作延迟一段时间 
+　　参数说明:
+　　--help:显示辅助讯息 
+　　--version:显示版本编号 
+　　number:时间长度,后面可接 s,m,h 或 d 
+　　其中 s 为秒,m 为 分钟,h 为小时,d 为日数 
+　　例子:
+　　显示目前时间后延迟 1 分钟,之后再次显示时间:
+　　date;sleep 1m;date 
+
+
+　　名称： finger 
+　　使用权限： 所有使用者 
+　　使用方式： finger [options] user[@address] 
+　　说明：finger 可以让使用者查询一些其他使用者的资料。
+    范例：下列指令可以查询本机管理员的资料： 
+　　finger root 
+
+名称：last 
+　　使用权限：所有使用者 
+　　使用方式：shell>> last [options] 
+　　说明：显示系统开机以来获是从每月初登入者的讯息 
+　　把计: 
+　　-R 省略 hostname 的栏位 
+　　-num 展示前 num 个 
+　　username 展示 username 的登入讯息 
+　　tty 限制登入讯息包含终端机代号 
+　　范例： 
+
+　　shell>> last -R -2 
+
+　名称:write 
+　　使用权限:所有使用者 
+　　使用方式:
+　　write user [ttyname] 
+　　说明:传讯息给其他使用者 
+　　把计:
+　　user:预备传讯息的使用者帐号 
+　　ttyname:如果使用者同时有两个以上的 tty 连线,可以自行选择合适的 tty 传讯息 
+　　例子.1:
+　　传讯息给 Rollaend,此时 Rollaend 只有一个连线:
+　　write Rollaend 
+    接下来就是将讯息打上去,结束请按 ctrl+c 
+
+　　例子.2 :传讯息给 Rollaend,Rollaend 的连线有 pts/2,pts/3:
+　　write Rollaend pts/2
+
+　　接下来就是将讯息打上去,结束请按 ctrl+c 
+　　注意:若对方设定 mesg n,则此时讯席将无法传给对方 
+
+名称：expr 
+　　使用权限：所有使用者 
+　　### 字串长度 
+　　shell>> expr length "this is a test" 
+　　14 
+
+　　### 数字商数 
+　　shell>> expr 14 % 9 
+　　5 
+
+　　### 从位置处抓取字串 
+　　shell>> expr substr "this is a test" 3 5 
+　　is is 
+
+　　### 数字串 only the first character 
+
+　　shell>> expr index "testforthegame" e 
+　　2 
+
+　　### 字串真实重现 
+　　shell>> expr quote thisisatestformela 
+　　thisisatestformela 
+
+指令：clear 
+　　用途：清除萤幕用。 
+　　使用方法：在 console 上输入 clear。 
+--------------------------------------------------------------------------------------
+
+linux常用命令（基础）
+
+1. man 对你熟悉或不熟悉的命令提供帮助解释
+
+eg:man ls 就可以查看ls相关的用法
+
+注：按q键或者ctrl+c退出，在linux下可以使用ctrl+c终止当前程序运行。
+2. ls 查看目录或者文件的属*，列举出任一目录下面的文件
+
+eg: ls /usr/man
+
+ls -l
+
+a.d表示目录(directory)，如果是一个”-”表示是文件，如果是l则表示是一个连接文件(link)
+
+b.表示文件或者目录许可权限.分别用可读(r)，可写(w)，可运行(x)。
+
+3. cp 拷贝文件
+
+eg: cp filename1 filename2 //把filename1拷贝成filename2
+
+cp 1.c netseek/2.c //将1.c拷到netseek目录下命名为2.c
+
+4. rm 删除文件和目录
+
+eg: rm 1.c //将1.c这个文件删除
+
+5. mv 移走目录或者改文件名
+
+eg: mv filename1 filename2 //将filename1 改名为filename2
+
+mv qib.tgz ../qib.tgz //移到上一级目录
+
+6. cd 改变当前目录 pwd 查看当前所在目录完整路径
+
+eg: pwd //查看当前所在目录路径
+
+cd netseek //进入netseek这个目录
+
+cd //退出当前目录
+
+7. cat，more命令
+
+将某个文件的内容显示出来。两个命令所不同的是:cat把文件内容一直打印出来，而 more则分屏显示
+
+eg; cat>1.c //就可以把代码粘帖到1.c文件里，按ctrl+d 保存代码。
+
+cat 1.c 或more 1.c //都可以查看里面的内容。
+
+gcc -o 1 1.c //将1.c编译成.exe文件，我们可以用此命编译出代码。
+
+8.chmod 命令 权限修改 用法：chmod 一位8进制数 filename。
+
+eg: chmod u+x filenmame //只想给自己运行，别人只能读
+
+//u表示文件主人， g 表示文件文件所在组。 o 表示其他人 ;r 表可读，w 表可写，x 表可以运行
+
+chmod g+x filename //同组的人来执行
+
+9. clear，date命令
+
+clear:清屏，相当与DOS下的cls;date:显示当前时间。
+
+10. mount 加载一个硬件设备
+
+用法:mount [参数] 要加载的设备 载入点
+
+eg: mount /dev/cdrom
+
+cd /mnt/cdrom //进入光盘目录
+
+11. su 在不退出登陆的情况下，切换到另外一个人的身份
+
+用法: su -l 用户名(如果用户名缺省，则切换到root状态)
+
+eg:su -l netseek (切换到netseek这个用户，将提示输入密码)
+
+12.whoami，whereis，which，id
+
+//whoami:确认自己身份
+
+//whereis:查询命令所在目录以及帮助文档所在目录
+
+//which:查询该命令所在目录(类似whereis)
+
+//id:打印出自己的UID以及GID。(UID:用户身份唯一标识。GID:用户组身份唯一标识。每一个用户只能有一个唯一的UID和 GID)
+
+eg: whoami //显示你自已登陆的用户名
+
+whereis bin 显示bin所在的目录，将显示为：/usr/local/bin
+
+which bin
+
+13. grep，find
+
+grep:文本内容搜索;find:文件或者目录名以及权限属主等匹配搜索
+
+eg: grep success *    /*查找当前目录下面所有文件里面含有success字符的文件
+
+14. kill 可以杀死某个正在进行或者已经是dest状态的进程
+
+eg; ps ax
+
+15. passwd 可以设置口令
+
+16. history 用户用过的命令
+
+eg: history //可以显示用户过去使用的命令
+
+17. !! 执行最近一次的命令
+
+18. mkdir命令
+
+eg: mkdir netseek //创建netseek这个目录
+
+19. tar 解压命令
+
+eg: tar -zxvf nmap-3.45.tgz //将这个解压到nmap-3.45这个目录里
+
+20. finger 可以让使用者查询一些其他使用者的资料
+
+eg: finger //查看所用用户的使用资料
+
+finger root //查看root的资料
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+Linux 下zip包的压缩与解压 
+
+
+
+linux zip 命令详解 
+功能说明：压缩文件。 
+语 法：zip [-AcdDfFghjJKlLmoqrSTuvVwXyz$][-b <工作目录>][-ll][-n <字尾字符串>][-t <日期时间>][-<压缩效率>][压缩文件][文件...][-i <范本样式>][-x <范本样式>] 
+补充说明：zip是个使用广泛的压缩程序，文件经它压缩后会另外产生具有".zip"扩展名的压缩文件。 
+参 数： 
+-A 调整可执行的自动解压缩文件。 
+-b<工作目录> 指定暂时存放文件的目录。 
+-c 替每个被压缩的文件加上注释。 
+-d 从压缩文件内删除指定的文件。 
+-D 压缩文件内不建立目录名称。 
+-f 此参数的效果和指定"-u"参数类似，但不仅更新既有文件，如果某些文件原本不存在于压缩文件内，使用本参数会一并将其加入压缩文件中。 
+-F 尝试修复已损坏的压缩文件。 
+-g 将文件压缩后附加在既有的压缩文件之后，而非另行建立新的压缩文件。 
+-h 在线帮助。 
+-i<范本样式> 只压缩符合条件的文件。 
+-j 只保存文件名称及其内容，而不存放任何目录名称。 
+-J 删除压缩文件前面不必要的数据。 
+-k 使用MS-DOS兼容格式的文件名称。 
+-l 压缩文件时，把LF字符置换成LF+CR字符。 
+-ll 压缩文件时，把LF+CR字符置换成LF字符。 
+-L 显示版权信息。 
+-m 将文件压缩并加入压缩文件后，删除原始文件，即把文件移到压缩文件中。 
+-n<字尾字符串> 不压缩具有特定字尾字符串的文件。 
+-o 以压缩文件内拥有最新更改时间的文件为准，将压缩文件的更改时间设成和该文件相同。 
+-q 不显示指令执行过程。 
+-r 递归处理，将指定目录下的所有文件和子目录一并处理。 
+-S 包含系统和隐藏文件。 
+-t<日期时间> 把压缩文件的日期设成指定的日期。 
+-T 检查备份文件内的每个文件是否正确无误。 
+-u 更换较新的文件到压缩文件内。 
+-v 显示指令执行过程或显示版本信息。 
+-V 保存VMS操作系统的文件属性。 
+-w 在文件名称里假如版本编号，本参数仅在VMS操作系统下有效。 
+-x<范本样式> 压缩时排除符合条件的文件。 
+-X 不保存额外的文件属性。 
+-y 直接保存符号连接，而非该连接所指向的文件，本参数仅在UNIX之类的系统下有效。 
+-z 替压缩文件加上注释。 
+-$ 保存第一个被压缩文件所在磁盘的卷册名称。 
+-<压缩效率> 压缩效率是一个介于1-9的数值。
+
+linux unzip 命令详解
+
+功能说明：解压缩zip文件
+
+语 法：unzip [-cflptuvz][-agCjLMnoqsVX][-P <密码>][.zip文件][文件][-d <目录>][-x <文件>] 或 unzip [-Z]
+
+补充说明：unzip为.zip压缩文件的解压缩程序。
+
+参 数：
+
+-c 将解压缩的结果显示到屏幕上，并对字符做适当的转换。
+
+-f 更新现有的文件。
+
+-l 显示压缩文件内所包含的文件。
+
+-p 与-c参数类似，会将解压缩的结果显示到屏幕上，但不会执行任何的转换。
+
+-t 检查压缩文件是否正确。
+
+-u 与-f参数类似，但是除了更新现有的文件外，也会将压缩文件中的其他文件解压缩到目录中。
+
+-v 执行是时显示详细的信息。
+
+-z 仅显示压缩文件的备注文字。
+
+-a 对文本文件进行必要的字符转换。
+
+-b 不要对文本文件进行字符转换。
+
+-C 压缩文件中的文件名称区分大小写。
+
+-j 不处理压缩文件中原有的目录路径。
+
+-L 将压缩文件中的全部文件名改为小写。
+
+-M 将输出结果送到more程序处理。
+
+-n 解压缩时不要覆盖原有的文件。
+
+-o 不必先询问用户，unzip执行后覆盖原有文件。
+
+-P<密码> 使用zip的密码选项。
+
+-q 执行时不显示任何信息。
+
+-s 将文件名中的空白字符转换为底线字符。
+
+-V 保留VMS的文件版本信息。
+
+-X 解压缩时同时回存文件原来的UID/GID。
+
+[.zip文件] 指定.zip压缩文件。
+
+[文件] 指定要处理.zip压缩文件中的哪些文件。
+
+-d<目录> 指定文件解压缩后所要存储的目录。
+
+-x<文件> 指定不要处理.zip压缩文件中的哪些文件。
+
+-Z unzip -Z等于执行zipinfo指令
+
+
+
+范例：
+
+zip命令可以用来将文件压缩成为常用的zip格式。unzip命令则用来解压缩zip文件。
+
+1. 我想把一个文件abc.txt和一个目录dir1压缩成为yasuo.zip：
+
+＃ zip -r yasuo.zip abc.txt dir1
+
+2.我下载了一个yasuo.zip文件，想解压缩：
+
+# unzip yasuo.zip
+
+3.我当前目录下有abc1.zip，abc2.zip和abc3.zip，我想一起解压缩它们：
+
+＃ unzip abc\?.zip
+
+注释：?表示一个字符，如果用*表示任意多个字符。
+
+4.我有一个很大的压缩文件large.zip，我不想解压缩，只想看看它里面有什么：
+
+# unzip -v large.zip
+
+5.我下载了一个压缩文件large.zip，想验证一下这个压缩文件是否下载完全了
+
+# unzip -t large.zip
+
+6.我用-v选项发现music.zip压缩文件里面有很多目录和子目录，并且子目录中其实都是歌曲mp3文件，我想把这些文件都下载到第一级目录，而不是一层一层建目录：
+
+# unzip -j music.zip

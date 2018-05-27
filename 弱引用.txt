@@ -1,0 +1,13 @@
+static class MyHandler extends Handler {
+    WeakReference<Activity > mActivityReference;
+    MyHandler(Activity activity) {
+        mActivityReference= new WeakReference<Activity>(activity);
+    }
+    @Override
+    public void handleMessage(Message msg) {
+        final Activity activity = mActivityReference.get();
+        if (activity != null) {
+            mImageView.setImageBitmap(mBitmap);
+        }
+    }
+}

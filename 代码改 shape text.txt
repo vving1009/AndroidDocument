@@ -1,0 +1,8 @@
+代码改text字体
+TextView textView =(TextView)findViewById(R.id.custom);
+Typeface typeFace =Typeface.createFromAsset(getAssets(),"fonts/HandmadeTypewriter.ttf");
+textView.setTypeface(typeFace);
+
+代码改shape的颜色
+GradientDrawable myGrad = (GradientDrawable)view.getBackground();  
+myGrad.setColor(color);  

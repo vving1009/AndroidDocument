@@ -1,0 +1,118 @@
+Android FragmentManage FragmentTransaction介绍    .
+
+
+标签： androidhierarchylayoutnullui  
+
+2011-11-02 11:33 99338人阅读 评论(9) 收藏 举报 
+.  
+
+ 分类： 
+
+android（综合）（123）   
+
+
+ .
+
+版权声明：本文为博主原创文章，未经博主允许不得转载。
+
+
+
+目录(?)[+]
+
+
+
+
+
+
+FragmentManage：
+
+FragmentManager能够实现管理activity中fragment. 通过调用activity的getFragmentManager()取得它的实例.
+
+FragmentManager可以做如下一些事情:
+
+
+1、使用findFragmentById() (用于在activity layout中提供一个UI的fragment)或findFragmentByTag() 
+
+   (适用于有或没有UI的fragment)获取activity中存在的fragment
+
+2、将fragment从后台堆栈中弹出, 使用 popBackStack() (模拟用户按下BACK 命令).
+
+3、使用addOnBackStackChangeListener()注册一个监听后台堆栈变化的listener.
+
+ 
+
+FragmentTransaction：
+
+      FragmentTransaction对fragment进行添加,移除,替换,以及执行其他动作。
+
+
+
+从 FragmentManager 获得一个FragmentTransaction的实例 :
+
+
+
+
+FragmentManager fragmentManager = getFragmentManager(); 
+FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+
+
+
+
+每一个事务都是同时要执行的一套变化.可以在一个给定的事务中设置你想执行的所有变化,使用诸如 add(), remove(), 和 replace().然后, 要给activity应用事务, 必须调用 commit().
+
+
+
+
+在调用commit()之前, 你可能想调用 addToBackStack(),将事务添加到一个fragment事务的back stack. 这个back stack由activity管理, 并允许用户通过按下 BACK 按键返回到前一个fragment状态.
+
+
+
+
+举个例子, 这里是如何将一个fragment替换为另一个, 并在后台堆栈中保留之前的状态:
+
+
+
+
+// Create new fragment and transaction  Fragment newFragment = new ExampleFragment();  FragmentTransaction transaction = getFragmentManager().beginTransaction();  // Replace whatever is in the fragment_container view with this fragment,  // and add the transaction to the back stack  transaction.replace(R.id.fragment_container, newFragment);  transaction.addToBackStack(null);  // Commit the transaction  transaction.commit();
+
+
+
+
+
+在这个例子中, newFragment 替换了当前layout容器中的由R.id.fragment_container标识的fragment.通过调用 addToBackStack(), replace事务被保存到back stack, 因此用户可以回退事务,并通过按下BACK按键带回前一个fragment.
+
+
+
+
+如果添加多个变化到事务(例如add()或remove())并调用addToBackStack(), 然后在你调用commit()之前的所有应用的变化会被作为一个单个事务添加到后台堆栈, BACK按键会将它们一起回退.
+
+
+
+
+添加变化到 FragmentTransaction的顺序不重要, 除以下例外:
+
+?必须最后调用 commit().
+?如果添加多个fragment到同一个容器, 那么添加的顺序决定了它们在view hierarchy中显示的顺序.
+
+当执行一个移除fragment的事务时, 如果没有调用 addToBackStack(), 那么当事务提交后, 那个fragment会被销毁,并且用户不能导航回到它. 有鉴于此, 当移除一个fragment时,如果调用了 addToBackStack(), 那么fragment会被停止, 如果用户导航回来,它将会被恢复.
+
+
+
+
+提示: 对于每一个fragment事务, 你可以应用一个事务动画, 通过在提交事务之前调用setTransition()实现.
+
+
+
+
+调用 commit() 并不立即执行事务.恰恰相反, 它将事务安排排期, 一旦准备好, 就在activity的UI线程上运行(主线程).如果有必要, 无论如何, 你可以从你的UI线程调用 executePendingTransactions() 来立即执行由commit()提交的事务. 但这么做通常不必要, 除非事务是其他线程中的job的一个从属.
+
+
+
+
+警告: 你只能在activity保存它的状态(当用户离开activity)之前使用commit()提交事务.
+
+
+
+
+如果你试图在那个点之后提交, 会抛出一个异常.这是因为如果activity需要被恢复, 提交之后的状态可能会丢失.对于你觉得可以丢失提交的状况, 使用 commitAllowingStateLoss().

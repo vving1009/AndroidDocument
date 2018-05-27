@@ -1,0 +1,41 @@
+（1）在app的 build.gradle 中的dependencies 中添加
+
+
+       compile 'com.Android.support:multidex:1.0.1'
+
+
+      dependencies {
+             compile fileTree(include: ['*.jar'], dir: 'libs')
+             compile 'com.android.support:multidex:1.0.1'
+       }
+（2）在app的 build.gradle 中的 defaultConfig 中添加
+           multiDexEnabled true
+         defaultConfig {
+ ...
+ multiDexEnabled true
+         }
+（3）在 AndroidManifest.xml 中的  application 标签中添加 :
+
+
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package=".test">
+     <application
+        ...
+         android:name="android.support.multidex.MultiDexApplication">
+        ...
+    </application>
+</manifest>
+提示：如果你的应用重写了Application，则你需要继承MultiDexApplication而不再是Application啦
+
+
+在重写的Application中重写下边方法
+/**
+ * 分割 Dex 支持
+* @param base
+*/
+@Override
+protected void attachBaseContext(Context base) {
+         super.attachBaseContext(base);
+          MultiDex.install(this);
+}

@@ -1,0 +1,55 @@
+Android Studio 使用技巧：修改默认build.gradle
+
+在项目中发现一些好用的插件和库，就想默认在每个工程里使用，就想到了找找如何直接修改默认工程的build.gradle文件，经过多方面查找资料，可以使用下面的方法来改。
+
+比如说有一个好用的butterKnife这个库，需要添加buildscript的dependencies和compile的dependencies。
+
+我们先找到Android Studio\plugins\android\lib\templates\gradle-projects，然后看名称就知道NewAndroidProject目录下的就是创建android工程时默认使用的模板。
+
+然后我们打开root中的build.gradle.ftl，看起来和一个默认项目里的结构一模一样，我们首先把classpath 'com.jakewharton:butterknife-gradle-plugin:8.5.1'添加在buildscript.dependencies的最后面。同时，添加一个版本号字义(这一步也可以省略，如果省略，后面在app的gradle里就直接指定版本的butterknife)以供在app的gradle里使用版本号变量来指定butterknife，如下文中的ext结点。
+
+如：
+
+buildscript {
+    repositories {
+        jcenter()
+<#if mavenUrl != "mavenCentral">
+        maven {
+            url '${mavenUrl}'
+        }
+</#if>
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:${gradlePluginVersion}'
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+        classpath 'com.jakewharton:butterknife-gradle-plugin:8.5.1'
+    }
+}
+
+// Define versions in a single place
+ext {
+
+  // App dependencies
+  butterKnifeVersion = '8.5.1'
+}
+
+但是我们在NewAndroidProject目录里并没有找到新建工程后的app目录里的那个build.gradle对应的模板，看名称找到了NewAndroidModule目录，同样的步骤打开root\build.gradle.ftl然后在dependencies节点添加两行，结果见：
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    androidTestCompile('com.android.support.test.espresso:espresso-core:${espressoVersion!"2.0"}', {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+<#if WearprojectName?has_content && NumberOfEnabledFormFactors?has_content && NumberOfEnabledFormFactors gt 1 && Wearincluded>
+    wearApp project(':${WearprojectName}')
+    compile 'com.google.android.gms:play-services:+'
+</#if>
+
+    // code generator for view(这3行是新增的)
+    compile "com.jakewharton:butterknife:$rootProject.butterKnifeVersion"
+    annotationProcessor "com.jakewharton:butterknife-compiler:$rootProject.butterKnifeVersion"
+}
+
+然后保存文件，打开Android Stuido 新建工程。

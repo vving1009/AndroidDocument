@@ -1,0 +1,226 @@
+ Android动画效果之Tween Animation（补间动画）
+ http://www.cnblogs.com/whoislcj/p/5730520.html
+
+Tween Animation（补间动画）：
+
+    Tween动画，通过对View的内容进行一系列的图形变换 (包括平移、缩放、旋转、改变透明度)来实现动画效果。动画效果的定义可以采用XML来做也可以采用编码来做。
+
+ 
+动画类型 	XML配置方式 	Java代码实现方式
+渐变透明度动画效果 	<alpha/> 	AlphaAnimation
+渐变尺寸缩放动画效果 	<scale/> 	ScaleAnimation
+画面旋转动画效果 	<rotate/> 	RotateAnimation
+画面位置移动动画效果 	<translate/> 	TranslateAnimation
+组合动画效果 	<set/> 	AnimationSet
+
+xml文件存放目录如下图所示：
+
+具体如何实现：
+1.）alpha渐变透明度动画效果
+
+ xml方式：
+
+<?xml version="1.0" encoding="utf-8"?>
+<alpha xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="500"
+    android:fillAfter="false"
+    android:fromAlpha="1.0"
+    android:toAlpha="0.0" />
+
+fromAlpha:开始时透明度
+toAlpha： 结束时透明度
+duration：动画持续时间
+fillAfter：设置动画结束后保持当前的位置
+
+XML方式加载方式通过AnimationUtils.loadAnimation(this, R.anim.anim_alpha)获取Animation
+
+  Animation alphaAnimation = AnimationUtils.loadAnimation(this, R.anim.anim_alpha);
+  imageView.startAnimation(alphaAnimation);
+
+Java代码方式：
+
+  Animation alphaAnimation = new AlphaAnimation(1.0f, 0.0f);
+  alphaAnimation.setDuration(500);//设置动画持续时间为500毫秒
+  alphaAnimation.setFillAfter(false);//设置动画结束后保持当前的位置（即不返回到动画开始前的位置）
+  imageView.startAnimation(alphaAnimation);
+
+2.）scale渐变尺寸缩放动画效果
+
+ xml方式：
+
+<?xml version="1.0" encoding="utf-8"?>
+<scale xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="500"
+    android:fromXScale="0.0"
+    android:fromYScale="0.0"
+    android:interpolator="@android:anim/decelerate_interpolator"
+    android:pivotX="50%"
+    android:pivotY="50%"
+    android:repeatCount="1"
+    android:repeatMode="reverse"
+    android:startOffset="0"
+    android:toXScale="1.5"
+    android:toYScale="1.5" />
+
+fromXDelta,fromYDelta 起始时X，Y座标,屏幕右下角的座标是X:320,Y:480
+toXDelta， toYDelta 动画结束时X,Y的座标
+interpolator 指定动画插入器
+fromXScale,fromYScale， 动画开始前X,Y的缩放，0.0为不显示， 1.0为正常大小
+toXScale，toYScale， 动画最终缩放的倍数， 1.0为正常大小，大于1.0放大
+pivotX， pivotY 动画起始位置，相对于屏幕的百分比,两个都为50%表示动画从自身中间开始
+startOffset， 动画多次执行的间隔时间，如果只执行一次，执行前会暂停这段时间，单位毫秒
+duration，一次动画效果消耗的时间，单位毫秒，值越小动画速度越快
+repeatCount，动画重复的计数，动画将会执行该值+1次
+repeatMode，动画重复的模式，reverse为反向，当第偶次执行时，动画方向会相反。restart为重新执行，方向不变
+
+Java方式：
+
+ Animation scaleAnimation = new ScaleAnimation(0.0f, 1.5f, 0.0f, 1.5f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+    scaleAnimation.setDuration(500);//设置动画持续时间为500毫秒
+    scaleAnimation.setFillAfter(true);//如果fillAfter的值为true,则动画执行后，控件将停留在执行结束的状态
+    scaleAnimation.setFillBefore(false);//如果fillBefore的值为true，则动画执行后，控件将回到动画执行之前的状态
+    scaleAnimation.setRepeatCount(3);//设置动画循环次数
+    scaleAnimation.setRepeatMode(Animation.REVERSE);
+    scaleAnimation.setStartOffset(0);
+    scaleAnimation.setInterpolator(this, android.R.anim.decelerate_interpolator);//设置动画插入器
+    imageView.startAnimation(scaleAnimation);
+
+3.）rotate画面旋转动画效果
+
+xml方式：
+
+<?xml version="1.0" encoding="utf-8"?>
+<rotate xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="500"
+    android:fromDegrees="0"
+    android:interpolator="@android:anim/accelerate_decelerate_interpolator"
+    android:pivotX="50%"
+    android:pivotY="50%"
+    android:toDegrees="-360" />
+
+fromDegrees 动画开始时的角度
+toDegrees 动画结束时物件的旋转角度,正代表顺时针
+pivotX 属性为动画相对于物件的X坐标的开始位置
+pivotY 属性为动画相对于物件的Y坐标的开始位置
+
+Java方式：
+
+Animation rotateAnimation = new RotateAnimation(0, 360, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+rotateAnimation.setDuration(500);
+rotateAnimation.setFillAfter(true);
+rotateAnimation.setInterpolator(this, android.R.anim.accelerate_decelerate_interpolator);//设置动画插入器
+imageView.startAnimation(rotateAnimation);
+
+4.）translate画面位置移动动画效果
+
+xml方式：
+
+<?xml version="1.0" encoding="utf-8"?>
+<translate xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="500"
+    android:fromXDelta="100"
+    android:fromYDelta="0"
+    android:interpolator="@android:anim/cycle_interpolator"
+    android:toXDelta="0"
+    android:toYDelta="0" />
+
+fromXDelta,fromYDelta 起始时X，Y座标,屏幕右下角的座标是X:320,Y:480
+toXDelta， toYDelta 动画结束时X,Y的座标
+
+Java方式：
+
+Animation translateAnimation = new TranslateAnimation(0, 100, 0, 0);
+translateAnimation.setDuration(500);
+translateAnimation.setInterpolator(this, android.R.anim.cycle_interpolator);//设置动画插入器
+translateAnimation.setFillAfter(true);//设置动画结束后保持当前的位置（即不返回到动画开始前的位置）
+imageView.startAnimation(translateAnimation);
+
+5.）set组合动画效果
+
+xml方式：
+
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android">
+    <alpha
+        android:duration="500"
+        android:fromAlpha="1.0"
+        android:toAlpha="0.0" />
+
+    <scale
+        android:duration="500"
+        android:fromXScale="0.0"
+        android:fromYScale="0.0"
+        android:interpolator="@android:anim/decelerate_interpolator"
+        android:pivotX="50%"
+        android:pivotY="50%"
+        android:repeatCount="1"
+        android:repeatMode="reverse"
+        android:startOffset="0"
+        android:toXScale="1.5"
+        android:toYScale="1.5" />
+</set>
+
+如何使用
+
+   AnimationSet animationSet = (AnimationSet) AnimationUtils.loadAnimation(this, R.anim.anim_set);
+   imageView.startAnimation(animationSet);
+
+Java方式
+
+AnimationSet animationSet = new AnimationSet(true);
+
+Animation alphaAnimation = new AlphaAnimation(1.0f, 0.1f);
+alphaAnimation.setDuration(500);//设置动画持续时间为500毫秒
+
+Animation scaleAnimation = new ScaleAnimation(0.0f, 1.5f, 0.0f, 1.5f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+scaleAnimation.setDuration(500);//设置动画持续时间为500毫秒
+scaleAnimation.setRepeatMode(Animation.REVERSE);
+scaleAnimation.setStartOffset(0);
+scaleAnimation.setInterpolator(this, android.R.anim.decelerate_interpolator);//设置动画插入器
+
+animationSet.addAnimation(alphaAnimation);
+animationSet.addAnimation(scaleAnimation);
+
+imageView.startAnimation(animationSet);
+
+动画监听器Animation.AnimationListener：
+
+ 有时可能我们要在动画的每个周期里面做不同的操作，这时候就要借助动画监听器了
+
+  alphaAnimation.setAnimationListener(new Animation.AnimationListener() {
+    @Override
+    public void onAnimationStart(Animation animation) {
+        //动画开始时调用
+    }
+
+    @Override
+    public void onAnimationEnd(Animation animation) {
+        //动画结束时调用
+    }
+
+    @Override
+    public void onAnimationRepeat(Animation animation) {
+        //动画重复时调用
+    }
+    });
+
+ 
+几种自带的动画插入器
+
+AccelerateInterpolator 加速，开始时慢中间加速
+
+DecelerateInterpolator 减速，开始时快然后减速
+
+AccelerateDecelerateInterolator 先加速后减速，开始结束时慢，中间加速
+
+AnticipateInterpolator 反向，先向相反方向改变一段再加速播放
+
+AnticipateOvershootInterpolator 反向加超越，先向相反方向改变，再加速播放，会超出目的值然后缓慢移动至目的值
+
+BounceInterpolator 跳跃，快到目的值时值会跳跃，如目的值100，后面的值可能依次为85，77，70，80，90，100
+
+CycleIinterpolator 循环，动画循环一定次数，值的改变为一正弦函数：Math.sin(2* mCycles* Math.PI* input)
+
+LinearInterpolator 线性，线性均匀改变
+
+OvershootInterpolator超越，最后超出目的值然后缓慢改变到目的值

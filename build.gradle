@@ -1,0 +1,140 @@
+//Project gradle
+//设置脚本的运行环境
+buildscript {
+//支持java 依赖库管理（maven/ivy）,用于项目的依赖。
+repositories {
+mavenCentral()
+}
+//依赖包的定义。支持maven/ivy，远程，本地库，也支持单文件
+dependencies {
+classpath 'com.android.tools.build:gradle:0.4'
+}
+}
+
+//Module gradle
+//声明构建的项目类型，这里当然是android了
+apply plugin: 'android'
+//设置编译android项目的参数
+android {
+compileSdkVersion 17
+buildToolsVersion "17"
+
+defaultConfig {
+minSdkVersion 8
+targetSdkVersion 17
+}
+//Android默认配置
+sourceSets {
+main {
+manifest.srcFile 'AndroidManifest.xml'
+java.srcDirs = ['src']
+resources.srcDirs = ['src']
+aidl.srcDirs = ['src']
+renderscript.srcDirs = ['src']
+res.srcDirs = ['res']
+assets.srcDirs = ['assets']
+}
+//测试所在的路径，这里假设是tests文件夹，没有可以不写这一行
+instrumentTest.setRoot('tests')
+}
+
+//这个是解决lint报错的代码
+lintOptions {
+abortOnError false
+}
+/**
+* 签名设置
+*/
+signingConfigs {
+myConfigs {
+storeFile file("签名文件地址")
+keyAlias "..."
+keyPassword "..."
+storePassword "..."
+}
+}
+/**
+* 混淆设置
+*/
+buildTypes {
+release {
+signingConfig signingConfigs.myConfigs  // 签名
+shrinkResources true // 去除未使用资源
+minifyEnabled true // 混淆、去除未使用类
+runProguard true
+proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+}
+}
+/**
+* 渠道打包（不同包名）
+*/
+productFlavors {
+qqqq {
+applicationId = '包名'
+}
+hhhhh {
+applicationId='包名'
+}
+}
+//添加aar时添加
+repositories {  
+    flatDir {  
+        dirs 'libs'  
+    } 
+}
+}
+/**
+* .so文件的导入
+*/
+task copyNativeLibs(type: Copy) {
+from fileTree(dir: 'libs', include: 'armeabi/*.so') into 'build/lib'
+}
+
+tasks.withType(Compile) {
+options.encoding = "UTF-8"
+}
+
+tasks.withType(Compile) {
+compileTask -> compileTask.dependsOn copyNativeLibs
+}
+clean.dependsOn 'cleanCopyNativeLibs'
+tasks.withType(com.android.build.gradle.tasks.PackageApplication) { pkgTask ->
+pkgTask.jniFolders = [new File(buildDir, 'lib')]
+}
+//依赖库
+dependencies {
+//单文件依赖
+compile files('libs/android-support-v4.jar') 
+//某个文件夹下面全部依赖
+compile fileTree(dir: 'libs', include: '*.jar')
+//添加aar
+compile(name:'test', ext:'aar')
+}
+
+
+gradle 同时支持maven，ivy，由于ivy我没用过，所以用maven 作为例子，以下为代码块：
+repositories {
+//从中央库里面获取依赖
+mavenCentral() 
+//或者使用指定的本地maven 库
+maven{
+url "file://F:/githubrepo/releases"
+} 
+//或者使用指定的远程maven库
+maven{
+url "远程库地址"
+}
+}
+
+dependencies {
+//应用格式: packageName:artifactId:version
+compile 'com.google.android:support-v4:r13'}
+
+android {
+
+}
+
+/*对于项目依赖 android library的话，就不是依赖一个jar，那么简单了，在这里需要使用gradle mulit project 机制。在过去，android library并没有一个很好的包管理方式，简单来说，在gradle出现以前，官方并没有一种用于管理android library 依赖包的方式，一般我们都是直接下载别人的android library project 源码进行集成，而对于第三方的android-maven-plugin 用的是apklib 格式。
+而现在，官方终于推出一种android library的打包格式，扩展名为*.aar。前面提到，目前android gradle插件并不支持本地直接使用*.aar文件，不过，支持包管理库的引用方式，下面，我为大家说一下，怎么对android library 发布使用。
+打包android library
+对android library 进行打包直接在library项目下面使用gradle build 即可，然后，你就会在 build/libs 目录下看到两个*.aar文件，一个debug包用的，一个是release 下用的，看个人需求使用，这里我们用的是release 版本的 .aar 文件。*/

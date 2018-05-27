@@ -1,0 +1,154 @@
+Android ArrayAdapter 详解   .
+
+
+标签： androidlistviewlayoutuserliststring  
+
+2011-05-31 16:22 109706人阅读 评论(39) 收藏 举报 
+.
+
+  
+
+ 分类： 
+
+Android（16）   
+
+
+ .
+
+版权声明：本文为博主原创文章，未经博主允许不得转载。
+
+
+本文主要讲解ArrayAdapter的创建方法，我把ArrayAdapter分为三种:简单的、样式丰富的但内容简单的、内容丰富的。
+
+默认的，ArrayAdapter期望接受的样式文件里只含有一个textview，然后它把接受到的数据toString后（即调用数据对象的toString方法）展示在textview里。
+
+一、简单的。
+
+这样的列表的每一行都只有一行文字。
+
+
+
+
+[Java] view plain copy 
+01.// 当然listview 也可以是在layout里写好，然后findViewById()获取出来，这样的话后面就不需setContentView(listview);      
+02.        ListView listview = new ListView(this);  
+03.        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,Android.R.layout.simple_expandable_list_item_1);  
+04.        adapter.add("string1");  
+05.        adapter.add("haha");  
+06.        adapter.add("heihei");        
+07.        listview.setAdapter(adapter);  
+08.        setContentView(listview);    
+
+
+ 
+
+上面代码中，android.R.layout.simple_expandable_list_item_1是android里已提供的样式，我们也可换成自己的xml。但是需要注意的是这个xml文件仅能有一个textview。连Layout也不能有。否则会报错：ArrayAdapter requires the resource ID to be a TextView
+
+如layout下有online_user_list_item.xml，它的内容如下：
+
+
+
+
+[xhtml] view plain copy 
+01.<TextView xmlns:android="http://schemas.android.com/apk/res/android"  
+02.android:layout_width="wrap_content"   
+03.android:layout_height="wrap_content"    
+04.android:id="@+id/online_user_list_item_textview" >  
+05.</TextView>  
+
+
+ 
+
+则android.R.layout.simple_expandable_list_item_1换成R.layout.online_user_list_item。
+
+如果我们想要使用更复杂一点的layout，而不仅是只有一个textview，那就要用下面这种。
+
+二、样式丰富但内容简单的。
+
+layout下的online_user_list_item.xml内容如下：
+
+
+
+
+[xhtml] view plain copy 
+01.<?xml version="1.0" encoding="utf-8"?>  
+02.<LinearLayout  xmlns:android="http://schemas.android.com/apk/res/android"  
+03.    android:layout_width="fill_parent"  
+04.    android:layout_height="wrap_content">  
+05.<TextView android:layout_width="wrap_content" android:layout_height="wrap_content"  android:id="@+id/online_user_list_item_textview" android:text="TextView"></TextView>  
+06.<Button  
+07.    android:text="button"  
+08.    android:layout_width="wrap_content"  
+09.    android:layout_height="wrap_content">  
+10.</Button>  
+11.</LinearLayout>  
+
+
+ 
+
+里面含有的textview是我们想要展示内容的地方。那么构建ArrayAdapter时，应该这样写：
+
+
+
+
+[java] view plain copy 
+01.ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.online_user_list_item, R.id.online_user_list_item_textview);  
+
+
+ 
+
+如果我们需要展示的内容是一仅一个textview承载不了的，还需要其它组件，怎么办？我们可以自定义。
+
+三、内容丰富的（自定义ArrayAdapter）。
+
+这就需要写一个类继承自ArrayAdapter并且重写getView方法。上代码：
+
+
+
+
+[java] view plain copy 
+01.public class UserListAdapter extends ArrayAdapter<User> {  
+02.    private int resourceId;  
+03.    public UserListAdapter(Context context, int textViewResourceId, List<User> objects) {  
+04.        super(context, textViewResourceId, objects);  
+05.        this.resourceId = textViewResourceId;  
+06.    }  
+07.      
+08.    @Override  
+09.    public View getView(int position, View convertView, ViewGroup parent){  
+10.        User user = getItem(position);  
+11.        LinearLayout userListItem = new LinearLayout(getContext());  
+12.        String inflater = Context.LAYOUT_INFLATER_SERVICE;   
+13.        LayoutInflater vi = (LayoutInflater)getContext().getSystemService(inflater);   
+14.        vi.inflate(resourceId, userListItem, true);  
+15.        TextView tvUsername = (TextView)userListItem.findViewById(R.id.tv_user_list_username);  
+16.        TextView tvAskedNum = (TextView)userListItem.findViewById(R.id.tv_user_list_askednum);  
+17.        TextView tvLastMsg = (TextView)userListItem.findViewById(R.id.tv_user_list_lastmsg);  
+18.        tvUsername.setText(user.getUsername());  
+19.        tvAskedNum.setText(String.valueOf(user.getAskedNum()));  
+20.        tvLastMsg.setText(user.getLastMsg());  
+21.        return userListItem;  
+22.    }  
+23.}  
+
+
+ 
+
+ 
+
+activity里就这样写
+
+
+
+
+[java] view plain copy 
+01.List<User> users = new ArrayList<User>();  
+02.        User user = new User();  
+03.        user.setAskedNum(8);  
+04.        user.setLastMsg("hello");  
+05.        user.setUsername("pxx");  
+06.        users.add(user);  
+07.        users.add(user);  
+08.        users.add(user);  
+09.        UserListAdapter adapter = new UserListAdapter(this,R.layout.online_user_list_item,users);  
+10.        listview.setAdapter(adapter);  

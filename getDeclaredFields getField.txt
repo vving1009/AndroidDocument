@@ -1,0 +1,78 @@
+
+java Class getDeclaredFields() 与getFields()的区别  
+博客分类： Java Web
+Java
+ 
+getDeclaredFieldsgetFields私有字段Class反射 .
+
+
+
+java 中getDeclaredFields() 与getFields() 的区别
+
+ 
+
+getDeclaredFields()返回Class中所有的字段，包括私有字段。例证：
+
+package com.test.bean;
+
+import java.sql.Timestamp;
+
+public class Person2 {
+	private int id;
+	private int age;
+	private String personName;
+	private Timestamp birthdate;
+	public String identitify;
+	protected String address;
+	String phone;
+	
+}
+@Test
+	public void test_getDeclaredFields() {
+		Field[]fields=Person2.class.getDeclaredFields();
+		for (int i = 0; i < fields.length; i++) {
+			Field field = fields[i];
+			System.out.println(field.getName());
+		}
+	}
+	
+ 运行结果：
+
+id
+
+age
+
+personName
+
+birthdate
+
+identitify
+
+address
+
+phone
+
+ 
+
+getFields  只返回公共字段，即有public修饰的字段。例证：
+
+@Test
+	public void test_getDeclaredFields() {
+		Field[]fields=Person2.class.getFields();
+		for (int i = 0; i < fields.length; i++) {
+			Field field = fields[i];
+			System.out.println(field.getName());
+		}
+	}
+	
+运行结果如下：
+
+identitify
+
+ 
+
+总结：
+
+（1）getDeclaredFields()返回Class中所有的字段，包括私有字段；
+
+（2）getFields  只返回公共字段，即有public修饰的字段

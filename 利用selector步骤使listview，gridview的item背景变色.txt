@@ -1,0 +1,43 @@
+利用selector方法使listview，gridview的item背景变色
+
+转载请注明出处：http://blog.csdn.net/harryweasley/article/details/44955845，谢谢
+
+
+当我点击了一个item后，这个item的背景会一直变色下去，
+
+
+刚开始使用state_selected，想着点击item后，选中后，他的背景就会改变，但发现并没有起作用，
+
+
+之后经过谷歌，找到了实现该效果的方法，
+
+
+我们应该用state_activated而不是state_selected这个方法，并且在xml给listview或者gridview设置他的属性android:choiceMode="singleChoice"
+
+保证只有一个item被选中
+
+
+
+其中，selector中的文件是这样的
+
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 按压后的背景 -->
+    <item android:drawable="@drawable/poupwindow" android:state_pressed="true"></item>
+    <!-- 选择后的背景 -->
+    <item android:drawable="@drawable/poupwindow" android:state_activated="true"></item>
+    <!-- 默认的背景 -->
+    <item android:drawable="@drawable/gridview_item"></item>
+
+</selector>
+
+
+
+
+关于selector更多的信息，你可以点击这里Android中的Selector的用法
+
+
+
+
+参考地址：http://stackoverflow.com/questions/15767274/state-selected-is-not-working-although-state-pressed-works

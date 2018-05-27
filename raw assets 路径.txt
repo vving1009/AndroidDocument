@@ -1,0 +1,12 @@
+
+
+ android开发如何获取res/raw和assets文件夹的路径，主要分为两种情况：
+
+    1.如果你只是拷贝动作，那么你只需要得到res/raw和assets文件输入流就可以，方法如下：
+
+    获取res/raw文件输入流：  InputStream is=getResources().openRawResource(R.raw.XXX);
+    获取assets文件输入流：  InputStream is=getResources().getAssets().open("文件名");
+
+    2.如果你想对res/raw和assets文件写的动作，那就要得到相应uri，方法如下：
+
+    获取res/raw的uri：Uri uri=Uri.paese("android.resource://包名/"+R.raw.xxx);

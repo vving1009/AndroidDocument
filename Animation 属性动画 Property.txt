@@ -1,0 +1,509 @@
+http://www.cnblogs.com/whoislcj/p/5738478.html
+http://www.cnblogs.com/whoislcj/p/5796803.html
+Property Animation产生的背景：
+
+    由于Tween Animation（补间动画）只能实现简单的四种的动画（alpha、scale、rotate、translate），要想实现比较复杂的动画就难以满足需求，而且补间动画只是改变了View对象绘制的位置，而没有改变View对象本身，比如View形状的变换，如大小的缩放，透明度的改变，位置的改变，其实本身并没有改变，举个例子就好比孙悟空灵魂出窍一样，虽然已经上天入地，其实肉体还在那里一动不动，我们开发过程中的经常遇见的就是translate之后事件还在原地。如果要实现既要有动画效果又要使得View本身得到真正改变，那就要借助属性动画了，这也是属性动画引入的原因。它能够更加灵活的实现各种效果，不仅限于类似补间动画实现的哪几种效果。
+Property Animation相关类
+
+   属性动画，根据字面理解可以通过修改物件的属性值以达到动画效果。
+类名 	用途
+ValueAnimator 	属性动画主要的计时器，也计算动画后的属性的值，动画的执行类
+ObjectAnimator   	ValueAnimator的一个子类，允许你设置一个目标对象和对象的属性进行动画，动画的执行类
+AnimatorSet 	提供组织动画的结构，使它们能相关联得运行，用于控制一组动画的执行
+AnimatorInflater  	用户加载属性动画的xml文件
+Evaluators  	属性动画计算器，告诉了属性动画系统如何计算给出属性的值
+Interpolators 	动画插入器，定义动画的变化率
+
+ 上面几个重要类之间的关系如下图所示：
+
+ 
+
+今天先通过最简单最容易理解的ObjectAnimator来学习总结。
+ObjectAnimator：
+
+   ValueAnimator的一个子类，允许你设置一个目标对象和对象的属性进行动画。当这个类计算好一个动画的新值后，相应的会更新其属性。大多数时候你都会想用ObjectAnimator，因为它使得动画值到目标对象的处理更简单了。
+1.）以实现一个View透明渐变效果为例进行说明
+
+xml实现方式：
+
+这里需要注意是的属性动画文件存放目录为res/animator
+
+
+<?xml version="1.0" encoding="utf-8"?>
+<objectAnimator xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="500"
+    android:propertyName="alpha"
+    android:repeatCount="1"
+    android:repeatMode="reverse"
+    android:startOffset="200"
+    android:valueFrom="0.0"
+    android:valueTo="1.0"
+    android:valueType="floatType" />
+
+
+
+duration 表示动画执行的时间
+propertyName 表示修改的物件的哪个属性值，这里是透明度
+valueFrom 表示从哪个状态值开始动画
+valueTo 表示到哪个状态值结束动画
+valueType 类型估值，主要用于设置动画操作属性的值
+repeatMode 表示重复的模式 reverse表示
+repeatCount 动画重复的计数，动画将会执行该值+1次
+repeatMode 动画重复的模式，reverse为反向，当第偶次执行时，动画方向会相反。restart为重新执行，方向不变
+startOffset， 动画多次执行的间隔时间，如果只执行一次，执行前会暂停这段时间，单位毫秒 
+interpolator 指定动画插入器
+
+通过上面的xml属性可以看出和补间动画基本上一致，然后通过AnimatorInflater 来加载xml中的动画
+
+Animator anim = AnimatorInflater.loadAnimator(this, R.animator.animator_alpha);
+anim.setTarget(imageView);
+anim.start();
+
+当然也可以通过纯Java代码的方式实现
+
+
+ObjectAnimator alphaAnimation = ObjectAnimator.ofFloat(imageView, "alpha", 0f, 1f);
+    alphaAnimation.setDuration(500);
+    alphaAnimation.setRepeatCount(0);
+    alphaAnimation.setRepeatMode(ValueAnimator.REVERSE);
+    alphaAnimation.setStartDelay(200);
+    alphaAnimation.setInterpolator(new AccelerateDecelerateInterpolator());
+    alphaAnimation.start();
+
+
+
+对于java代码实现，ObjectAnimator 提供了以下几个方法：ofFloat()，ofInt()，ofObject()，ofArgb()，ofPropertyValuesHolder()这几个方法都是设置动画作用的元素、作用的属性、动画开始、结束、以及中间的任意个属性值。
+
+其他举例：
+缩放动画：
+
+xml：
+
+
+<objectAnimator xmlns:android="http://schemas.android.com/apk/res/android"
+　　android:duration="500"
+　　android:propertyName="scaleX"
+　　android:repeatCount="1"
+　　android:repeatMode="reverse"
+　　android:valueFrom="1.0"
+　　android:valueTo="1.5"
+　　android:valueType="floatType" />
+
+
+
+java代码：
+
+ ObjectAnimator scaleXAnimator = ObjectAnimator.ofFloat(imageView, "scaleX", 1f, 1.5f);
+   scaleXAnimator.setDuration(500);
+   scaleXAnimator.setRepeatCount(1);
+   scaleXAnimator.setRepeatMode(ValueAnimator.REVERSE);
+   scaleXAnimator.start();
+
+旋转动画：
+
+ xml：
+
+
+<?xml version="1.0" encoding="utf-8"?>
+<objectAnimator xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="500"
+    android:interpolator="@android:anim/accelerate_decelerate_interpolator"
+    android:propertyName="rotation"
+    android:repeatCount="1"
+    android:repeatMode="reverse"
+    android:valueFrom="0"
+    android:valueTo="360"
+    android:valueType="floatType" />
+
+
+
+java代码：
+
+ ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(imageView, "rotation", 0f, 360f);
+    objectAnimator.setDuration(500);
+    objectAnimator.setRepeatCount(1);
+    objectAnimator.setRepeatMode(ValueAnimator.REVERSE);
+    objectAnimator.start();
+
+平移动画：
+
+xml：
+
+
+<?xml version="1.0" encoding="utf-8"?>
+<objectAnimator xmlns:android="http://schemas.android.com/apk/res/android"
+    android:duration="500"
+    android:propertyName="translationX"
+    android:repeatCount="1"
+    android:repeatMode="reverse"
+    android:valueFrom="0"
+    android:valueTo="100"
+    android:valueType="floatType" />
+
+
+
+java代码：
+
+ ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(imageView, "translationX", 0f, 100f);
+    objectAnimator.setDuration(500);
+    objectAnimator.setRepeatCount(1);
+    objectAnimator.setRepeatMode(ValueAnimator.REVERSE);
+    objectAnimator.start();
+
+2.)如何实现一个组合动画
+
+    举例我们同时对一个控件进行宽高两个维度的缩放
+  方式一：使用AnimatorSet
+
+
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:ordering="together">
+    <objectAnimator
+        android:duration="500"
+        android:propertyName="scaleX"
+        android:repeatCount="1"
+        android:repeatMode="reverse"
+        android:valueFrom="1.0"
+        android:valueTo="1.5"
+        android:valueType="floatType" />
+    <objectAnimator
+        android:duration="500"
+        android:propertyName="scaleY"
+        android:repeatCount="1"
+        android:repeatMode="reverse"
+        android:valueFrom="1.0"
+        android:valueTo="1.5"
+        android:valueType="floatType" />
+
+</set>
+
+
+
+加载xml动画
+
+    Animator anim = AnimatorInflater.loadAnimator(this, R.animator.animator_scale);
+      anim.setTarget(imageView);
+      anim.start();
+
+纯Java代码实现：
+
+
+AnimatorSet animatorSet = new AnimatorSet();
+
+    ObjectAnimator scaleXAnimator = ObjectAnimator.ofFloat(imageView, "scaleX", 1f, 1.5f);
+    scaleXAnimator.setDuration(500);
+    scaleXAnimator.setRepeatCount(1);
+    scaleXAnimator.setRepeatMode(ValueAnimator.REVERSE);
+    scaleXAnimator.start();
+
+    ObjectAnimator scaleYAnimator = ObjectAnimator.ofFloat(imageView, "scaleY", 1f, 1.5f);
+    scaleYAnimator.setDuration(500);
+    scaleYAnimator.setRepeatCount(1);
+    scaleYAnimator.setRepeatMode(ValueAnimator.REVERSE);
+
+    animatorSet.playTogether(scaleXAnimator, scaleYAnimator);
+    animatorSet.start();
+
+
+
+上述代码通过playTogether函数实现两个动画同时执行，如果不想同时执行，也可以调用play函数返回AnimatorSet.Builder实例，AnimatorSet.Builder提供了如下几个函数用于实现动画组合：
+
+    after(Animator anim) 将现有动画插入到传入的动画之后执行
+    after(long delay) 将现有动画延迟指定毫秒后执行
+    before(Animator anim) 将现有动画插入到传入的动画之前执行
+    with(Animator anim) 将现有动画和传入的动画同时执行
+
+也可以调用playSequentially函数实现分布执行动画。
+  方式二：使用PropertyValuesHolder
+
+
+PropertyValuesHolder scaleXValuesHolder = PropertyValuesHolder.ofFloat("scaleX", 1.0f, 1.5f);
+PropertyValuesHolder scaleYValuesHolder = PropertyValuesHolder.ofFloat("scaleY", 1.0f, 1.5f);
+ObjectAnimator objectAnimator = ObjectAnimator.ofPropertyValuesHolder(imageView, scaleXValuesHolder, scaleYValuesHolder);
+    objectAnimator.setDuration(500);
+    objectAnimator.setRepeatCount(1);
+    objectAnimator.setRepeatMode(ValueAnimator.REVERSE);
+    objectAnimator.start();
+
+
+
+通过这种方式只能实现同时执行的动画组合相比AnimatorSet就没那么丰富了，PropertyValuesHolder 提供的函数方法有如下几种：ofInt()、ofFloat()、ofObject()、ofKeyframe()。
+方式三：使用ViewPropertyAnimator
+
+ ViewPropertyAnimator viewPropertyAnimator=imageView.animate();
+ viewPropertyAnimator.scaleXBy(1.0f).scaleX(1.5f).scaleYBy(1.0f).scaleY(1.5f).setDuration(500).start();
+
+多属性动画，作用于View，能够实现的动画相对单一，只能实现比如缩放，透明度改变，平移、旋转等，具体函数名字：平移 translationX，translationY, X，Y，缩放 scaleX，scaleY， 旋转 rotationX， rotationY，透明度 alpha
+3.）设置动画监听器
+
+有时候我们可能要在某一个动画执行之前 或者动画结束之后进行一些其他的操作，这个时候就要借助动画监听器了。
+
+
+    objectAnimator.addListener(new Animator.AnimatorListener() {
+    @Override
+    public void onAnimationStart(Animator animation) {
+        //TODO 动画开始前的操作
+    }
+
+    @Override
+    public void onAnimationEnd(Animator animation) {
+        //TODO 动画结束的操作
+    }
+
+    @Override
+    public void onAnimationCancel(Animator animation) {
+       //TODO 动画取消的操作
+    }
+
+    @Override
+    public void onAnimationRepeat(Animator animation) {
+        //TODO 动画重复的操作
+    }
+    });
+
+
+
+如果我们需要简单动画执行过程中的变化可以使用AnimatorUpdateListener
+
+
+ objectAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+    @Override
+    public void onAnimationUpdate(ValueAnimator animation) {
+        float value = (float) animation.getAnimatedValue();
+        //可以根据自己的需要来获取动画更新值。
+        Log.e("AnimatorUpdateListener", "the animation value is " + value);
+    }
+    });
+
+
+
+ValueAnimator（差值动画）
+
+    上篇文章一直使用的ObjectAnimator来实现属性动画，单纯从字面上理解的话ObjectAnimator作用于某个实际的对象，而ValueAnimator是ObjectAnimator的父类，它继承自抽象类Animator，它作用于一个值，将其由一个值变化为另外一个值，然后根据值的变化，按照一定的规则，动态修改View的属性，比如View的位置、透明度、旋转角度、大小等，即可完成了动画的效果。直接看下上面的数字动画是怎么实现的？
+
+
+ValueAnimator valueAnimator =ValueAnimator.ofFloat( 0f, 126512.36f);
+valueAnimator.setDuration(2000);
+valueAnimator.setInterpolator(new LinearInterpolator());
+valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+    @Override
+    public void onAnimationUpdate(ValueAnimator animation) {
+    float money= (float) animation.getAnimatedValue();
+    mTextView.setText(String.format("%.2f", money));
+    }
+});
+valueAnimator.start();
+
+
+
+这里通过ofFloat()方法构造一个ValueAnimator实例，除此之外还提供了其他函数ofInt()、ofObject()、ofPropertyValuesHolder()函数，api 21之后又提供了ofArgb()，每个函数都是可以传入多个改变值。
+Interpolator（插值器）
+
+   Interpolator插值器用于控制动画的变化速率，也可以简单的理解成用于控制动画的快慢，插值器目前都只是对动画执行过程的时间进行修饰，并没有对轨迹进行修饰。系统提供的插值器有以下几种：
+插值器名字 	解说 	对应的xml
+AccelerateInterpolator 	 加速，开始时慢中间加速  	@android:anim/accelerate_interpolator
+DecelerateInterpolator 	减速，开始时快然后减速 	@android:anim/decelerate_interpolator
+AccelerateDecelerateInterolator　  	先加速后减速，开始结束时慢，中间加速  	@android:anim/accelerate_decelerate_interpolator
+AnticipateInterpolator 	反向 ，先向相反方向改变一段再加速播放  	@android:anim/anticipate_interpolator
+AnticipateOvershootInterpolator 	反向加超越，先向相反方向改变，再加速播放，会超出目的值然后缓慢移动至目的值 	@android:anim/anticipate_overshoot_interpolator
+BounceInterpolator  	跳跃，快到目的值时值会跳跃，如目的值100，后面的值可能依次为85，77，70，80，90，100 	@android:anim/bounce_interpolator
+CycleIinterpolator  	循环，动画循环一定次数，值的改变为一正弦函数：Math.sin(2* mCycles* Math.PI* input) 	@android:anim/cycle_interpolator
+LinearInterpolator  	线性，线性均匀改变 	@android:anim/linear_interpolator
+OvershootInterpolator 	超越，最后超出目的值然后缓慢改变到目的值 	@android:anim/overshoot_interpolator
+
+通过上面的名字大家是不是很眼熟，是的和补间动画的插值器是一致的。Android的动画插值器采用策略设计模式，都是实现了Interpolator这个接口，而Interpolator又是继承自一个叫做TimeInterpolator的接口（从3.0开始，增加了TimeInterpolator这个接口，并把原先的Interpolator接口的抽象方法移到了其中，3.0后的Interpolator接口也就什么也没做，只是对父类改了个名字，达到向下兼容）。
+
+
+package android.animation;
+
+public interface TimeInterpolator {
+
+    float getInterpolation(float input);
+}
+
+
+
+在Interpolator的实现类里面，都实现了一个float getInterpolator(float input)的方法，传入参数是正常执行动画的时间点，返回值是用户真正想要它执行的时间点。上面的数字动画使用了匀速插值器LinearInterpolator其代码实现如下：
+
+
+public class LinearInterpolator extends BaseInterpolator implements NativeInterpolatorFactory {
+
+    public LinearInterpolator() {
+    }
+
+    public LinearInterpolator(Context context, AttributeSet attrs) {
+    }
+
+    public float getInterpolation(float input) {
+        return input;
+    }
+
+    /** @hide */
+    @Override
+    public long createNativeInterpolator() {
+        return NativeInterpolatorFactoryHelper.createLinearInterpolator();
+    }
+}
+
+
+
+可以看出float getInterpolator(float input)返回的值就是当前要执行的时间点实现匀速执行动画。
+
+如何自定义一个插值器？举例：我们实现一个先减速后加速插值器，代码如下
+
+
+public class DecelerateAccelerateInterpolator implements Interpolator {
+    @Override
+    public float getInterpolation(float input) {
+        float result;
+        if (input <= 0.5f) {
+            result = (float) (Math.sin(Math.PI * input)) / 2.0f;
+        } else {
+            result = (float) (2 - Math.sin(Math.PI * input)) / 2.0f;
+        }
+        return result;
+    }
+}
+
+
+TypeEvaluator（估值器）
+
+  TypeEvaluator用于根据当前属性改变的百分比来计算改变后的属性值，系统提供了如下几种估值器
+
+    IntEvaluator 针对整型属性
+
+    IntArrayEvaluator 针对整型属性集合
+
+    FloatEvaluator 针对浮点型属性
+
+    FloatArrayEvaluator 针对浮点型属性集合
+
+    ArgbEvaluator  针对Color属性
+
+    RectEvaluator 针对Rect属性
+
+    PointFEvaluator 针对PointF属性
+
+  TypeEvaluator设计也是采用策略设计模式，都实现TypeEvaluator接口，源代码如下：
+
+
+package android.animation;
+
+public interface TypeEvaluator<T> {
+
+    public T evaluate(float fraction, T startValue, T endValue);
+
+}
+
+
+
+接口提供了evaluate(float fraction, T startValue, T endValue);动画在运行过程中Interpolator自动计算出动画运行的百分比fraction，然后TypeEvaluator根据fraction计算出当前动画的属性值。以FloatEvaluator 代码为例：
+
+
+public class FloatEvaluator implements TypeEvaluator<Number> {
+
+
+    public Float evaluate(float fraction, Number startValue, Number endValue) {
+        float startFloat = startValue.floatValue();
+        return startFloat + fraction * (endValue.floatValue() - startFloat);
+    }
+}
+
+
+
+ 如何自定义TypeEvaLuator？比如我们要实现一个钱的增加，字体颜色越红的动画，我们现在都知道可以使用ofArgb(),但是ofArgb()需要api 21以上才能使用，所以需要我们自定义一个ArgbEvaLuator，这里为了演示自定义TypeEvaluator直接把api 21中提供的ArgbEvaluator源代码拿来使用，如下：
+
+
+public class TextArgbEvaluator implements TypeEvaluator {
+    
+    public Object evaluate(float fraction, Object startValue, Object endValue) {
+        int startInt = (Integer) startValue;
+        int startA = (startInt >> 24) & 0xff;
+        int startR = (startInt >> 16) & 0xff;
+        int startG = (startInt >> 8) & 0xff;
+        int startB = startInt & 0xff;
+
+        int endInt = (Integer) endValue;
+        int endA = (endInt >> 24) & 0xff;
+        int endR = (endInt >> 16) & 0xff;
+        int endG = (endInt >> 8) & 0xff;
+        int endB = endInt & 0xff;
+
+        return (int) ((startA + (int) (fraction * (endA - startA))) << 24) |
+                (int) ((startR + (int) (fraction * (endR - startR))) << 16) |
+                (int) ((startG + (int) (fraction * (endG - startG))) << 8) |
+                (int) ((startB + (int) (fraction * (endB - startB))));
+    }
+}
+
+
+
+调用方式：
+
+
+        AnimatorSet animatorSet = new AnimatorSet();
+        ValueAnimator valueAnimator = ValueAnimator.ofFloat(0f, 126512.36f);
+        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                float money = (float) animation.getAnimatedValue();
+                Log.e("Interpolator", "money---->" + money);
+                mTextView.setText(String.format("%.2f", money));
+            }
+        });
+
+        int startColor = Color.parseColor("#FCA3AB");
+        int endColor = Color.parseColor("#FB0435");
+        ValueAnimator colorAnimator = ValueAnimator.ofObject(new TextArgbEvaluator(),startColor, endColor);
+        colorAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                int color = (int) animation.getAnimatedValue();
+                Log.e("Interpolator", "color---->" + color);
+                mTextView.setTextColor(color);
+            }
+        });
+
+        animatorSet.playTogether(valueAnimator,colorAnimator);
+        animatorSet.setDuration(5000);
+        animatorSet.setInterpolator(new LinearInterpolator());
+        animatorSet.start();
+
+
+
+运行效果：
+
+ObjectAnimator
+
+    上篇我们简单了学习了ObjectAnimator动画，并且通过ObjectAnimator实现了几种简单的动画效果，ObjectAnimator继承自ValueAnimator，所以主体方法还是ValueAnimator里实现的。先来回顾一下上篇的一个旋转动画例子。
+
+ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(imageView, "rotation", 0f, 360f);
+    objectAnimator.setDuration(500);
+    objectAnimator.setRepeatCount(1);
+    objectAnimator.setRepeatMode(ValueAnimator.REVERSE);
+    objectAnimator.start();
+
+这个例子很简单，针对view的属性rotation进行持续时间为500ms的0到360的角度变换。属性名字rotation在View中有对应setRotation(),否则没有任何效果，而且参数类型必须为float型，否则没有任何效果。view常见可操作的参数有：x/y；scaleX/scaleY；rotationX/ rotationY；transitionX/ transitionY等等。现在问题来了，我们本篇例子是为TextView 赋值一个float型的值，我们查看TextView的函数并不找不到setText(float f),这时该怎么处理呢？如何为不具有get/set方法的属性提供修改方法呢？莫着急！谷歌为此提供了两种方法，第一种就是使用ValueAnimator来实现，就是上面所说的方式，另外一种方式通过自己写一个包装类，来为该属性提供get/set方法。
+
+
+public class MoneyTextView extends TextView {
+    public MoneyTextView(Context context, AttributeSet attrs) {
+        super(context, attrs);
+    }
+
+    public void setText(float money) {
+        setText(String.format("%.2f", money));
+    }
+}
+
+
+
+然后就可以通过ObjectAnimator实现上面的数字动画效果了。
+
+ ObjectAnimator objectAnimator = ObjectAnimator.ofFloat(mTextView, "text", 0f, 126512.36f);
+    objectAnimator.setDuration(2000);
+    objectAnimator.setInterpolator(new LinearInterpolator());
+    objectAnimator.start();
+
+其他有关ObjectAnimator的使用方式请参考上篇文章Android动画效果之初识Property Animation（属性动画）（三）。

@@ -1,0 +1,53 @@
+JAVA Timer and task 
+JAVA里面有时候需要定期地处理某些任务，例如：定期地查询数据库提取数据；定期地清理超时数据；定期地将内存中数据存到数据库。
+一种方法是自己写线程，自己控制。另一种方法就是利用java.util.Timer 和 java.util.TimerTask  来实现。
+下面就以一个将队列中数据定期存入数据库的例子展示这种用法：
+
+
+import java.util.TimerTask;  
+2.import java.util.Timer;  
+3.  
+4.public class Myservice{  
+5.   private Queue<String> logs = new LinkedBlockingQueue<String>(10000);  
+6.   private DBProvider provider;  
+7.   private Timer timer;  
+8.   private LogToDbTask task;   
+9.   private final long interval = 60 * 1000;   
+10.  
+11.   public Myservice(){  
+12.     provider= new DBProvider();  
+13.     timer= new Timer();  
+14.   }  
+15.  
+16.   private void saveToDb(){  
+17.         String logstr=null;  
+18.         boolean suc=false;  
+19.         for(int i=0;i<100 && !logs.isEmpty();i++){  
+20.              logstr=logs.poll();  
+21.              if(logstr!=null){  
+22.                 suc=provider.save(logstr);  
+23.                 if(!suc){  
+24.                    logs.add(logstr);  
+25.                 }  
+26.              }  
+27.         }  
+28.   }  
+29.  
+30.   private class LogToDbTask extends TimerTask{  
+31.          public void run(){  
+32.                 saveToDb();  
+33.          }  
+34.   }  
+35.  
+36.   public void start(){  
+37.       task = new LogToDbTask();  
+38.       timer.schedule(task,interval,interval);  
+39.   }  
+40.  
+41.   public void main(String args[]){         
+42.        Myservice service = new Myservice();  
+43.        service.start();  
+44.   }  
+45.  
+46.}  
+

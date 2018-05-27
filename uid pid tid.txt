@@ -1,0 +1,59 @@
+系统刚启动的时候，会对每个app分配一个uid，
+
+最简单的获取方式就是通过adb ，不过限于eng或userdebug版
+
+adb pull  data/system/packages.list   d:\
+
+当然最合理的方式是通过PackageManager
+
+public List getUids() {
+        List<Integer> uidList = new ArrayList<Integer>();
+        pm = getPackageManager();
+        List<PackageInfo> packinfos = pm
+                .getInstalledPackages(PackageManager.GET_UNINSTALLED_PACKAGES
+                        | PackageManager.GET_PERMISSIONS);
+        for (PackageInfo info : packinfos) {
+            String[] premissions = info.requestedPermissions;
+            if (premissions != null && premissions.length > 0) {
+                for (String premission : premissions) {
+                    if ("android.permission.INTERNET".equals(premission)) {
+                        // System.out.println(info.packageName+"访问网络");
+                        int uid = info.applicationInfo.uid;
+                        Log.i("test", "uid = " + uid);
+                        // String name = pm.getNameForUid(uid);
+                        // // textName.setText(name);
+                        // Log.i("test", "name = "+name);
+                        uidList.add(uid);
+                    }
+                }
+            }
+        }
+        return uidList;
+    } 
+ 
+
+ [Android Pro] 获取手机已经安装的应用 和 获取当前正在运行的所有进程（一个uid对应多个pid）
+
+1： 获取PackageManager 获取全部静态已安装的应用：
+
+PackageManager pm = getPackageManager(); 
+List<PackageInfo> infos = pm.getInstalledPackages(0); 
+
+icon  ： info.applicationInfo.loadIcon(pm)
+appName : info.applicationInfo.loadLabel(pm)
+
+2：获取ActivityManager获取动态所有正在运行的进程
+
+ActivityManager am = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+List<RunningAppProcessInfo> infos = am.getRunningAppProcesses();
+
+info.processName + " ; " + info.uid + " ; " + info.pid
+
+类似如下输出： 
+
+10-20 13:43:16.047: I/System.out(28009): com.qihoo360.mobilesafe:FloatWindow ; 10057 ; 27991
+10-20 13:43:16.047: I/System.out(28009): com.qihoo360.mobilesafe:GuardService ; 10057 ; 25390
+10-20 13:43:16.047: I/System.out(28009): com.qihoo360.mobilesafe:clear ; 10057 ; 27532
+
+
+https://www.cnblogs.com/androidsj/p/3378102.html

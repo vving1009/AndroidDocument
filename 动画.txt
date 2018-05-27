@@ -1,0 +1,101 @@
+Android动画分类
+ https://www.jianshu.com/p/1ab1b80099a9
+
+View动画、帧动画、属性动画
+
+    View动画包括：平移、旋转、缩放、透明度，View动画是一种渐近式动画
+    帧动画：图片切换动画
+    属性动画：通过动态改变对象的属性达到动画效果
+
+View动画
+
+继承自Animation，四个动画效果实现类：TranslateAnimation、ScaleAnimation、RotateAnimation、AlphaAnimation
+
+    XML格式
+    <?xml version="1.0" encoding="utf-8"?>
+    <set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:interpolator="@android:anim/accelerate_interpolator"
+    android:shareInterpolator="true"
+    android:duration="200"
+    android:fillAfter="true"
+    android:zAdjustment="normal"
+    >
+    <alpha
+    android:interpolator="@android:anim/accelerate_interpolator"
+    android:fromAlpha="float"
+    android:toAlpha="float"/>
+    <scale
+    android:fromXScale="float"
+    android:toXScale="float"
+    android:fromYScale="float"
+    android:toYScale="float"
+    android:pivotX="float"
+    android:pivotY="float"/>
+    <translate
+    android:fromXScale="float"
+    android:toXScale="float"
+    android:fromYScale="float"
+    android:toYScale="float"/>
+    <rotate
+    android:fromDegrees="float"
+    android:toDegrees="float"
+    android:pivotX="float"
+    android:pivotY="float"/>
+    </set>
+
+    android:interpolator 表示插值器
+    android:shareInterpolator 是否共用同一个插值器
+    android:fillAfter="true" 是否停留结束位置
+    android:zAdjustment="normal" 设置动画的内容运行时在Z轴上的位置
+
+    代码使用
+    Animation animation = AnimationUtils.loadAnimation(this, R.anim.animation);
+    view.startAnimation(animation);
+
+    也可以直接代码使用
+
+    自定义View动画继承Animation，实现initialize、applyTransformation方法，分别处理初始化和矩阵变换采用Camera简化矩阵变换的过程
+    final Camera camera = new Camera();// 自己创建的Camera
+    final Matrix matrix = t.getMatrix();// 方法传过来的矩阵
+    camera.save();
+
+      camera.translate(0f, 0f, interpolatedTime);
+      camera.getMatrix(matrix);
+
+      camera.restore();
+
+帧动画
+
+    XML定义
+    <?xml version="1.0" encoding="utf-8"?>
+    <animation-list xmlns:android="http://schemas.android.com/apk/res/android"
+    android:oneshot="false">
+    <item android:drawable="@mipmap/ic_launcher" android:duration="100"/>
+    <item android:drawable="@mipmap/ic_launcher" android:duration="100"/>
+    </animation-list>
+
+    android:oneshot="false" false 无限循环
+
+    代码中使用
+    view.setBackgroundResource(R.drawable.animation_list);
+    AnimationDrawable drawable = (AnimationDrawable)view.getBackground();
+    drawable.start();
+
+属性动画
+
+    使用方式一
+    ObjectAnimator.ofFloat(view, "translationY", 10).start();
+    使用方式二
+    ValueAnimator valueAnimator = ValueAnimator.ofFloat(0, 1);
+    valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+    @Override
+    public void onAnimationUpdate(ValueAnimator valueAnimator) {
+    mAnimatorValue = (float) valueAnimator.getAnimatedValue();
+    invalidate();
+    }
+    });
+
+    可以在View中使用
+    插值器：根据时间流逝百分比计算属性值改变百分比
+    估值器：根据属性值百分比计算改变后的属性值
+

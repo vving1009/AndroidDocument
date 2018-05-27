@@ -1,0 +1,57 @@
+Android 数据库SQLite Cursor数据遍历
+
+    |
+    浏览：1838
+    |
+    更新：2015-05-18 16:34
+    |
+    标签：数据库 
+
+Cursor是SQLite 数据库查询返回的行数集合，Cursor是一个游标接口，提供了遍历查询结果的方法，如移动指针方法move()，获得列值方法getString()等。以下是Cursor遍历的方法。
+工具/原料
+
+    编译环境Eclipse
+
+方法/步骤
+
+    通过query获取数据：
+
+    SQLiteDatabase dataBase=sqliteDB.openDB();
+
+    String table="tab_running";
+
+    String[] columns={"startaddress","startgpstime","startsystime","endaddress","endgpstime","endsystime"};//你要的数据  
+
+    String selection="finished=?";  
+
+    String[] selectionArgs={"1"};//具体的条件,注意要对应条件字段  
+
+    Cursor cursor=dataBase.query(table, columns, selection, selectionArgs, null, null, null);
+    2
+
+    根据列索引遍历读取列数据：
+
+    while(cursor.moveToNext())
+
+    {
+
+    //根据列的索引直接读取  比如第0列的值
+
+       String strValue= cursor.getString(0);  
+
+    }
+    3
+
+    根据列名获取列索引遍历读取列数据：
+
+    while(cursor.moveToNext())
+
+    {
+
+    //根据列名获取列索引   
+
+    int nameColumnIndex = cursor.getColumnIndex(“username");
+
+    String strValue=cursor.getString(nameColumnIndex); 
+
+    }

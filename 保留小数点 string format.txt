@@ -1,0 +1,118 @@
+
+Java保留两位小数的几种写法总结
+
+转载  2016-11-23   投稿：daisy   我要评论
+相信大家在平时做项目时，可能会有这样的业务需求： 页面或界面上展示的数据保留小数点后两位。 那么这篇文章小编就和大家分享了利用Java保留两位小数的几种写法，文章给出了详细的示例代码，对大家的学习和理解很有帮助，有需要的朋友们下面来一起学习学习下吧。
+
+本文列举了几个方法：
+
+     1. 使用java.math.BigDecimal
+
+     2. 使用java.text.DecimalFormat
+
+     3. 使用java.text.NumberFormat
+
+     4. 使用java.util.Formatter
+
+     5. 使用String.format
+
+文章末尾给大家分享了更多的拓展知识，另外可以自己实现或者借用封装好的类库来实现，在这篇文章中就不一一列举了。 下面来看看详细的介绍。
+
+一、使用BigDecimal，保留小数点后两位
+
+public static String format1(double value) {
+
+ BigDecimal bd = new BigDecimal(value);
+ bd = bd.setScale(2, RoundingMode.HALF_UP);
+ return bd.toString();
+}
+
+二、使用DecimalFormat,保留小数点后两位
+
+public static String format2(double value) {
+
+ DecimalFormat df = new DecimalFormat("0.00");
+ df.setRoundingMode(RoundingMode.HALF_UP);
+ return df.format(value);
+}
+
+三、使用NumberFormat,保留小数点后两位
+
+public static String format3(double value) {
+
+ NumberFormat nf = NumberFormat.getNumberInstance();
+ nf.setMaximumFractionDigits(2);
+ /*
+  * setMinimumFractionDigits设置成2
+  * 
+  * 如果不这么做，那么当value的值是100.00的时候返回100
+  * 
+  * 而不是100.00
+  */
+ nf.setMinimumFractionDigits(2);
+ nf.setRoundingMode(RoundingMode.HALF_UP);
+ /*
+  * 如果想输出的格式用逗号隔开，可以设置成true
+  */
+ nf.setGroupingUsed(false);
+ return nf.format(value);
+}
+
+四、使用java.util.Formatter,保留小数点后两位
+
+public static String format4(double value) {
+ /*
+  * %.2f % 表示 小数点前任意位数 2 表示两位小数 格式后的结果为 f 表示浮点型
+  */
+ return new Formatter().format("%.2f", value).toString();
+}
+
+五、使用String.format来实现。
+
+public static String format5(double value) {
+
+ return String.format("%.2f", value).toString();
+}
+
+扩展知识
+
+String.format 作为文本处理工具，为我们提供强大而丰富的字符串格式化功能。
+
+对浮点数进行格式化　　　　　　　　　　　　　　　　　　　　　　　　
+
+占位符格式为： %[index$][标识]*[最小宽度][.精度]转换符
+
+double num = 123.4567899;
+System.out.print(String.format("%f %n", num)); // 123.456790 
+System.out.print(String.format("%a %n", num)); // 0x1.edd3c0bb46929p6 
+System.out.print(String.format("%g %n", num)); // 123.457
+
+可用标识：
+
+      -，在最小宽度内左对齐,不可以与0标识一起使用。
+
+      0，若内容长度不足最小宽度，则在左边用0来填充。
+
+      #，对8进制和16进制，8进制前添加一个0,16进制前添加0x。
+
+      +，结果总包含一个+或-号。
+
+      空格，正数前加空格，负数前加-号。
+
+      ,，只用与十进制，每3位数字间用,分隔。
+
+      (，若结果为负数，则用括号括住，且不显示符号。
+
+可用转换符：
+
+      b，布尔类型，只要实参为非false的布尔类型，均格式化为字符串true，否则为字符串false。
+
+      n，平台独立的换行符, 也可通过System.getProperty("line.separator")获取。
+
+      f，浮点数型（十进制）。显示9位有效数字，且会进行四舍五入。如99.99。
+
+      a，浮点数型（十六进制）。
+
+      e，指数类型。如9.38e+5。
+
+      g，浮点数型（比%f，%a长度短些，显示6位有效数字，且会进行四舍五入）

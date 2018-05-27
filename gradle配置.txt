@@ -1,0 +1,56 @@
+1.先下载androidstudio，下载地址：http://developer.android.com/sdk/installing/studio.html
+下载完直接安装，安装完打开它，然后会出现下载gradle-1.8-bin.zip，这个一般都会卡死，在天朝是这个样子的，不过不要紧，把androidstudio关掉。
+
+2.下载gradle-1.8-bin.zip，下载地址：http://www.gradle.org/downloads，下载完之后，找到目录：
+
+C:\Users\用户名\.gradle\wrapper\dists\gradle-1.8-bin\vruqmccc8532n7gr46qavsii8\
+
+把下载的gradle-1.8-bin.zip放到该目录下，并且把gradle-1.8-bin.zip解压到该目录(解压得到的文件为gradle-1.8)。
+
+3.最关键的来了，把该目录下的gradle-1.8-bin.zip.part文件删除，然后复制gradle-1.8-bin.zip.lck，把它改为gradle-1.8-bin.zip.ok
+
+4.ok，到此你就可以运行androidstudio开发了。
+
+
+
+android studio 更新 Gradle错误解决方法 
+
+Android Studio每次更新版本都会更新Gradle这个插件，但由于长城的问题每次更新都是失败，又是停止在Refreshing Gradle Project ,有时新建项目的时候报 Gradle Project Compile Error 等等相关的问题
+
+解决这些问题办法是
+
+首先打开android studio项目 找到项目目录gradle\wrapper\gradle-wrapper.properties这个文件 
+
+内容如下
+
+#Wed Apr 10 15:27:10 PDT 2013
+distributionBase=GRADLE_USER_HOME
+distributionPath=wrapper/dists
+zipStoreBase=GRADLE_USER_HOME
+zipStorePath=wrapper/dists
+distributionUrl=http\://services.gradle.org/distributions/gradle-1.9-all.zip
+
+最重要的就是最下面一句，android studio会联网下载符合当前版本的gradle插件，而这个网址虽然可以访问但速度实在太慢，所以每次更新需要花很长时间或直接超时
+
+下面是我尝试后解决问题的办法就是先通过下载工具下载http://services.gradle.org/distributions/gradle-1.9-all.zip 这个版本的插件，用下载工具会比较快下载后 直接把zip文件，不要解压拷贝到 C:\Users\Administrator\.gradle\wrapper\dists\gradle-1.9-all\3jdgemv0iv8uqohg3kcp2o88r1 目录下
+
+重新关闭android studio 重新打开 或 直接单击android studio工具栏 Sync Project Gradle Files
+
+android studio就是自动更新插件了，不用下载了
+
+
+
+
+
+1.解压到任意的位置，并且将其bin的路径加入到系统环境Path中
+
+2.完成之后在cmd中输入gradle -v验证是否成功
+
+
+建议android gradle 始终保持最新版本,写法如下:
+dependencies {
+    classpath 'com.android.tools.build:gradle:0.5+'
+}
+
+
+下载：https://services.gradle.org/distributions/gradle-2.14.1-all.zip

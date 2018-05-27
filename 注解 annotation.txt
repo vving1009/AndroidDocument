@@ -1,0 +1,292 @@
+AS3.0以后gradle加上这个：
+android {
+    ...
+    defaultConfig {
+        ...
+        javaCompileOptions {
+            annotationProcessorOptions {
+                includeCompileClasspath = true  
+            }
+        }
+    }
+}
+
+定义：注解（Annotation），也叫元数据。一种代码级别的说明。它是JDK1.5及以后版本引入的一个特性，与类、接口、枚举是在同一个层次。它可以声明在包、类、字段、方法、局部变量、方法参数等的前面，用来对这些元素进行说明，注释。
+
+注解是以‘@注解名’在代码中存在的，根据注解参数的个数，我们可以将注解分为：标记注解、单值注解、完整注解三类。它们都不会直接影响到程序的语义，只是作为注解（标识）存在，我们可以通过反射机制编程实现对这些元数据（用来描述数据的数据）的访问。另外，你可以在编译时选择代码里的注解是否只存在于源代码级，或者它也能在class文件、或者运行时中出现（SOURCE/CLASS/RUNTIME）。
+
+如果要对于元数据的作用进行分类，还没有明确的定义，不过我们可以根据它所起的作用，大致可分为三类：
+编写文档：通过代码里标识的元数据生成文档。【生成文档doc文档】
+代码分析：通过代码里标识的元数据对代码进行分析。【使用反射】
+编译检查：通过代码里标识的元数据让编译器能实现基本的编译检查【Override】
+
+
+1. Java 注解基本内置注解
+@Override
+它的作用是对覆盖超类中方法的方法进行标记，如果被标记的方法并没有实际覆盖超类中的方法，则编译器会发出错误警告。
+
+Java代码
+/**
+ * 测试Override注解
+ * @author Administrator
+ */
+public class OverrideDemoTest {
+    //@Override
+    public String tostring() {
+        return "测试注解";
+    }
+}
+
+@Deprecated
+它的作用是对不应该再使用的方法添加注解，当编程人员使用这些方法时，将会在编译时显示提示信息，它与javadoc里的@deprecated标记有相同的功能，准确的说，它还不如javadoc @deprecated，因为它不支持参数，使用@Deprecated的示例代码示例如下：
+
+Java代码
+/**
+ * 测试Deprecated注解
+ * @author Administrator
+ */
+public class DeprecatedDemoTest {
+    public static void main(String[]args) {
+        // 使用DeprecatedClass里声明被过时的方法
+        DeprecatedClass.DeprecatedMethod();
+    }
+}
+
+class DeprecatedClass {
+    @Deprecated
+    public static void DeprecatedMethod() {
+    }
+}
+
+@SuppressWarnings
+其参数有：
+deprecation，使用了过时的类或方法时的警告
+unchecked，执行了未检查的转换时的警告
+fallthrough，当 switch 程序块直接通往下一种情况而没有 break 时的警告
+path，在类路径、源文件路径等中有不存在的路径时的警告
+serial，当在可序列化的类上缺少serialVersionUID 定义时的警告
+finally ，任何 finally 子句不能正常完成时的警告
+all，关于以上所有情况的警告
+
+Java代码
+import java.util.ArrayList;
+import java.util.List;
+
+public class SuppressWarningsDemoTest {
+    public static Listlist = newArrayList();
+    @SuppressWarnings("unchecked")
+    public void add(Stringdata) {
+        list.add(data);
+    }
+}
+
+
+2. Java 注解自定义注解
+它类似于新创建一个接口文件，但为了区分，我们需要将它声明为@interface,如下例：
+
+Java代码
+public @interface NewAnnotation {
+}
+
+使用自定义的注解类型
+
+Java代码
+public class AnnotationTest {
+    @NewAnnotation
+    public static void main(String[]args) {
+    }
+}
+
+为自定义注解添加变量
+
+Java代码
+public @interface NewAnnotation {
+    String value();
+}
+
+Java代码
+public class AnnotationTest {
+    @NewAnnotation("mainmethod")
+    public static void main(String[]args) {
+        saying();
+    }
+    
+    @NewAnnotation(value="saymethod")
+    public static void saying() {
+    }
+}
+
+定义一个枚举类型，然后将参数设置为该枚举类型，并赋予默认值
+
+public @interface Greeting {
+    public enum FontColor {
+        BLUE,
+        RED,
+        GREEN
+    };
+    String name();
+    FontColor fontColor() default FontColor.RED;
+}
+
+这里有两种选择，其实变数也就是在赋予默认值的参数上，我们可以选择使用该默认值，也可以重新设置一个值来替换默认值
+
+Java代码
+public class AnnotationTest {
+    @NewAnnotation("mainmethod")
+    public static void main(String[]args) {
+        saying();
+        sayHelloWithDefaultFontColor();
+        sayHelloWithRedFontColor();
+    }
+
+    @NewAnnotation("saymethod")
+    public static void saying() {
+    }
+    
+    // 此时的fontColor为默认的RED
+    @Greeting(name="defaultfontcolor")
+    public static void sayHelloWithDefaultFontColor() {
+    }
+
+    // 将fontColor改为BLUE
+    @Greeting(name="notdefault", fontColor=Greeting.FontColor.BLUE)
+    public static void sayHelloWithRedFontColor() {
+    }
+}
+
+
+3. Java 注解注解的高级应用
+
+Java 注解限制注解的使用范围
+用@Target指定ElementType属性
+
+Java代码(jdk)
+public enum ElementType {
+    // 用于类，接口，枚举但不能是注解
+    TYPE,
+    // 字段上，包括枚举值
+    FIELD,
+    // 方法，不包括构造方法
+    METHOD,
+    // 方法的参数
+    PARAMETER,
+    // 构造方法
+    CONSTRUCTOR,
+    // 本地变量或catch语句
+    LOCAL_VARIABLE,
+    // 注解类型(无数据)
+    ANNOTATION_TYPE,
+    // Java包
+    PACKAGE
+}
+
+具体例子：
+
+Java代码
+// 限制注解使用范围
+@Target({ElementType.METHOD,ElementType.CONSTRUCTOR})
+public @interface Greeting {
+    // 使用枚举类型
+    public enum FontColor {
+        BLUE,RED,GREEN
+    };
+    String name();
+    FontColor fontColor() default FontColor.RED;
+}
+
+Java 注解注解保持性策略
+在Java编译器编译时，它会识别在源代码里添加的注解是否还会保留，这就是RetentionPolicy。下面是Java定义的RetentionPolicy枚举：
+编译器的处理有三种策略：
+将注解保留在编译后的类文件中，并在第一次加载类时读取它；
+将注解保留在编译后的类文件中，但是在运行时忽略它；
+按照规定使用注解，但是并不将它保留到编译后的类文件中。
+
+Java代码
+public enum RetentionPolicy {
+    // 此类型会被编译器丢弃
+    SOURCE,
+    // 此类型注解会保留在class文件中，但JVM会忽略它
+    CLASS,
+    // 此类型注解会保留在class文件中，JVM会读取它
+    RUNTIME
+}
+
+Java代码
+// 让保持性策略为运行时态，即将注解编码到class文件中，让虚拟机读取
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Greeting {
+    // 使用枚举类型
+    public enum FontColor {
+        BLUE,RED,GREEN
+    };
+    String name();
+    FontColor fontColor() default FontColor.RED;
+}
+
+Java 注解文档化功能
+Java提供的Documented元注解跟Javadoc的作用是差不多的，其实它存在的好处是开发人员可以定制Javadoc不支持的文档属性，并在开发中应用。它的使用跟前两个也是一样的，简单代码示例如下：
+
+Java代码
+// 让它定制文档化功能
+// 使用此注解时必须设置RetentionPolicy为RUNTIME
+@Documented
+public @interface Greeting {
+    // 使用枚举类型
+    public enum FontColor {
+        BLUE,RED,GREEN
+    };
+    String name();
+    FontColor fontColor() default FontColor.RED;
+}
+
+Java 注解标注继承
+
+Java代码
+// 让它允许继承，可作用到子类
+@Inherited
+public @interface Greeting {
+    // 使用枚举类型
+    public enum FontColor {
+        BLUE,RED,GREEN
+    };
+    String name();
+    FontColor fontColor() default FontColor.RED;
+}
+
+
+4. Java 注解读取注解信息的方法
+编辑
+属于重点，在系统中用到注解权限时非常有用，可以精确控制权限的粒度
+注意：要想使用反射去读取注解，必须将Retention的值选为Runtime
+
+Java代码
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+
+//读取注解信息
+public class ReadAnnotationInfoTest {
+    public static void main(String[] args) throws Exception {
+        // 测试AnnotationTest类，得到此类的类对象
+        Class c = Class.forName("com.iwtxokhtd.annotation.AnnotationTest");
+        // 获取该类所有声明的方法
+        Method[] methods = c.getDeclaredMethods();
+        // 声明注解集合
+        Annotation[] annotations;
+        // 遍历所有的方法得到各方法上面的注解信息
+        for (Method method : methods) {
+            // 获取每个方法上面所声明的所有注解信息
+            annotations = method.getDeclaredAnnotations();
+            // 再遍历所有的注解，打印其基本信息
+            System.out.println(method.getName());
+            for (Annotation an : annotations) {
+                System.out.println("方法名为：" + method.getName() + "其上面的注解为：" + an.annotationType().getSimpleName());
+                Method[] meths = an.annotationType().getDeclaredMethods();
+                // 遍历每个注解的所有变量
+                for (Method meth : meths) {
+                    System.out.println("注解的变量名为：" + meth.getName());
+                }
+            }
+        }
+    }
+}
+

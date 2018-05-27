@@ -1,0 +1,32 @@
+Android在用命令安装一个apk包时方法如下:
+
+adb install SpareParts.apk  
+
+注：如果系统里有一个于这个包同名的包，安装会是失败，并提示安装的这个包已经存在，
+
+要想通过命令安装，需要先将系统里的包删掉后在安装，
+
+删除系统里的包的方法：
+
+adb remount  
+
+让系统的system目录变为读写 
+
+然后adb shell 进入系统，进入到system/app/目录下将其
+
+rm SpareParts.apk  
+
+然后退出 在用命令按转即可
+
+通过install命令安装的apk包会放在/data/app目录下，而且包名会改变。
+
+卸载一个apk包方法：
+
+adb uninstall SpareParts.apk  
+
+会提示失败 
+
+原因在于安装后的包名已将改变，变为AndroidMainifest.xml文件中<manifest>节点下，package元素所指定的名字
+
+正确方法是：
+adb uninstall com.android.spare_parts  

@@ -1,0 +1,159 @@
+android RelativeLayout 动态设置高度，android设置高度
+
+
+定义：
+1     private RelativeLayout mrlay;
+
+调高度：
+1   mrlay = (RelativeLayout) findViewById(R.id.rlay_1);
+2   android.view.ViewGroup.LayoutParams pp =mrlay.getLayoutParams();
+3   mrlayt.getLayoutParams();
+4   pp.height =180; 
+5   mrlay.setLayoutParams(pp);
+
+===================================================================================================
+
+如何动态的设置Relative Layout中按钮的layout_align_parent_right属性 
+
+我动态的创建了一个Relative Layout:
+RelativeLayout layout = new RelativeLayout( this );
+    RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT,
+            LayoutParams.WRAP_CONTENT);
+
+现在我想在Relative Layout上面添加两个按钮，但是这两个按钮都显示在Relative Layout的左边，还重叠在一起。
+buttonContainer.addView(btn1);
+buttonContainer.addView(btn2);
+
+现在我想知道如何动态的设置按钮的属性android:layout_alignParentRight="true"或者android:layout_toLeftOf="@id/btn" 就像在xml中一样?
+
+
+你可以使用View.getLayoutParams从代码中访问 LayoutParams。你只需要知道你访问的什么LayoutParams。这通常是通过检查包含的ViewGroup就能知道。如果它有一个LayoutParams子类,那你就应该使用这个LayoutParams类。
+ 在你的案例中它是RelativeLayout.LayoutParams，你应该使用RelativeLayout.LayoutParams#addRule(int verb)和RelativeLayout.LayoutParams#addRule(int verb, int anchor)
+你可以通过以下代码获得：
+RelativeLayout.Layoutparams params = (RelativeLayout.LayoutParams)button.getLayoutParams();
+params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+params.addRule(RelativeLayout.LEFT_OF, R.id.id_to_be_left_of);
+
+button.setLayoutParams(params); //使layout更新
+
+
+1.你应该使用btn1.setId(1)来创建和识别按钮
+2.使用params变量在布局中添加参数，方法是addRule，再检查LayoutPArams对象中的java代码。
+
+=========================================================================================================
+
+ImageView signView=(ImageView)findViewById(R.id.sign);
+LayoutParams params = signView.getLayoutParams();
+        
+AbsoluteLayout.LayoutParams new_params = new AbsoluteLayout.LayoutParams(params.width, params.height,200, 0);
+signView.setLayoutParams(new_params);
+设置View的绝对坐标为200,0
+
+==========================================================================================================
+
+1.动态设置padding，拿ImageView为例：
+
+[java] view plain copy 
+01.ImageView imageView = new ImageView(this);  
+02.imageView.setPadding(5,5,5,5)  
+
+2.动态设置margin
+拿LinearLayout里边放ImageVIew例：
+
+[java] view plain copy 
+01.LinearLayout layout = (LinearLayout) convertView.findViewById(R.id.linearlayout);  
+03.LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(100, 100);  
+04.params.setMargins(5, 5, 5, 5);  
+05.layout.addView(imageView); 
+
+=================================================================================================================
+可见（visible)
+XML文件：android:visibility="visible"
+Java代码：view.setVisibility(View.VISIBLE);
+
+不可见（invisible）
+XML文件：android:visibility="invisible"
+Java代码：view.setVisibility(View.INVISIBLE);
+
+隐藏（GONE）
+XML文件：android:visibility="gone"
+Java代码：view.setVisibility(View.GONE);
+=================================================================================================================
+
+RelativeLayout.addRule()方法
+
+通过LayoutParams的 addRule方法来额外的添加别的规则了，android.widget.RelativeLayout.LayoutParams.addRule(int verb, int anchor)，
+
+    其中 anchor 参数指定可以是 View 的 id(“相对于谁”)、RelativeLayout.TRUE（启用某种对齐方式）或者 是-1（应用于某些不需要 anchor 的 verb)[因为 RelativeLayout.TRUE的值为 -1 ，所以-1或者RelativeLayout.TRUE都是可以的]、是  0 （不启用这个规则）
+
+    其中 verb 参数指定相对的“动作”；
+
+    （1）如果是相对于父控件的相对布局的话 anchor 参数可以不用或者设置为-1或者RelativeLayout.TRUE ，
+
+    （2）如果是相对于级别和自己同一级的控件的话参数设置应该是 view 的id ,
+
+    （3）如果参数设置为 0 的话，则表示这个规则不会运用到该控件的布局中，当是相对于本身的父控件的时候这个参数可以省略。
+
+比如：
+
+relLayoutParams.addRule(RelativeLayout.ABOVE,imageViewId.getId())    
+
+子控件相对于控件：imageViewId在其的上面
+
+relLayoutParams.addRule(RelativeLayout.BELOW ,imageViewId.getId())  
+
+子控件相对于控件：imageViewId在其的下面
+
+relLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT ,-1) 与
+
+relLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT ,RelativeLayout.TRUE) 与
+
+relLayoutParams.addRule(RelativeLayout.ALIGN_PARENT_RIGHT )  
+
+表示的是一样的表示子控件在父控件的右边
+
+(
+
+relLayoutParams.setMargins(arg0, arg1, arg2, arg3)或者 relLayoutParams.topMargin=5 等等离某元素的左、上、右、下的距离单位
+
+)
+
+ 
+
+下面就将verb 相关常量名列如下：
+
+relLayoutParams.alignWithParent=true   如果对应的兄弟元素找不到的话就以父元素做参照物
+
+RelativeLayout.CENTER_HORIZONTAL   在父控件中水平居中
+
+RelativeLayout.CENTER_VERTICAL   在父控件中垂直居中
+
+RelativeLayout.CENTER_IN_PARENT  相对于父控件完全居中
+
+RelativeLayout.ALIGN_PARENT_BOTTOM  紧贴父控件的下边缘
+
+RelativeLayout.ALIGN_PARENT_TOP  紧贴父控件的上边缘
+
+RelativeLayout.ALIGN_PARENT_LEFT 紧贴父控件的左边边缘
+
+RelativeLayout.ALIGN_PARENT_RIGHT  紧贴父控件的右边缘
+
+ 
+
+RelativeLayout.ABOVE  在某元素的上方  需要第二个参数为某元素的ID
+
+RelativeLayout.BELOW 在某元素的下方  需要第二个参数为 某元素的ID
+
+RelativeLayout.LEFT_OF  在某元素的左边  需要第二个参数为某元素的ID
+
+RelativeLayout.RIGHT_OF  在某元素的右边  需要第二个参数为 某元素的ID
+
+RelativeLayout.ALIGN_TOP 本元素的上边缘和某元素的的上边缘对齐 需要第二个参数为某元素的ID
+
+RelativeLayout.ALIGN_BOTTOM  本元素的上边缘和某元素的的下边缘对齐 需要第二个参数为某元素的ID
+
+RelativeLayout.ALIGN_LEFT  本元素的上边缘和某元素的的左边缘对齐 需要第二个参数为某元素的ID
+
+RelativeLayout.ALIGN_RIGHT  本元素的上边缘和某元素的的右边缘对齐 需要第二个参数为某元素的ID
+
+RelativeLayout.ALIGN_BASELINE    本元素的基线和某元素的的基线对齐 需要第二个参数为某元素的ID

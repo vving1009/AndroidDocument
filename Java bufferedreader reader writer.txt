@@ -1,0 +1,64 @@
+读取txt文件乱码 
+【Java代码】
+　　BufferedReader read = new BufferedReader(new FileReader(new File(filename)));
+解决办法： 
+【Java代码】
+　　InputStreamReader isr = new InputStreamReader(new FileInputStream(file), "UTF-8");
+　　BufferedReader read = new BufferedReader(isr);
+因为InputStreamReader和BufferedReader 都继承自Reader,而BufferedReader 的构造器又是Reader. 
+Writer也是一样的处理 
+【Java代码】
+　　FileOutputStream writerStream = new FileOutputStream(filePath, true);
+　　BufferedWriter oWriter = new BufferedWriter(new OutputStreamWriter(writerStream, "UTF-8"));
+
+---------------------------------------------------------------------------------------------------------
+
+很明显bufferedreader的用法比inputstream要复杂，复杂的存在必然会导致优势的存在！我们都知道inputstream是一个字节一个字节的读取，每次读取都会执行一次IO，我们知道io的操作是很费时间的，这就必然会导致程序的效率，而bufferedreader很好的解决这一问题，它可以一次读取大量的数据，大大减少了io次数，效率也就上去了，这就像有辆能乘坐一百人的大巴，从热力输送学生到理工本部，司机脑残，学生没睡醒，非要一次只坐一个同学，大巴的来回跑一百趟才能把这一百人全部送到学校，这就类似inputstream，另一个司机是清华毕业，智商当然高了，他让这一百人全部上车，一次九ok了，虽然在学生上车时多用了点时间，但总时间要远比那个脑残司机要少的多！！！当然在计算机中不会有这么大的时间差！！哔哔了这么多，应该表述清楚了，下面是一个bufferedreader的例子，本想写个关于bufferedreader比inputstream快的例子，可能是本人人品太好了吧，运行的结果每次都是0毫秒~~~
+
+package cn.tsp2s.liu.liubao;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+/**
+ *
+ * @author Administrator
+ */
+public class TestBufferedReader {
+    public static void main(String[] args){
+        FileReader in=null;
+        BufferedReader read=null;
+        String s=null;
+        BufferedWriter writer=null;
+        try {
+            in = new FileReader("d:\\java\\TestLeap.java");
+            read=new BufferedReader(in);
+            writer=new BufferedWriter(new FileWriter("d:\\java\\leap.txt"));
+            while ((s = read.readLine()) != null) {
+               // System.out.println(s);
+                writer.write(s);
+                //这里调用newline（）方法是让它输出和读取的完全一致，理由不解释
+                writer.newLine();
+                //这里一定要调用flush（）方法，如果不调用，文件中将会显示不全或者压根就不显示任何东西，理由不解释，你肯定知道
+                writer.flush();     
+            }
+        } catch (FileNotFoundException ex) {
+            System.out.println("找不到指定文件！！");
+        }catch (IOException e) {
+            System.out.println("文件读取有误！");
+        }finally{
+            try {
+                writer.close();
+                read.close();
+            } catch (IOException ex) {
+                System.out.println(ex.getMessage());
+            }
+        }
+    }
+}

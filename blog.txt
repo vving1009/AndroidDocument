@@ -1,0 +1,2 @@
+http://lib.csdn.net/base/android
+http://blog.csdn.net/android_tutor

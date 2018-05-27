@@ -1,0 +1,51 @@
+首先在 build.gradle 里添加
+dependencies {
+    debugCompile 'com.squareup.leakcanary:leakcanary-android:1.5.1'
+    releaseCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.1'
+    testCompile 'com.squareup.leakcanary:leakcanary-android-no-op:1.5.1‘
+}
+        
+添加
+public class LeakApplication extends Application {
+
+    //添加成员
+    private RefWatcher refWatcher;
+    
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        refWatcher= setupLeakCanary();
+    }
+    private RefWatcher setupLeakCanary() {
+        if (LeakCanary.isInAnalyzerProcess(this)) {
+            // This process is dedicated to LeakCanary for heap analysis.
+            // You should not init your app in this process.
+            return RefWatcher.DISABLED;
+        }
+        return LeakCanary.install(this);  //如果是 activity，this 变成 this.getApplication()
+    }
+
+最后，在Activity的onDestroy()方法中添加：
+在这个例子中onDestroy方法是多余的，因为LeakCanary在调用install方法时会启动一个ActivityRefWatcher类，它用于自动监控Activity执行onDestroy方法之后是否发生内存泄露。这里只是为了方便举例，如果想要监控Fragment，在Fragment中添加如上的onDestroy方法是有用的。
+protected void onDestroy() {
+        super.onDestroy();
+        //添加
+        RefWatcher refWatcher = LeakApplication.getRefWatcher(this);//1
+        refWatcher.watch(this);
+}
+
+这时会在界面生成一个名为Leaks的应用图标。接下来不断的切换横竖屏，这时会闪出一个提示框，提示内容为：“Dumping memory app will freeze.Brrrr.”。再稍等片刻，内存泄漏信息就会通过Notification展示出来
+
+
+
+其他的 Memory Leak 的原因（部分）
+ClipboradManager 
+Android内存泄漏：谨慎使用 getSystemService
+参考这篇文章：
+http://blog.csdn.net/xiabing082/article/details/53993298
+只要用了 EditText 就会调用 ClipboradManager，就会出现泄漏，所以这个算系统级的问题，没法改。
+
+其他类似的系统级泄漏有：
+InputMethodManager.sInstance (这个泄漏比较有名，网上都有说)
+PhoneManager.sInstance
+这样的泄漏无法修改，要改也要动很多代码。

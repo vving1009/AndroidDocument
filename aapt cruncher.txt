@@ -1,0 +1,60 @@
+Exception in thread “png-cruncher_21” java.lang.RuntimeException: Timed out while waiting for slave aapt process, make sure the aapt execute at D:\Android-SDK\Android\android-sdk\build-tools\23.0.0\aapt.exe can run successfully (some anti-virus may block it) or try setting environment variable SLAVE_AAPT_TIMEOUT to a value bigger than 5 seconds
+ at com.android.builder.png.AaptProcess.waitForReady(AaptProcess.java:108)
+ at com.android.builder.png.QueuedCruncher1.creation(QueuedCruncher.java:110)atcom.android.builder.tasks.WorkQueue.run(WorkQueue.java:203)atjava.lang.Thread.run(Thread.java:745)Exceptioninthread“png?cruncher40”java.lang.RuntimeException:Timedoutwhilewaitingforslaveaaptprocess,makesuretheaaptexecuteatD:\Android?SDK\Android\android?sdk\build?tools\23.0.0\aapt.execanrunsuccessfully(someanti?virusmayblockit)ortrysettingenvironmentvariableSLAVEAAPTTIMEOUTtoavaluebiggerthan5secondsatcom.android.builder.png.AaptProcess.waitForReady(AaptProcess.java:108)atcom.android.builder.png.QueuedCruncher1.creation(QueuedCruncher.java:110)
+ at com.android.builder.tasks.WorkQueue.run(WorkQueue.java:203)
+ at java.lang.Thread.run(Thread.java:745)
+……
+ ……
+Error:Error: Could not create the Java Virtual Machine.
+ Error:Error: A fatal exception has occurred. Program will exit.
+ Error:Error: Could not create the Java Virtual Machine.
+ Error:Error: A fatal exception has occurred. Program will exit.
+ Error:Execution failed for task ‘:app:transformClassesWithDexForDebug’.
+com.android.build.api.transform.TransformException: java.lang.RuntimeException: com.android.ide.common.process.ProcessException: java.util.concurrent.ExecutionException: com.android.ide.common.process.ProcessException: org.gradle.process.internal.ExecException: Process ‘command ‘C:\Program Files\Java\jdk1.7.0_79\bin\java.exe” finished with non-zero exit value 1
+
+从log上看，说SLAVE_AAPT_TIMEOUT 的值大于5，于是增加系统变量并设置为30，再次编译还是有如上的错误，汗-_-!
+继续搜索解决方法，网上说这可能与build tools有关，需要更新一下build tools。
+ 更新build tools 重新编译，错误没了，OK搞定。
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+这两天遇到了一个AS编译过程中报Exception的问题：
+	...//省略
+	:app:mergeDebugResources
+	Exception in thread "png-cruncher_5" java.lang.RuntimeException: Timed out while waiting for slave aapt process, try setting environment variable SLAVE_AAPT_TIMEOUT to a value bigger than 5 seconds
+	    at com.android.builder.png.AaptProcess.waitForReady(AaptProcess.java:104)
+	    at com.android.builder.png.QueuedCruncher$1.creation(QueuedCruncher.java:107)
+	    at com.android.builder.tasks.WorkQueue.run(WorkQueue.java:206)
+	    at java.lang.Thread.run(Thread.java:745)
+	Exception in thread "png-cruncher_10" java.lang.RuntimeException: Timed out while waiting for slave aapt process, try setting environment variable SLAVE_AAPT_TIMEOUT to a value bigger than 5 seconds
+	    at com.android.builder.png.AaptProcess.waitForReady(AaptProcess.java:104)
+	    at com.android.builder.png.QueuedCruncher$1.creation(QueuedCruncher.java:107)
+	    at com.android.builder.tasks.WorkQueue.run(WorkQueue.java:206)
+	    at java.lang.Thread.run(Thread.java:745)
+	...//省略
+
+
+解决这个问题花了我一天时间，网上根本找不到解决方案，按照网上提示的设置环境变量“SLAVE_AAPT_TIMEOUT”，延长超时的时间、更改build-tools的版本、更新build-tools、升级AS、关掉杀毒软件都不管用。
+
+最后只好结合编译时的日志进行分析，肯定是在编译时打包资源时出了问题，这就涉及到aapt打包资源的问题，所以最终还是怀疑到了build-tools上面，因为aapt.exe这个文件就在每个版本的build-tools文件夹下，但之前更新过build-tools、更改过build-tools的版本并不管用，再结合网上提示有可能是杀毒软件的问题，想到是不是杀毒软件将build-tools中的文件标记位病毒导致的，最后找同事要了一份他电脑上的build-tools，对比发现里面的很多文件内容的确不同，拷贝过来，重新编译，成功！！！
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+在你的主工程文件夹里的build.gradle文件里，加上下面这两句：
+aaptOptions.cruncherEnabled = false
+aaptOptions.useNewCruncher = false
+
+我的改完以后是这样的：
+android {
+compileSdkVersion 19
+buildToolsVersion "23.0.1"
+
+aaptOptions.cruncherEnabled = false
+aaptOptions.useNewCruncher = false
+
+defaultConfig {
+    minSdkVersion 10
+    targetSdkVersion 19
+}
+
+
+more........
+
+然后这个错误就没有了，看样子好像是把那个什么引起错误的cruncher给关了吧。。。于是就好了，楼主或者路过的各位可以试试。。。我的成功了。。。再怎么clean都不会报错了。。。

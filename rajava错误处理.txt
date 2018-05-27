@@ -1,0 +1,293 @@
+RX操作符之错误处理（catch[onErrorReturn、onErrorResumeNext、onExceptionResumeNext]、retry、retryWhen）
+http://blog.csdn.net/nicolelili1/article/details/52152155
+
+一、catch
+
+从onError通知中恢复发射数据。Catch操作符拦截原始Observable的onError通知，将它替换为其它的数据项或数据序列，让产生的Observable能够正常终止或者根本不终止。
+
+1.onErrorReturn
+
+让Observable遇到错误时发射一个特殊的项并且正常终止。
+        Observable<String> observable =  Observable.create(new Observable.OnSubscribe<String>() {
+
+            @Override
+            public void call(Subscriber<? super String> subscriber) {
+                for (int i = 0; i < 5; i++) {
+                    if(i == 3) {
+                        subscriber.onError(new Throwable("ERROR"));
+                    }else{
+                        subscriber.onNext(i + "");
+                    }
+                    try {
+                        Thread.sleep(1000);
+                    } catch (Exception e) {
+
+                    }
+                }
+                subscriber.onCompleted();
+            }
+        });
+
+        Subscriber<String> mySubscriber =new Subscriber<String>() {
+            @Override
+            public void onNext(String s) {
+                Log.e(TAG,"onNext................."+s);
+            }
+
+            @Override
+            public void onCompleted() {
+                Log.e(TAG, "onCompleted.................");
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                Log.e(TAG, "onError.....................");
+            }
+        };
+
+        observable
+                .onErrorReturn(new Func1<Throwable, String>() {
+                    @Override
+                    public String call(Throwable throwable) {
+                        return "this is an error observable";
+                    }
+                })
+                .subscribe(mySubscriber);
+                
+运行结果：
+onNext.................0
+onNext.................1
+onNext.................2
+onNext.................this is an error observable
+onCompleted.................
+
+
+2.onErrorResumeNext
+
+让Observable在遇到错误时开始发射第二个Observable的数据序列。
+ Observable<String> observable =  Observable.create(new Observable.OnSubscribe<String>() {
+
+            @Override
+            public void call(Subscriber<? super String> subscriber) {
+                for (int i = 0; i < 5; i++) {
+                    if(i == 3) {
+                        subscriber.onError(new Throwable("ERROR"));
+                    }else{
+                        subscriber.onNext(i + "");
+                    }
+                    try {
+                        Thread.sleep(1000);
+                    } catch (Exception e) {
+
+                    }
+                }
+                subscriber.onCompleted();
+            }
+        });
+
+        Subscriber<String> mySubscriber =new Subscriber<String>() {
+            @Override
+            public void onNext(String s) {
+                Log.e(TAG,"onNext................."+s);
+            }
+
+            @Override
+            public void onCompleted() {
+                Log.e(TAG, "onCompleted.................");
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                Log.e(TAG, "onError.....................");
+            }
+        };
+
+        observable
+                .onErrorResumeNext(Observable.just("this is an error observable","error2"))
+                .subscribe(mySubscriber);
+                
+运行结果：
+onNext.................0
+onNext.................1
+onNext.................2
+onNext.................this is an error observable
+onNext.................error2
+onCompleted.................
+
+3.onExceptionResumeNext
+
+和onErrorResumeNext类似，onExceptionResumeNext方法返回一个镜像原有Observable行为的新Observable，也使用一个备用的Observable，不同的是，如果onError收到的Throwable不是一个Exception，它会将错误传递给观察者的onError方法，不会使用备用的Observable。
+
+ Observable<String> observable =  Observable.create(new Observable.OnSubscribe<String>() {
+
+            @Override
+            public void call(Subscriber<? super String> subscriber) {
+                for (int i = 0; i < 5; i++) {
+                    if(i == 3) {
+                        subscriber.onError(new Throwable("ERROR"));
+                    }else{
+                        subscriber.onNext(i + "");
+                    }
+                    try {
+                        Thread.sleep(1000);
+                    } catch (Exception e) {
+
+                    }
+                }
+                subscriber.onCompleted();
+            }
+        });
+
+        Subscriber<String> mySubscriber =new Subscriber<String>() {
+            @Override
+            public void onNext(String s) {
+                Log.e(TAG,"onNext................."+s);
+            }
+
+            @Override
+            public void onCompleted() {
+                Log.e(TAG, "onCompleted.................");
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                Log.e(TAG, "onError.....................");
+            }
+        };
+
+        observable
+                .onExceptionResumeNext(Observable.just("occur an error1","occur an error2"))
+                .subscribe(mySubscriber);
+                
+
+运行结果：
+onNext.................0
+onNext.................1
+onNext.................2
+onError.....................
+
+
+二、retry
+
+如果原始Observable遇到错误，重新订阅它期望它能正常终止。Retry操作符不会将原始Observable的onError通知传递给观察者，它会订阅这个Observable，再给它一次机会无错误地完成它的数据序列。Retry总是传递onNext通知给观察者，由于重新订阅，可能会造成数据项重复。无论收到多少次onError通知，无参数版本的retry都会继续订阅并发射原始Observable。
+
+接受单个count参数的retry会最多重新订阅指定的次数，如果次数超了，它不会尝试再次订阅，它会把最新的一个onError通知传递给它的观察者。     
+
+     Observable<String> observable =  Observable.create(new Observable.OnSubscribe<String>() {
+
+            @Override
+            public void call(Subscriber<? super String> subscriber) {
+                for (int i = 0; i < 5; i++) {
+                    if(i == 3) {
+                        subscriber.onError(new Throwable("ERROR"));
+                    }else{
+                        subscriber.onNext(i + "");
+                    }
+                    try {
+                        Thread.sleep(1000);
+                    } catch (Exception e) {
+
+                    }
+                }
+                subscriber.onCompleted();
+            }
+        });
+
+        Subscriber<String> mySubscriber =new Subscriber<String>() {
+            @Override
+            public void onNext(String s) {
+                Log.e(TAG,"onNext................."+s);
+            }
+
+            @Override
+            public void onCompleted() {
+                Log.e(TAG, "onCompleted.................");
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                Log.e(TAG, "onError.....................");
+            }
+        };
+
+        observable
+                .retry(2)
+                .subscribe(mySubscriber);
+                
+运行结果：
+onNext.................0
+onNext.................1
+onNext.................2
+onNext.................0
+onNext.................1
+onNext.................2
+onNext.................0
+onNext.................1
+onNext.................2
+onError.....................
+
+三、retryWhen
+
+retryWhen和retry类似，区别是，retryWhen将onError中的Throwable传递给一个函数，这个函数产生另一个Observable，retryWhen观察它的结果再决定是不是要重新订阅原始的Observable。如果这个Observable发射了一项数据，它就重新订阅，如果这个Observable发射的是onError通知，它就将这个通知传递给观察者然后终止。retryWhen默认在trampoline调度器上执行，你可以通过参数指定其它的调度器。    
+  Observable<String> observable =  Observable.create(new Observable.OnSubscribe<String>() {
+
+            @Override
+            public void call(Subscriber<? super String> subscriber) {
+                for (int i = 0; i < 5; i++) {
+                    if(i == 3) {
+                        subscriber.onError(new Throwable("ERROR"));
+                    }else{
+                        subscriber.onNext(i + "");
+                    }
+                    try {
+                        Thread.sleep(1000);
+                    } catch (Exception e) {
+
+                    }
+                }
+                subscriber.onCompleted();
+            }
+        });
+
+        Subscriber<String> mySubscriber =new Subscriber<String>() {
+            @Override
+            public void onNext(String s) {
+                Log.e(TAG,"onNext................."+s);
+            }
+
+            @Override
+            public void onCompleted() {
+                Log.e(TAG, "onCompleted.................");
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                Log.e(TAG, "onError.....................");
+            }
+        };
+
+        observable
+                .retryWhen(new Func1<Observable<? extends Throwable>, Observable<?>>() {
+                    @Override public Observable<?> call(Observable<? extends Throwable> errors) {
+
+                        return errors.flatMap(new Func1<Throwable, Observable<?>>() {
+                            @Override public Observable<?> call(Throwable error) {
+
+                                // For IOExceptions, we  retry
+                                if (error instanceof IOException) {
+                                    return Observable.just(null);
+                                }
+
+                                // For anything else, don't retry
+                                return Observable.error(error);
+                            }
+                        });
+                    }
+                })
+                .subscribe(mySubscriber);
+                
+运行结果：
+onNext.................0
+onNext.................1
+onNext.................2
+onError.....................

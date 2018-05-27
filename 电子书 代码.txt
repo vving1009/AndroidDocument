@@ -1,0 +1,407 @@
+一个android本地txt阅读器的思路与实现  
+
+核心功能
+
+因为准备实现的阅读器属于简易版，功能上需要实现的并不算多，核心功能大致有如下几条： 
+1，保存阅读位置；这个是必须的，总不能每次打开一本书都在开头处。 
+2，调整字体大小；不同的人有不同的阅读习惯，调整字体大小也是很有必要的功能。 
+3，书籍搜索、添加；将本地储存的小说文件添加到阅读器中。 
+4，章节目录；从文件中索引出章节，并可以导向指定章节。
+
+文件添加
+
+决定需求之后我们来考虑整个软件的实现。 
+ 按照我们使用软件时的流程，首先，我们应该能看到自己的书籍列表，即，添加本地书籍到列表中。 
+ 这个的实现还是比较容易的，简单一点我们可以通过调用系统的文件选择，但这样的机制对于一个阅读器而言，或许不是特别适合，所以我写了一个简单的文件搜索工具，界面大概是这样的： 
+这里写图片描述 
+FileSearcher on github:https://github.com/YuanWenHai/FileSearcher 
+所以我们搞定了文件添加。
+
+列表
+
+添加文件之后我们要考虑书籍列表的持久化，我们得保存这个书籍列表啊。 
+ 先来看看我们需要保存的都有什么： 
+1，名称 
+2，位置 
+3，访问时间 
+4，文字编码 
+ 访问时间用于排序，将用户最近访问的文件放在第一位。 
+ 这么多条，sharedPreferences这种键值储存显然是不行的，而且也无法保证顺序，所以我们这里需要用到数据库。 
+ok至目前为止我们的代码逻辑是这样的，打开书架——读取数据库——无书籍——打开文件选择器——选择书籍——在书架展示刚刚选择的书籍并将被选中的条目写入数据库。 
+ 这里需要提及的是，在添加书籍的过程中可能会和已有的条目重复，我们需要做一下过滤。 
+ 于是我们有了一个书籍列表。
+
+阅读界面
+
+接下来的操作应该是打开书籍开始阅读，在这里我们用一个自定义view来完成：
+class PageView extends View{
+    Bitmap bit;
+ @Override
+    protected void onDraw(Canvas canvas){
+        super.onDraw(canvas);
+        canvas.save();
+        //在这里将我们传入的bitmap绘制出来
+        canvas.drawBitmap(bit,0,0,null);
+        canvas.restore();
+    }
+public void setBitmap(Bitmap bitmap){
+            bit = bitmap;
+    }
+   }
+   
+在bitmap上绘制想要的内容：
+Bitmap bitmap = Bitmap.createBitmap(screenWidth,screenHeight,Bitmap.Config.ARGB_8888);
+mView.setBitmap(bitmap);
+mCanvas = new Canvas(bitmap);
+//通过canvas绘制
+mCanvas.drawColor...
+mCanvas.drawText..
+//最后invalidate View
+mView.invalidate();
+
+为自定义view设定bitmap，我们在这个bitmap上绘制阅读界面，然后invalidate这个view就可以展示。 
+ 内容的获取： 
+1，因为我们的阅读要从上次停止的位置开始，也就是说，我们在打开文件后要跳转到某个位置然后开始读取，我使用了RandomAccessFile。 
+2，要读取多少；通过对屏幕尺寸，字体大小，偏移量的计算，我们得出一页需要的行数，以及每行的字数。 
+3，按段落读取，用0x0a识别二进制文件中的换行符，读取到0x0a停止。 
+4，将读取到的bytes转化为String，这里就有个绕不过的问题，编码；不同的书籍有不同的编码，有gbk，有utf8，utf16等等诸多，这里用一个EncodingDetector类库来完成识别，并将结果写入数据库。 
+5，当本页行数已经达到限制时，若已读取到的段落中尚有文字，我们将读取时的指针后退/前进相应的位置。 
+6，用SharedPreferences保存上次阅读位置。
+public class PageFactory {
+    private int screenHeight, screenWidth;//实际屏幕尺寸
+    private int pageHeight,pageWidth;//文字排版页面尺寸
+    private int lineNumber;//行数
+    private int lineSpace = Util.getPXWithDP(5);
+    private int fileLength;//Book的字节数
+    private int fontSize ;
+    private static final int margin = Util.getPXWithDP(5);//文字显示距离屏幕实际尺寸的偏移量
+    private Paint mPaint;
+    private int begin;//当前阅读的字节数_开始
+    private int end;//当前阅读的字节数_结束
+    private MappedByteBuffer mappedFile;//映射到内存中的文件
+    private RandomAccessFile randomFile;//关闭Random流时使用
+
+    private String encoding;//编码
+    private Context mContext;
+
+    private SPHelper spHelper = SPHelper.getInstance();
+    private PageView mView;
+    private Canvas mCanvas;
+    private ArrayList<String> content = new ArrayList<>();
+    private Book book;
+
+
+    public PageFactory(PageView view){
+        DisplayMetrics metrics = new DisplayMetrics();
+        mContext = view.getContext();
+        mView = view;
+
+        ((Activity)mContext).getWindowManager().getDefaultDisplay().getMetrics(metrics);
+        screenHeight = metrics.heightPixels;
+        screenWidth = metrics.widthPixels;
+        fontSize = spHelper.getFontSize();
+        pageHeight = screenHeight - margin*2 - fontSize;
+        pageWidth = screenWidth -margin*2;
+        lineNumber = pageHeight/(fontSize+lineSpace);
+
+        mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        mPaint.setTextSize(fontSize);
+        mPaint.setColor(mContext.getResources().getColor(R.color.dayModeTextColor));
+        //设置bitmap
+        Bitmap bitmap = Bitmap.createBitmap(screenWidth,screenHeight, Bitmap.Config.ARGB_8888);
+        mView.setBitmap(bitmap);
+        mCanvas = new Canvas(bitmap);
+
+    }
+    //打开书籍
+    public void openBook(final Book book){
+        this.book = book;
+        encoding = book.getEncoding();
+        begin = spHelper.getBookmarkStart(book.getBookName());
+        end = spHelper.getBookmarkEnd(book.getBookName());
+        File file = new File(book.getPath());
+        fileLength = (int) file.length();
+            try {
+                randomFile = new RandomAccessFile(file, "r");
+                mappedFile = randomFile.getChannel().map(FileChannel.MapMode.READ_ONLY, 0, (long) fileLength);
+            } catch (Exception e) {
+                e.printStackTrace();
+                Util.makeToast("打开失败！");
+            }
+    }
+    //下一页
+    public void nextPage(){
+        if(end >= fileLength){
+            return;
+        }else{
+            content.clear();
+            begin = end;
+            pageDown();
+        }
+        printPage();
+    }
+    //上一页
+    public void prePage(){
+        if(begin <= 0){
+            return;
+        }else{
+            content.clear();
+            pageUp();
+            end = begin;
+            pageDown();
+        }
+        printPage();
+    }
+
+
+    //向后读取一个段落，返回bytes
+    private byte[] readParagraphForward(int end){
+        byte b0;
+        int i = end;
+        while(i < fileLength){
+            b0 = mappedFile.get(i);
+            if(b0 == 10) {
+                break;
+            }
+            i++;
+        }
+        i = Math.min(fileLength-1,i);
+
+        int nParaSize = i - end + 1 ;
+
+        byte[] buf = new byte[nParaSize];
+        for (i = 0; i < nParaSize; i++) {
+            buf[i] =  mappedFile.get(end + i);
+        }
+        return buf;
+    }
+    //向前读取一个段落
+    private byte[] readParagraphBack(int begin){
+        byte b0 ;
+        int i = begin -1 ;
+        while(i > 0){
+            b0 = mappedFile.get(i);
+            if(b0 == 0x0a && i != begin -1 ){
+                i++;
+                break;
+            }
+            i--;
+        }
+        int nParaSize = begin -i ;
+        byte[] buf = new byte[nParaSize];
+        for (int j = 0; j < nParaSize; j++) {
+            buf[j] = mappedFile.get(i + j);
+        }
+        return buf;
+
+    }
+    //获取后一页的内容
+private void pageDown(){
+    String strParagraph = "";
+    while((content.size()<lineNumber) && (end< fileLength)){
+        byte[] byteTemp = readParagraphForward(end);
+        end += byteTemp.length;
+        try{
+            strParagraph = new String(byteTemp, encoding);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        strParagraph = strParagraph.replaceAll("\r\n","  ");
+        strParagraph = strParagraph.replaceAll("\n", " ");
+        //计算每行需要的字数，切断string放入list中
+        while(strParagraph.length() >  0){
+            int size = mPaint.breakText(strParagraph,true,pageWidth,null);
+            content.add(strParagraph.substring(0,size));
+            strParagraph = strParagraph.substring(size);
+            if(content.size() >= lineNumber){
+                break;
+            }
+        }
+            //如有剩余，则将指针回退
+            if(strParagraph.length()>0){
+                try{
+                end -= (strParagraph).getBytes(encoding).length;
+            }catch(Exception e){
+                    e.printStackTrace();
+                }
+            }
+
+    }
+}
+    //读取前一页的内容
+    private  void pageUp(){
+        String strParagraph = "";
+        List<String> tempList = new ArrayList<>();
+        while(tempList.size()<lineNumber && begin>0){
+            byte[] byteTemp = readParagraphBack(begin);
+            begin -= byteTemp.length;
+            try{
+                strParagraph = new String(byteTemp, encoding);
+            }catch(UnsupportedEncodingException e){
+                e.printStackTrace();
+            }
+            strParagraph = strParagraph.replaceAll("\r\n","  ");
+            strParagraph = strParagraph.replaceAll("\n","  ");
+            while(strParagraph.length() > 0){
+                int size = mPaint.breakText(strParagraph,true,pageWidth,null);
+                tempList.add(strParagraph.substring(0, size));
+                strParagraph = strParagraph.substring(size);
+                if(tempList.size() >= lineNumber){
+                    break;
+                }
+            }
+            if(strParagraph.length() > 0){
+              try{
+                  begin+= strParagraph.getBytes(encoding).length;
+              }catch (UnsupportedEncodingException u){
+                  u.printStackTrace();
+              }
+            }
+        }
+    }
+    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm", Locale.CHINA);
+    //将获取到的内容绘制到view上
+    public void printPage(){
+        if(content.size()>0){
+            int y = margin;
+
+            mCanvas.drawColor(mContext.getResources().getColor(R.color.dayModeBackgroundColor));
+
+            for(String line : content){
+                y += fontSize+lineSpace;
+                mCanvas.drawText(line,margin,y, mPaint);
+            }
+            float percent = (float) begin / fileLength *100;
+            DecimalFormat format = new DecimalFormat("#0.00");
+            String readingProgress = format.format(percent)+"%";
+            int length = (int ) mPaint.measureText(readingProgress);
+            mCanvas.drawText(readingProgress, (screenWidth - length) / 2, screenHeight - margin, mPaint);
+
+            //显示时间
+            String time = simpleDateFormat.format(new Date(System.currentTimeMillis()));
+            mCanvas.drawText("时间:"+time,margin, screenHeight -margin, mPaint);
+
+            //显示电量
+            String batteryLevel = getBatteryLevel();
+            float[] widths = new float[batteryLevel.length()];
+            float batteryLevelStringWidth = 0;
+            mPaint.getTextWidths(batteryLevel, widths);
+            for(float f : widths){
+                batteryLevelStringWidth += f;
+            }
+            mCanvas.drawText(batteryLevel, screenWidth - margin - batteryLevelStringWidth, screenHeight - margin, mPaint);
+            mView.invalidate();
+        }
+    }
+
+
+    private String getBatteryLevel(){
+        Intent batteryIntent = mContext.registerReceiver(null,new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+        int scaledLevel = batteryIntent.getIntExtra(BatteryManager.EXTRA_LEVEL,-1);
+        int scale = batteryIntent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+        return "电量："+String.valueOf(scaledLevel*100/scale);
+    }
+
+public void saveBookmark(){
+        SPHelper.getInstance().setBookmarkEnd(book.getBookName(),begin);
+        SPHelper.getInstance().setBookmarkStart(book.getBookName(),begin);
+    }
+
+
+public void setFontSize(int size){
+        if(size < 15){
+            return;
+        }
+        fontSize = size;
+        mPaint.setTextSize(fontSize);
+        pageHeight =  screenHeight - margin*2 - fontSize;
+        lineNumber = pageHeight/(fontSize+lineSpace);
+        end = begin;
+        nextPage();
+        SPHelper.getInstance().setFontSize(size);
+    }
+}
+
+现在我们已经可以在阅读界面上看到书籍内容，并可以翻页。
+
+章节目录
+
+1，获取章节；这个的实现方式有很多，比如正则，比如在读取整个txt文件的readLine循环中做单句关键字判定。 
+2，跳转到章节，这个有点意思，我们的阅读界面是通过字节读取展示的，而我们获取目录是在string文件中，两者之间的关系难以直接转换，即，虽然我知道第X章在第X个字的位置，但我无法准确得知这个字在byte文件中的位置，思前想后，决定用段落作为标记。因为换行符在byte中是可以被读取到的。 
+ 这就又回到了第一条，如果我们使用正则读取，那么将无法得到当前章节的段落数，readLine是个不错的选择，当获取到符合筛选条件的条目时，我们将其段落数也记录下来。 
+ 只有章节的段落数位置还不够，我们需要记录下在byte文件中每个0x0a出现的位置，然后用章节的段落位置去拿byte段落中的位置，这样我们就得到了每个段落在文件中的位置。
+private List<Chapter> findChapterParagraphPosition(){
+        List<Chapter> list = new ArrayList<>();
+        int i = 0;
+        try {
+            InputStreamReader isr = new InputStreamReader(new FileInputStream(new File(book.getPath())), encoding);
+            BufferedReader reader = new BufferedReader(isr);
+            String temp;
+            Chapter chapter;
+            while ((temp = reader.readLine()) != null) {
+                //这里关键字可以是章，也可以是其他的什么
+                if(temp.contains("第")&&temp.contains(keyword)){
+                    chapter = new Chapter();
+                    chapter.setChapterName(temp);
+                    chapter.setBookName(book.getBookName());
+                    chapter.setChapterParagraphPosition(i);
+                    list.add(chapter);
+                }
+                i++;
+            }
+        } catch (FileNotFoundException f) {
+            f.printStackTrace();
+            Util.makeToast("未发现" + book.getBookName() + "文件");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+    private List<Integer> findParagraphInBytePosition(){
+        List<Integer> list = new ArrayList<>();
+        byte[] fileBytes = new byte[mappedFileLength];
+        mappedByteBuffer.get(fileBytes);
+        mappedByteBuffer.position(0);
+        for(int i=0;i<mappedFileLength;i++){
+            if(fileBytes[i] == 0x0a){
+                //i的位置为句尾
+                list.add(i+1);
+
+            }
+        }
+        return list;
+    }
+    private void insert(){
+       for(Chapter chapter : findChapterParagraphPosition()){
+           chapter.setChapterBytePosition(findParagraphInBytePosition().get(chapter.getChapterParagraphPosition()));
+       }
+    }
+    
+需要注意的是，如上代码段应该新开一个线程去执行，否则很容易ANR。
+
+随后展示，并写入数据库。 
+3,定位，将目录列表的位置定位到当前阅读章节，这个我们用一个二分查找逻辑来实现。
+private int getChapterNumber(int position,List<Chapter> list){
+        position -= 2;//因为在获取章节位置时往前了一字节，同时position指向的是下一未读字节，故这里回退两个字节
+        int begin = 0;
+        int end = list.size()-1;
+        while (begin <= end){
+            int middle = begin + (end-begin)/2;
+            if(middle == 0 && list.get(middle).getChapterBytePosition() >= position){
+                return 0;
+            }
+            if(middle == list.size()-1 && list.get(list.size()-1).getChapterBytePosition() <= position){
+                return list.size()-1;
+            }
+            if(list.get(middle).getChapterBytePosition() <= position  && list.get(middle+1).getChapterBytePosition() > position){
+                return middle;
+            }else if (list.get(middle).getChapterBytePosition() > position && list.get(middle-1).getChapterBytePosition() <= position){
+                return middle -1;
+            }else if(list.get(middle).getChapterBytePosition() < position && list.get(middle+1).getChapterBytePosition() < position){
+                 begin = middle+1;
+            }else if(list.get(middle).getChapterBytePosition() > position && list.get(middle-1).getChapterBytePosition() > position){
+                end = middle-1;
+            }
+        }
+        return 0;
+        

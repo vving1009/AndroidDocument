@@ -1,0 +1,77 @@
+Android端代码打包成jar包和aar形式：
+
+首先，jar包的形式和aar形式有什么区别？
+1、打包之后生成的文件地址：
+*.jar：库/build/intermediates/bundles/debug(release)/classes.jar
+*.aar：库/build/outputs/aar/libraryname.aar
+区别：jar包只包含了classes文件，不包含资源文件；aar不仅包含了classes文件，还包含资源文件
+并且，aar的这个可以发布到maven库，然后使用者直接通过更改版本号就可以获取到最新的aar文件
+
+方法1：
+1.将apply plugin: 'com.android.application'改为apply plugin: 'com.android.library'
+2.去掉applicationId "com.xx.xx.xx.xx"
+此时再点击rebuild或右侧的assembleRelease，看到module层的outputs文件夹下生成了.aar文件，修改该.aar文件的后缀名为.zip，解压后，可以看到classes.jar文件。
+在module层的intermediates文件夹下，也生成了一个bundles文件夹，.jar文件也可以用这里生成的，这个就是生成的jar包。
+要把AndroidManifest.xml中的文件，将android:label="@string/app_name"这一项内容去掉，否则其他APP在调用这个的时候，就会遇到AndroidManifest.xml的文件会存在冲突（和其他的app自己的AndroidManifest.xml文件）。
+
+方法2：
+aar形式的打包，首先在Android工程里面通过File-New-New Module
+之后选择：:
+之后可以把module的这个名字改成自己想要的即可，比如test：
+之后build-Rebuild roject，编译整个工程就会自动生成aar包，具体路径就在：新建的Module-build-outputs-aar的这个目录下
+
+方法3：
+生成jar，在module的gradle最后加入如下代码：
+//task to delete the old jar  
+task deleteOldJar(type: Delete) {  
+    delete 'release/AndroidPlugin.jar'  
+}  
+//task to export contents as jar  
+task exportJar(type: Copy) {  
+    from('build/intermediates/bundles/release/')  
+    into('release/')  
+    include('classes.jar')  
+    ///Rename the jar  
+    rename('classes.jar', 'AndroidPlugin.jar')  //其中AndroidPlugin.jar就是生成的jar包名
+}  
+exportJar.dependsOn(deleteOldJar, build)  
+点击右边的Gradle侧边栏之后选择 library包下面的Tasks->other->exportJar方法 然后运行它,在library项目文件下面的release文件夹里面找到生成的jar文件了
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+方式 1
+*.aar文件使用。
+
+*.aar文件使用有两种方式，一种是使用在线的（网上的），一种是添加本地的*.aar文件。网络加载，只要你知道*.aar文件在maven中的路径即可，此处不演示了。下面主要看看在Android Studio中如何加载本地的*.aar文件。
+
+(1).把aar文件放在一个文件目录内，比如就放在libs目录内；
+
+(2).在app的build.gradle文件添加如下内容；
+    repositories {  
+        flatDir {  
+            dirs 'libs'   
+        }  
+    }  
+
+(3).之后只需要添加一句gradle依赖便方便的引用了该aar文件；
+    dependencies {  
+       ...  
+        compile(name:'test', ext:'aar')  
+       ...  
+    }  
+缺点
+    假如是把 aar 文件放在 Library 的 Module 中，会造成引用该 Module 的其他 Module 或者 Application 无法找到或者解析该 aar。
+
+    
+方式 2
+    File -> New -> New Module -> Import .JAR/.AAR Package
+    Choose File
+    Finish
+    在 build.gradle 添加 dependencies{compile project(':Name-Of-Your-Module')}
+缺点：
+    会在 Project 中引入一个 Module， 造成 Project 复杂度变高
+
+    
+    
+    
+    

@@ -1,0 +1,161 @@
+ Android Parcelable和Serializable的区别
+
+本文主要介绍Parcelable和Serializable的作用、效率、区别及选择，关于Serializable的介绍见Java 序列化的高级认识。
+
+ 
+
+1、作用
+
+Serializable的作用是为了保存对象的属性到本地文件、数据库、网络流、rmi以方便数据传输，当然这种传输可以是程序内的也可以是两个程序间的。而Android的Parcelable的设计初衷是因为Serializable效率过慢，为了在程序内不同组件间以及不同Android程序间(AIDL)高效的传输数据而设计，这些数据仅在内存中存在，Parcelable是通过IBinder通信的消息的载体。
+
+从上面的设计上我们就可以看出优劣了。
+
+ 
+
+2、效率及选择
+
+Parcelable的性能比Serializable好，在内存开销方面较小，所以在内存间数据传输时推荐使用Parcelable，如activity间传输数据，而Serializable可将数据持久化方便保存，所以在需要保存或网络传输数据时选择Serializable，因为android不同版本Parcelable可能不同，所以不推荐使用Parcelable进行数据持久化
+
+ 
+
+3、编程实现
+
+对于Serializable，类只需要实现Serializable接口，并提供一个序列化版本id(serialVersionUID)即可。
+
+public class Person implements Serializable{
+ private static final long serialVersionUID = -7060210544600464481L;
+ private String name;
+ private int age;
+  
+ public String getName(){
+  return name;
+ }
+  
+ public void setName(String name){
+  this.name = name;
+ }
+  
+ public int getAge(){
+  return age;
+ }
+  
+ public void setAge(int age){
+  this.age = age;
+ }
+}
+
+发送：
+// 传输方式一，intent直接调用putExtra
+// public Intent putExtra(String name, Serializable value)
+open.putExtra("put_ser_test", person);
+// 传输方式二，intent利用putExtras（注意s）传入bundle
+Bundle bundle = new Bundle();
+bundle.putSerializable("bundle_ser",person);
+open.putExtras(bundle);
+接受：
+Intent intent = getIntent();
+// 关键方法：getSerializableExtra ，我们的类是实现了Serializable接口的，所以写这个方法获得对象
+// public class Person implements Serializable
+Person per = (Person)intent.getSerializableExtra("put_ser_test");
+//Person per = (Person)intent.getSerializableExtra("bundle_ser");
+
+需要注意的是：
+    静态成员不输入单个对象，不参与序列化；
+    使用transient关键字修饰的成员不参与序列化。
+
+serialVersionUID用来在反序列化的时候做校验。反序列化时，会检测文件中的serialVersionUID和类的serialVersionUID是否一致，如果一致，则说明可以进行序列化，否则说明类的版本不匹配，不能进行序列化。
+如果不指定serialVersionUID，在进行序列化的时候，会默认根据当前类的结构，生成hash值作为serialVersionUID写到文件，在反序列化的时候，同样会生成类的hash值并和文件中序列化写入的serialVersionUID进行比较，如果一致就可以序列化，否则不可以。这样会造成一个问题：如果序列化之后，类有了修改，那么，此时默认生成的hash值和之前序列化写入的hash值不匹配，导致无法序列化。
+为了克服这个问题，最好手动指定serialVersionUID，或者由IDE工具自动生成。这样的好处是，及时序列化后，类做了小的改动，比如增加或删除了成员变量，那么，还是可以反序列恢复对象。但是，如果类的结构发生了非常规的改变，则无法反序列化，比如，修改了类名等。
+
+
+而Parcelable则需要实现writeToParcel、describeContents函数以及静态的CREATOR变量，实际上就是将如何打包和解包的工作自己来定义，而序列化的这些操作完全由底层实现。
+
+Parcelable的一个实现例子如下
+
+public class User implements Parcelable{
+    public int userId;
+    public String userName;
+    public boolean isMale;
+
+    public Book book;
+
+    public User() {
+    }
+
+    public User(int userId, String userName, boolean isMale) {
+        this.userId = userId;
+        this.userName = userName;
+        this.isMale = isMale;
+    }
+
+    /**
+     * 当当前对象中含有文件描述符时，返回1，其他时候返回0；
+     * @return
+     */
+    public int describeContents() {
+        return 0;
+    }
+
+    /**
+     * 通过Parcel的write方法，实现序列化
+     * @param out
+     * @param flags
+     */
+    public void writeToParcel(Parcel out, int flags) {
+        out.writeInt(userId);
+        out.writeString(userName);
+        out.writeInt(isMale ? 1 : 0);
+        out.writeParcelable(book, 0);
+    }
+
+    /**
+     * 实现反序列化
+     */
+    public static final Parcelable.Creator<User> CREATOR = new Parcelable.Creator<User>() {
+        /**
+         * 通过Parcel的read方法，实现反序列化生成一个对象
+         * @param in
+         * @return
+         */
+        public User createFromParcel(Parcel in) {
+            return new User(in);
+        }
+
+        /**
+         * 实现反序列化生成一个数组
+         * @param size
+         * @return
+         */
+        public User[] newArray(int size) {
+            return new User[size];
+        }
+    };
+
+    private User(Parcel in) {
+        userId = in.readInt();
+        userName = in.readString();
+        isMale = in.readInt() == 1;
+
+        /**
+        * book是一个Parcelable对象，反序列需要传递一个ClassLoader，否则会报错。
+        */
+        book = in.readParcelable(Thread.currentThread().getContextClassLoader());
+    }
+}
+
+从上面我们可以看出Parcel的写入和读出顺序是一致的。如果元素是list读出时需要先new一个ArrayList传入，否则会报空指针异常。如下：
+
+list = new ArrayList<String>();
+in.readStringList(list);
+
+序列化时通过writeToParcel（）实现，反序列化通过CREATOR提供，内容描述由describeContents提供。注意事项见注释。系统为我们提供了很多Parcelable类：Intent，Bundle和BitMap等。同时，List和Map也可以是Parcelable的，当且仅当它们里面的每个对象都是Parcelable的。
+
+ PS: 在自己使用时，read数据时误将前面int数据当作long读出，结果后面的顺序错乱，报如下异常，当类字段较多时务必保持写入和读取的类型及顺序一致。
+
+11-21 20:14:10.317: E/AndroidRuntime(21114): Caused by: java.lang.RuntimeException: Parcel android.os.Parcel@4126ed60: Unmarshalling unknown type code 3014773 at offset 164
+
+ 
+
+4、高级功能上
+
+Serializable序列化不保存静态变量，可以使用Transient关键字对部分字段不进行序列化，也可以覆盖writeObject、readObject方法以实现序列化过程自定义

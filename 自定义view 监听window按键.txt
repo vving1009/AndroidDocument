@@ -1,0 +1,47 @@
+自定义view 监听 window 按键 并加载layout
+
+可以重写window的根view的dispatchKeyEvent方法：
+		WindowManager mWindowManager = (WindowManager) getContext().getSystemService(Context.WINDOW_SERVICE);
+		Display display = mWindowManager.getDefaultDisplay();
+		int width = display.getWidth();
+		int height = display.getHeight();
+		int statusBarHeight = getStatusBarHeight();
+		final PopupWindow pw = new PopupWindow(width, height - statusBarHeight);
+		
+		final FrameLayout container = new FrameLayout(getContext()){
+
+			@Override
+			public boolean dispatchKeyEvent(KeyEvent event) {
+				if(event.getAction() == KeyEvent.ACTION_UP) {
+					if(event.getKeyCode() == KeyEvent.KEYCODE_BACK) {
+						Log.addLog(this, "window height =" + pw.getHeight());
+						removeAllViews();
+						pw.dismiss();
+						return true;
+					}
+				}
+				return super.dispatchKeyEvent(event);
+			}
+			
+		};
+		container.addView(view, params);  //view可以用LayoutInflater.inflate 加载layout资源
+		pw.setContentView(container);
+		pw.setFocusable(true);
+		pw.setAnimationStyle(R.style.popUpWindowAnimation);
+		pw.showAtLocation(this, Gravity.NO_GRAVITY, 0, statusBarHeight);
+		
+		====================================================================
+		
+		keyboardView.setFocusable(true);//comment by danielinbiti,设置view能够接听事件，标注1    
+ keyboardView.setFocusableInTouchMode(true); //comment by danielinbiti,设置view能够接听事件 标注2    
+  keyboardView.setOnKeyListener(new OnKeyListener(){    
+        @Override    
+        public boolean onKey(View arg0, int arg1, KeyEvent arg2) {    
+                if (arg1 == KeyEvent.KEYCODE_BACK){    
+                if(popupWindow != null) {    
+                    close();    
+                    }     
+                }    
+                 return false;     
+        }    
+     });  

@@ -1,0 +1,27 @@
+很多伙伴在更新VS2010，或者卸载VS2012安装2010后，建立Win32 Console Project/MFC项目时会出现"LINK : fatal error LNK1123: 转换到 COFF 期间失败: 文件无效或损坏"的错误。
+
+ 
+错误描述：
+
+1>正在编译资源...
+1>正在编译资源清单...
+1>正在链接...
+1>LINK : fatal error LNK1123: 转换到 COFF 期间失败: 文件无效或损坏
+1>生成日志保存在“file://E:\HelloC\ShapeFill V11\ShapeFill\Debug\ShapeFill.log”
+1>ShapeFill- 1个错误，0个警告
+========== 全部重新生成: 0 已成功, 1 已失败, 0 已跳过 ==========
+
+ 
+解决方案：
+
+ 第一步：将 项目——项目属性——配置属性——连接器——清单文件——嵌入清单 “是”改为“否”。若还不能解决问题进入第二步。
+
+第二步：查看计算机是否为64bit操作系统，如是，继续如下操作。
+ 查找是否有两个cvtres.exe。
+C:\Program Files(x86)\Microsoft Visual Studio 10.0\vc\bin\cvtres.exe
+C:\Windows\Microsoft.NET\Framework\v4.0.30319\cvtres.exe
+右键属性—详细信息， 查看两者版本号，删除/重命名较旧的版本，或者重新设置Path变量。
+
+ 
+
+治本的办法是第二步，删除旧版本的cvtres.exe后，就不需要每次都设置配置了。

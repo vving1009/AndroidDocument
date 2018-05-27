@@ -1,0 +1,779 @@
+手把手教你使用 RxJava 2.0（一）
+http://www.jianshu.com/p/d149043d103a
+
+作者 Ruheng  
+ 
+ 2017.01.18 21:10* 字数 2824 
+   
+网上有很多关于RxJava的技术文章，大多数是关于1.x版本的。随着 RxJava 2.0 的推出，有些文章也介绍了2.x版本新增的内容以及与1.x版本的对比。有些同学如果刚刚接触RxJava，仅仅看RxJava 1.x 的一些技术文章，有时候会有些出入。因此本篇文章基于RxJava 2.0 进行由浅入深的学习，逐步掌握RxJava。
+
+1.作用
+
+RxJava的目的就是异步。
+RxJava的特点就是可以非常简便的实现异步调用，可以在逻辑复杂的代码逻辑中以比较轻易的方式实现异步调用。随着逻辑的复杂，需求的更改，代码可依然能保持极强的阅读性，在深入的使用过程中一定对这点深有体会。
+
+2.工程引用
+
+要应用RxJava，需要在项目中引入依赖： 
+io.reactivex.rxjava2:rxjava:2.0.4
+io.reactivex.rxjava2:rxjava:2.0.4
+
+3.概念
+
+要想理解好RxJava，首先要理解清楚其中的几个关键概念。由于RxJava是利用观察者模式来实现一些列的操作，所以对于观察者模式中的观察者，被观察者，以及订阅、事件需要有一个了解。如果不理解观察者模式，不要紧，下面会详细介绍。
+
+Observable：在观察者模式中称为“被观察者”；
+Observer：观察者模式中的“观察者”，可接收Observable发送的数据；
+subscribe：订阅，观察者与被观察者，通过subscribe()方法进行订阅；
+Subscriber：也是一种观察者，在2.0中 它与Observer没什么实质的区别，不同的是 Subscriber要与Flowable(也是一种被观察者)联合使用，该部分内容是2.0新增的，后续文章再介绍。Obsesrver用于订阅Observable，而Subscriber用于订阅Flowable
+
+4.RxJava中的观察者模式
+
+观察者模式的概念很好理解，具体可以解释为：A 对象（观察者）对 B 对象（被观察者）的某种变化高度敏感，需要在 B 变化的一瞬间做出反应。
+在程序的观察者模式，观察者不需要时刻盯着被观察者（例如 A 不需要每过 2ms 就检查一次 B 的状态），而是采用注册(Register)或者称为订阅(Subscribe)的方式，告诉被观察者：我需要你的某某状态，你要在它变化的时候通知我。
+
+下面具体讲RxJava 的观察者模式
+
+RxJava 有四个基本概念：Observable (被观察者)、 Observer (观察者)、 subscribe (订阅)、事件。Observable 和 Observer 通过 subscribe() 方法实现订阅关系，从而 Observable 可以在完成某些操作，获得一些结果后，回调触发事件，即发出事件来通知 Observer。
+
+关于回调，如果理解则可以跳过这一段，如果不理解，在RxJava中可以简单的理解为：为了方便Observable和Observer交互，在Observable中，将Observer对象传入，在完成某些操作后调用Observer对象的方法，此时将触发Observer中具体实现的对应方法。
+注意：Observer是个接口，Observable是个类。
+
+与传统观察者模式不同， RxJava 的事件回调方法除了普通事件 onNext() 之外，还定义了三个特殊的事件：onComplete() 和 onError()，onSubscribe()。
+
+onComplete(): 事件队列完结时调用该方法。RxJava 不仅把每个事件单独处理，还会把它们看做一个队列。
+onError(): 事件队列异常。在事件处理过程中出异常时，onError() 会被触发，同时队列自动终止，不允许再有事件发出。
+onSubscribe()：RxJava 2.0 中新增的，传递参数为Disposable ，Disposable 相当于RxJava1.x中的Subscription,用于解除订阅。
+注意：onComplete() 和 onError() 二者也是互斥的，即在队列中调用了其中一个，就不应该再调用另一个。
+
+讲了这么多，大家会疑惑:这些都跟异步有什么关系？
+其实这都是在为异步进行铺垫。当大家理解了观察者模式之后，就会很容易理解RxJava的异步实现方式。让Observable (被观察者)开启子线程执行耗操作，完成耗时操作后，触发回调，通知Observer (观察者)进行主线程UI更新。如此轻松便可以实现Android中的异步，且代码简洁明了，集中分布。RxJava中默认Observer (观察者)和Observer (观察者)都在同一线程执行任务。本文主要介绍RxJava中的一些基本使用，关于线程调度问题下篇文章再进行介绍。即本文中的所有操作都默认在同一线程进行。
+好了，下面我们就开始了解RxJava的一些基本使用。
+
+5.基本的用法
+
+RxJava用法多种多样，其多样性体现在Obserable(被观察者)的创建上。
+我们先以最基础的Obserable(被观察者)的创建为例介绍RxJava的使用：
+Observable的创建：
+Observable<String> observable = Observable.create(new ObservableOnSubscribe<String>() {
+            @Override
+            public void subscribe(ObservableEmitter<String> e) throws Exception {
+                //执行一些其他操作
+                //.............
+                //执行完毕，触发回调，通知观察者
+                e.onNext("我来发射数据");
+            }
+        });
+
+Observer的创建：
+Observer<String> observer = new Observer<String>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+
+            }
+
+            @Override
+            //观察者接收到通知,进行相关操作
+            public void onNext(String aLong) {
+                System.out.println("我接收到数据了");
+            }
+
+            @Override
+            public void onError(Throwable e) {
+
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        };
+
+订阅：
+ observable.subscribe(observer);
+
+使用create( )创建Observable最基本的创建方式。可以看到，这里传入了一个 ObservableOnSubscribe对象作为参数，它的作用相当于一个计划表，当 Observable被订阅的时候，ObservableOnSubscribe的subscribe()方法会自动被调用，事件序列就会依照设定依次触发（对于上面的代码，就是观察者Observer 将会被调用一次 onNext()）。这样，由被观察者调用了观察者的回调方法，就实现了由被观察者向观察者的事件传递，即观察者模式。
+
+Observable的其他创建方式：
+
+just()方式
+Observable<String> observable = Observable.just("Hello");
+使用just( )，将为你创建一个Observable并自动为你调用onNext( )发射数据。通过just( )方式 直接触发onNext()，just中传递的参数将直接在Observer的onNext()方法中接收到。
+
+fromIterable()方式
+ List<String> list = new ArrayList<String>();
+        for(int i =0;i<10;i++){
+            list.add("Hello"+i);
+        }
+Observable<String> observable = Observable.fromIterable((Iterable<String>) list);
+
+使用fromIterable()，遍历集合，发送每个item。相当于多次回调onNext()方法，每次传入一个item。
+注意：Collection接口是Iterable接口的子接口，所以所有Collection接口的实现类都可以作为Iterable对象直接传入fromIterable()方法。
+
+defer()方式
+ Observable<String> observable = Observable.defer(new Callable<ObservableSource<? extends String>>() {
+            @Override
+            public ObservableSource<? extends String> call() throws Exception {
+                return Observable.just("hello");
+            }
+        });
+
+当观察者订阅时，才创建Observable，并且针对每个观察者创建都是一个新的Observable。以何种方式创建这个Observable对象，当满足回调条件后，就会进行相应的回调。
+
+interval( )方式
+ Observable<String> observable = Observable.interval(2, TimeUnit.SECONDS);
+
+创建一个按固定时间间隔发射整数序列的Observable，可用作定时器。即按照固定2秒一次调用onNext()方法。
+range( )方式
+Observable<Integer> observable = Observable.range(1,20);
+
+创建一个发射特定整数序列的Observable，第一个参数为起始值，第二个为发送的个数，如果为0则不发送，负数则抛异常。上述表示发射1到20的数。即调用20次nNext()方法，依次传入1-20数字。
+
+timer( )方式
+Observable<Integer> observable = Observable.timer(2, TimeUnit.SECONDS);
+
+创建一个Observable，它在一个给定的延迟后发射一个特殊的值，即表示延迟2秒后，调用onNext()方法。
+repeat( )方式
+Observable<Integer> observable = Observable.just(123).repeat();
+
+创建一个Observable，该Observable的事件可以重复调用。
+除了Observable(被观察者)的创建之外，RxJava 2.x 还提供了多个函数式接口 ，用于实现简便式的观察者模式。具体的函数式接口包括以下：
+Action, BiConsumer, BiFunction, BiPredicate, BooleanSupplier, Cancellable, Consumer, Function, Function3,
+Function4, Function5, Function6, Function7, Function8, Function9, IntFunction, LongConsumer, Predicate
+
+
+以Consumer为例，我们可以实现简便式的观察者模式：
+Observable.just("hello").subscribe(new Consumer<String>() {
+            @Override
+            public void accept(String s) throws Exception {
+                System.out.println(s);
+            }
+        });
+
+其中Consumer中的accept()方法接收一个来自Observable的单个值。Consumer就是一个观察者。其他函数式接口可以类似应用。
+注意：Observable (被观察者)只有在被Observer (观察者)订阅后才能执行其内部的相关逻辑,下面代码证实了这一点：
+Observable<Long> observable = Observable.interval(2, TimeUnit.SECONDS);
+        Observer<Long> observer = new Observer<Long>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+
+            }
+
+            @Override
+            public void onNext(Long aLong) {
+                    System.out.println(aLong);
+            }
+
+            @Override
+            public void onError(Throwable e) {
+
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        };
+        SystemClock.sleep(10000);//睡眠10秒后，才进行订阅  仍然从0开始，表示Observable内部逻辑刚开始执行
+        observable.subscribe(observer);
+
+
+01-18 16:09:20.874 12535-12927/com.lvr.rxjavalearning I/System.out: 0
+01-18 16:09:22.864 12535-12927/com.lvr.rxjavalearning I/System.out: 1
+01-18 16:09:24.864 12535-12927/com.lvr.rxjavalearning I/System.out: 2
+01-18 16:09:26.864 12535-12927/com.lvr.rxjavalearning I/System.out: 3
+
+除此之外，RxJava中还有许多操作符。操作符就是用于在Observable和最终的Observer之间，通过转换Observable为其他观察者对象的过程，修改发出的事件，最终将最简洁的数据传递给Observer对象。下面我们介绍一些比较常用的操作符。
+
+6.RxJava中的操作符
+
+map()操作符
+Observable<Integer> observable = Observable.just("hello").map(new Function<String, Integer>() {
+            @Override
+            public Integer apply(String s) throws Exception {
+                return s.length();
+            }
+        });
+
+map()操作符，就是把原来的Observable对象转换成另一个Observable对象，同时将传输的数据进行一些灵活的操作，方便Observer获得想要的数据形式。
+flatMap()操作符
+ Observable<Object> observable = Observable.just(list).flatMap(new Function<List<String>, ObservableSource<?>>() {
+            @Override
+            public ObservableSource<?> apply(List<String> strings) throws Exception {
+                return Observable.fromIterable(strings);
+            }
+        });
+
+flatMap()对于数据的转换比map()更加彻底，如果发送的数据是集合，flatmap()重新生成一个Observable对象，并把数据转换成Observer想要的数据形式。它可以返回任何它想返回的Observable对象。
+filter()操作符
+Observable.just(list).flatMap(new Function<List<String>, ObservableSource<?>>() {
+            @Override
+            public ObservableSource<?> apply(List<String> strings) throws Exception {
+                return Observable.fromIterable(strings);
+            }
+        }).filter(new Predicate<Object>() {
+            @Override
+            public boolean test(Object s) throws Exception {
+                String newStr = (String) s;
+                if (newStr.charAt(5) - '0' > 5) {
+                    return true;
+                }
+                return false;
+            }
+        }).subscribe(new Consumer<Object>() {
+            @Override
+            public void accept(Object o) throws Exception {
+                System.out.println((String)o);
+            }
+        });
+
+filter()操作符根据test()方法中，根据自己想过滤的数据加入相应的逻辑判断，返回true则表示数据满足条件，返回false则表示数据需要被过滤。最后过滤出的数据将加入到新的Observable对象中，方便传递给Observer想要的数据形式。
+take()操作符
+Observable.just(list).flatMap(new Function<List<String>, ObservableSource<?>>() {
+            @Override
+            public ObservableSource<?> apply(List<String> strings) throws Exception {
+                return Observable.fromIterable(strings);
+            }
+        }).take(5).subscribe(new Consumer<Object>() {
+            @Override
+            public void accept(Object s) throws Exception {
+                System.out.println((String)s);
+            }
+        });
+
+take()操作符：输出最多指定数量的结果。
+doOnNext()
+Observable.just(list).flatMap(new Function<List<String>, ObservableSource<?>>() {
+            @Override
+            public ObservableSource<?> apply(List<String> strings) throws Exception {
+                return Observable.fromIterable(strings);
+            }
+        }).take(5).doOnNext(new Consumer<Object>() {
+            @Override
+            public void accept(Object o) throws Exception {
+                System.out.println("准备工作");
+            }
+        }).subscribe(new Consumer<Object>() {
+            @Override
+            public void accept(Object s) throws Exception {
+                System.out.println((String)s);
+            }
+        });
+
+doOnNext()允许我们在每次输出一个元素之前做一些额外的事情。
+
+以上就是一些常用的操作符，通过操作符的使用。我们每次调用一次操作符，就进行一次观察者对象的改变，同时将需要传递的数据进行转变，最终Observer对象获得想要的数据。
+以网络加载为例，我们通过Observable开启子线程，进行一些网络请求获取数据的操作，获得到网络数据后，然后通过操作符进行转换，获得我们想要的形式的数据，然后传递给Observer对象。
+
+以上仅仅是介绍RxJava的观察者模式以及RxJava的简单操作与使用。通过本篇文章，可以对RxJava有个简单的了解。后面我会继续介绍RxJava中线程调度的内容，以及RxJava 2.x 中新增的功能。如果大家喜欢这部分内容，可以持续关注，后面会继续更新。
+
+==============================================================================================================
+
+手把手教你使用 RxJava 2.0（二）
+http://www.jianshu.com/p/310726a75045
+ 
+作者 Ruheng  
+ 
+ 2017.01.19 14:36* 字数 2421 
+   
+
+
+本篇文章主要介绍线程调度器，通过对线程调度器的了解，方便我们更好的处理异步操作，在合适的场景选择合适的线程。同时，结合上篇文章，我们就初步掌握了 RxJava 2.x的基本操作并可以应用在我们的项目中。在本篇文章的后半部分，会具体展示RxJava 2.x的使用。
+
+Scheduler简介
+
+在不指定线程的情况下， RxJava 遵循的是线程不变的原则，即：在哪个线程调用 subscribe()，就在哪个线程生产事件；在哪个线程生产事件，就在哪个线程消费事件。如果需要切换线程，就需要用到 Scheduler （调度器）。
+在RxJava 中，Scheduler，相当于线程控制器，RxJava 通过它来指定每一段代码应该运行在什么样的线程。RxJava 已经内置了几个 Scheduler ，它们已经适合大多数的使用场景。
+
+Scheduler 的 API
+
+● Schedulers.immediate(): 直接在当前线程运行，相当于不指定线程。这是默认的 Scheduler。
+
+●Schedulers.newThread(): 总是启用新线程，并在新线程执行操作。
+
+●Schedulers.io(): I/O 操作（读写文件、读写数据库、网络信息交互等）所使用的 Scheduler。行为模式和 newThread() 差不多，区别在于 io() 的内部实现是用一个无数量上限的线程池，可以重用空闲的线程，因此多数情况下 io() 比 newThread() 更有效率。不要把计算工作放在 io() 中，可以避免创建不必要的线程。
+
+●Schedulers.computation(): 计算所使用的 Scheduler。这个计算指的是 CPU 密集型计算，即不会被 I/O 等操作限制性能的操作，例如图形的计算。这个 Scheduler 使用的固定的线程池，大小为 CPU 核数。不要把 I/O 操作放在 computation() 中，否则 I/O 操作的等待时间会浪费 CPU。
+
+● Android 还有一个专用的 AndroidSchedulers.mainThread()，它指定的操作将在 Android 主线程运行。
+
+有了这几个 Scheduler ，就可以使用 subscribeOn() 和 observeOn() 两个方法来对线程进行控制了。subscribeOn(): 指定Observable(被观察者)所在的线程，或者叫做事件产生的线程。 * observeOn(): 指定 Observer(观察者)所运行在的线程，或者叫做事件消费的线程。
+下面用代码展示下线程调度的使用：
+Observable.create(new ObservableOnSubscribe<Integer>() {
+            @Override
+            public void subscribe(ObservableEmitter<Integer> e) throws Exception {
+                Log.d("所在的线程：",Thread.currentThread().getName());
+                Log.d("发送的数据:", 1+"");
+                e.onNext(1);
+            }
+        }).subscribeOn(Schedulers.io()) 
+                .observeOn(AndroidSchedulers.mainThread()) /
+                .subscribe(new Consumer<Integer>() {
+                    @Override
+                    public void accept(Integer integer) throws Exception {
+                        Log.d("所在的线程：",Thread.currentThread().getName());
+                        Log.d("接收到的数据:", "integer:" + integer);
+                    }
+                });
+
+
+01-19 10:06:38.275 27734-27783/? D/所在的线程：: RxCachedThreadScheduler-1
+01-19 10:06:38.275 27734-27783/? D/发送的数据:: 1
+01-19 10:06:38.285 27734-27734/? D/所在的线程：: main
+01-19 10:06:38.285 27734-27734/? D/接收到的数据:: integer:1
+
+可以看到,Observable(被观察者)发送事件的线程的确改变了, 是在一个叫 RxCachedThreadScheduler-1的线程中发送的事件, 而Observer(观察者)仍然在主线程中接收事件。由此我们实现了线程调度的操作，可以在此基础上尽情的进行异步操作。
+
+下面来介绍一个具体的使用场景。
+
+RxJava 2.x 网络请求使用
+
+Android中有多种网络请求库, Retrofit便是其中的佼佼者，它的优势之一便是它支持RxJava的方式来调用。我们便以Retrofit进行网络请求，RxJava进行异步处理，两者结合来讲解RxJava在网络请求中的具体使用。
+
+本例中 我们使用聚合数据中的全国天气数据，获得城市信息。
+接口url：http://v.juhe.cn/weather/citys?key=.... 其中key是你申请时聚合数据给你的密钥。
+具体请求的返回数据形式如下：
+
+
+
+
+
+下面以上述数据简单讲解一下Retrofit的基本用法。
+
+要使用Retrofit,先在Gradle中添加配置:
+//Retrofit
+    compile 'com.squareup.retrofit2:retrofit:2.1.0'
+//Gson converter
+    compile 'com.squareup.retrofit2:converter-gson:2.1.0'
+//Okhttp
+    compile 'com.squareup.okhttp3:okhttp:3.5.0'
+//RxJava　adapter
+    compile 'com.jakewharton.retrofit:retrofit2-rxjava2-adapter:1.0.0'
+
+定义Api接口:
+public interface Api {
+    @GET("citys")
+    Observable<AllCity> getAllCity(@Query("key") String key);
+}
+
+创建一个Retrofit客户端:
+private static Retrofit create() {
+    OkHttpClient.Builder builder = new OkHttpClient().newBuilder();
+    builder.readTimeout(10, TimeUnit.SECONDS);
+    builder.connectTimeout(9, TimeUnit.SECONDS);
+
+    return new Retrofit.Builder().baseUrl(baseUrl)
+            .client(builder.build())
+            .addConverterFactory(GsonConverterFactory.create())
+            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+            .build();
+}
+
+接下来就可以进行网络请求：
+Retrofit retrofit = create();
+Api api = retrofit.create(Api.class);
+Observable<AllCity> observable = api.getAllCity(appkey);
+observable.subscribeOn(Schedulers.io())
+        .flatMap(new Function<AllCity, ObservableSource<City>>() {
+            @Override
+            public ObservableSource<City> apply(AllCity city) throws Exception {
+                ArrayList<City> result = city.getResult();
+                return Observable.fromIterable(result);
+            }
+        })
+        .filter(new Predicate<City>() {
+            @Override
+            public boolean test(City city) throws Exception {
+                String id = city.getId();
+                if(Integer.parseInt(id)<5){
+                    return true;
+                }
+                return false;
+            }
+        })
+        .observeOn(AndroidSchedulers.mainThread())
+        .subscribe(new Consumer<City>() {
+            @Override
+            public void accept(City city) throws Exception {
+                System.out.println(city);
+            }
+        });
+
+
+01-19 13:28:56.952 13218-13218/com.lvr.rxjavalearning I/System.out: City{id='1', province='北京', city='北京', district='北京'}
+01-19 13:28:56.952 13218-13218/com.lvr.rxjavalearning I/System.out: City{id='2', province='北京', city='北京', district='海淀'}
+01-19 13:28:56.952 13218-13218/com.lvr.rxjavalearning I/System.out: City{id='3', province='北京', city='北京', district='朝阳'}
+01-19 13:28:56.952 13218-13218/com.lvr.rxjavalearning I/System.out: City{id='4', province='北京', city='北京', district='顺义'}
+
+调用Api接口方法，返回一个Observable(被观察者)对象，然后当subscribe()订阅后，就可以在IO线程中执行网络 请求操作，然后进行转换过滤，最终Observer(观察者)对象在UI线程中获得城市id在1-4之间的城市信息。
+其中请求返回的数据是json形式，AllCity类包含所有的返回数据，具体代码如下：
+public class AllCity {
+    private String error_code;
+    private String reason;
+    private String resultcode;
+   private ArrayList<City> result;
+//省略getter,setter方法
+}
+
+ArrayList集合中封装了所有城市的信息，City类包含城市详细信息，具体代码如下：
+public class City {
+
+    /**
+     * id : 1
+     * province : 北京
+     * city : 北京
+     * district : 北京
+     */
+
+    private String id;
+    private String province;
+    private String city;
+    private String district;
+    //省略getter,setter,toString方法
+}
+
+本例中，我们假设Observer(观察者)需要id号在1-4之间的城市信息，我们就可以先使用flatMap()操作符先将封装所有信息的AllCity中提取出城市信息集合，然后转换成一个新的Observable(被观察者)进行传递，然后使用filter()进行过滤，过滤出符合要求的城市信息，最终传递给Observer(观察者)，让其在UI线程接收数据，然后更新UI。整个过程完成了网络请求，同时进行异步操作，防止阻塞UI线程。
+以上仅仅以实例介绍RxJava的基础使用，RxJava的功能远不止于此。不过掌握了以上的技能，我们已经可以在我们的项目中应用RxJava进行异步操作了。关于一些RxJava中的细节及其他相关技术还需要慢慢积累。
+
+下面我们另一个重要的概念Disposable。当Observer(观察者)与Observable(被观察者)通过subscribe()建立连接后，事件可以进行传递。当发生一些其他情况，不得不断开两者之间的连接时，该怎么操作?这个时候就该Disposable上场了。
+
+Disposable简介及使用
+
+Disposable简介
+
+Disposable, 这个单词的字面意思是一次性用品,用完即可丢弃的。在RxJava中,用它来切断Observer(观察者)与Observable(被观察者)之间的连接，当调用它的dispose()方法时, 它就会将Observer(观察者)与Observable(被观察者)之间的连接切断, 从而导致Observer(观察者)收不到事件。
+下面我们就该考虑如何来获得Disposable对象？
+Disposable的作用是切断连接，确切地讲是将Observer(观察者)切断，不再接收来自被观察者的事件，而被观察者的事件却仍在继续执行。
+因此Disposable的对象通过观察者获得，具体分为两种方式。
+
+Disposable对象的获得
+
+1.Observer接口
+Observer<String> observer = new Observer<String>() {
+            @Override
+            public void onSubscribe(Disposable d) {
+
+            }
+
+            @Override
+            public void onNext(String s) {
+
+            }
+
+            @Override
+            public void onError(Throwable e) {
+
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        };
+
+通过创建Observer接口,当订阅后，建立与Observable的联系，onSubscribe(Disposable d)中便可以获得Disposable对象。
+2.Consumer等其他函数式接口
+Disposable disposable = Observable.just("你好").subscribe(new Consumer<String>() {
+            @Override
+            public void accept(String s) throws Exception {
+
+            }
+        });
+
+当subscribe()后直接返回一个Disposable 对象
+获得了Disposable对象后，我们便可以调用dispose()方法，在恰当的时机，断开连接，停止接收Observable(被观察者)发送的事件。
+
+注意：当切断被观察者与观察者之间的联系，Observable(被观察者)的事件却仍在继续执行。
+
+另外，补充一下onNext()、onComplete()和onError()事件的发送规则。
+具体规则：
+
+Observable(被观察者)可以发送无限个onNext, Observer(观察者)也可以接收无限个onNext.
+
+当Observable(被观察者)发送了一个onComplete后, Observable(被观察者)中onComplete之后的事件将会继续发送, 而Observer(观察者)收到onComplete事件之后将不再继续接收事件.
+
+当Observable(被观察者)发送了一个onError后, Observable(被观察者)中onError之后的事件将继续发送, 而Observer(观察者)收到onError事件之后将不再继续接收事件.
+
+Observable(被观察者)可以不发送onComplete或onError.
+
+最为关键的是onComplete和onError必须唯一并且互斥, 即不能发多个onComplete, 也不能发多个onError, 也不能先发一个onComplete, 然后再发一个onError, 反之亦然
+
+注: 关于onComplete和onError唯一并且互斥这一点, 是需要自行在代码中进行控制, 如果你的代码逻辑中违背了这个规则, 并不一定会导致程序崩溃. 比如发送多个onComplete是可以正常运行的, 依然是收到第一个onComplete就不再接收了, 但若是发送多个onError, 则收到第二个onError事件会导致程序会崩溃。
+
+以上就是本篇文章的全部内容，结合上一篇文章，已经可以灵活使用RxJava了。在下篇文章中，将会介绍RxJava中新增加的内容：Flowable及backpressure。
+
+==============================================================================================================
+
+手把手教你使用 RxJava 2.0（三）
+http://www.jianshu.com/p/1f4867ce3c01
+  
+作者 Ruheng  
+ 
+ 2017.01.20 18:14* 字数 2713 
+   
+
+
+本节介绍的是关于Flowabale的使用，以及RxJava 2.x中的backpressure的处理策略。这部分内容应当是RxJava 2.x中改动最大的一部分。但同时也能解决一些应用场景中的问题，使得我们的RxJava更加强大。
+
+Flowable的产生
+
+在RxJava中会经常遇到一种情况就是被观察者发送消息十分迅速以至于观察者不能及时的响应这些消息。
+例如下面这种情况：
+Observable.create(new ObservableOnSubscribe<Integer>() {
+            @Override
+            public void subscribe(ObservableEmitter<Integer> e) throws Exception {
+                while (true){
+                    e.onNext(1);
+                }
+            }
+        })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<Integer>() {
+            @Override
+            public void accept(Integer integer) throws Exception {
+                Thread.sleep(2000);
+                System.out.println(integer);
+            }
+        });
+
+被观察者是事件的生产者，观察者是事件的消费者。上述例子中可以看出生产者无限生成事件，而消费者每2秒才能消费一个事件，这会造成事件无限堆积，最后造成OOM。
+
+因此问题来了，要怎么处理这些慢慢堆积起来的消息呢？
+
+Flowable就是由此产生，专门用来处理这类问题。
+关于上述的问题，有个专有的名词来形容上述现象，即：Backpressure(背压)。所谓背压，即生产者的速度大于消费者的速度带来的问题。
+在原来的RxJava 1.x版本中并没有Flowable的存在，Backpressure问题是由Observable来处理的。在RxJava 2.x中对于backpressure的处理进行了改动，为此将原来的Observable拆分成了新的Observable和Flowable，同时其他相关部分也同时进行了拆分。原先的Observable已经不具备背压处理能力。 
+
+到此，我们便知道了Flowable是为了应对Backpressure而产生的。Flowable是一个被观察者，与Subscriber(观察者)配合使用，解决Backpressure问题。
+
+下面我们就具体讲解处理Backpressure的策略。
+注意：处理Backpressure的策略仅仅是处理Subscriber接收事件的方式，并不影响Flowable发送事件的方法。即使采用了处理Backpressure的策略，Flowable原来以什么样的速度产生事件，现在还是什么样的速度不会变化，主要处理的是Subscriber接收事件的方式。
+
+处理Backpressure的策略
+
+在讲具体策略之前，我们要具体分析下什么情况下才会产生Backpressure问题？
+1.如果生产者和消费者在一个线程的情况下，无论生产者的生产速度有多快，每生产一个事件都会通知消费者，等待消费者消费完毕，再生产下一个事件。所以在这种情况下，根本不存在Backpressure问题。即同步情况下，Backpressure问题不存在。
+2.如果生产者和消费者不在同一线程的情况下，如果生产者的速度大于消费者的速度，就会产生Backpressure问题。即异步情况下，Backpressure问题才会存在。
+
+现在我们已经知道了具体产生Backpressure问题的原因及场景。那我们就可以通过学习下面处理Backpressure问题的策略来解决问题了。
+以下实例都是异步操作
+
+ERROR
+
+这种方式会在产生Backpressure问题的时候直接抛出一个异常,这个异常就是著名的MissingBackpressureException。
+
+我们先以代码示例介绍一下Flowable相比与Observable新的东西。
+Flowable<Integer> flowable = Flowable.create(new FlowableOnSubscribe<Integer>() {
+            @Override
+            public void subscribe(FlowableEmitter<Integer> emitter) throws Exception {
+                Log.d(TAG, "emit 1");
+                emitter.onNext(1);
+                Log.d(TAG, "emit 2");
+                emitter.onNext(2);
+                Log.d(TAG, "emit 3");
+                emitter.onNext(3);
+                Log.d(TAG, "emit complete");
+                emitter.onComplete();
+            }
+        }, BackpressureStrategy.ERROR); //增加了一个参数
+
+        Subscriber<Integer> subscriber = new Subscriber<Integer>() {
+            @Override
+            public void onSubscribe(Subscription s) {
+                Log.d(TAG, "onSubscribe");
+                s.request(Long.MAX_VALUE);  
+            }
+            @Override
+            public void onNext(Integer integer) {
+                Log.d(TAG, "onNext: " + integer);
+
+            }
+            @Override
+            public void onError(Throwable t) {
+                Log.w(TAG, "onError: ", t);
+            }
+            @Override
+            public void onComplete() {
+                Log.d(TAG, "onComplete");
+            }
+        };
+        flowable.subscribeOn(Schedulers.io()).observeOn(AndroidSchedulers.mainThread()).subscribe(subscriber);
+
+
+01-20 16:18:58.898 17829-17851/? D/MainActivity: emit 1
+01-20 16:18:58.898 17829-17851/? D/MainActivity: emit 2
+01-20 16:18:58.898 17829-17851/? D/MainActivity: emit 3
+01-20 16:18:58.898 17829-17851/? D/MainActivity: emit complete
+01-20 16:18:58.908 17829-17829/? D/MainActivity: onNext: 1
+01-20 16:18:58.908 17829-17829/? D/MainActivity: onNext: 2
+01-20 16:18:58.908 17829-17829/? D/MainActivity: onNext: 3
+01-20 16:18:58.908 17829-17829/? D/MainActivity: onComplete
+
+上述代码创建了一个Flowable(被观察者)和一个Subscriber(观察者)，可以看到程序如我们预期的一样输出结果了。不同的是 onSubscribe(Subscription s)中传给我们的不再是Disposable了, 而是Subscription。然而Subscription也可以用于切断观察者与被观察者之间的联系，调用Subscription.cancel()方法便可。 不同的地方在于Subscription增加了一个void request(long n)方法, 这个方法有什么用呢, 在上面的代码中也有这么一句代码:
+  s.request(Long.MAX_VALUE);
+
+这个方法就是用来向生产者申请可以消费的事件数量。这样我们便可以根据本身的消费能力进行消费事件。
+当调用了request()方法后，生产者便发送对应数量的事件供消费者消费。
+这是因为Flowable在设计的时候采用了一种新的思路也就是响应式拉取的方式,你要求多少，我便传给你多少。
+
+注意：如果不显示调用request就表示消费能力为0。
+
+虽然并不限制向request()方法中传入任意数字，但是如果消费者并没有这么多的消费能力，依旧会造成资源浪费，最后产生OOM。形象点就是不能打肿脸充胖子。
+而ERROR策略就避免了这种情况的出现(讲了这么多终于出现了)。
+
+在异步调用时，RxJava中有个缓存池，用来缓存消费者处理不了暂时缓存下来的数据，缓存池的默认大小为128，即只能缓存128个事件。无论request()中传入的数字比128大或小，缓存池中在刚开始都会存入128个事件。当然如果本身并没有这么多事件需要发送，则不会存128个事件。
+在ERROR策略下，如果缓存池溢出，就会立刻抛出MissingBackpressureException异常。
+Flowable.create(new FlowableOnSubscribe<Integer>() {
+            @Override
+            public void subscribe(FlowableEmitter<Integer> emitter) throws Exception {
+                for (int i = 0; i < 129; i++) {
+                    Log.d(TAG, "emit " + i);
+                    emitter.onNext(i);
+                }
+            }
+        }, BackpressureStrategy.ERROR).subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Subscriber<Integer>() {
+                    @Override
+                    public void onSubscribe(Subscription s) {
+                        mSubscription = s;
+                    }
+
+                    @Override
+                    public void onNext(Integer integer) {
+                        Log.d(TAG, "onNext: " + integer);
+                    }
+                    @Override
+                    public void onError(Throwable t) {
+                        Log.w(TAG, "onError: ", t);
+                    }
+
+                    @Override
+                    public void onComplete() {
+                    }
+                });
+
+
+01-20 16:58:48.993 32434-32474/? D/MainActivity: emit 125
+01-20 16:58:48.993 32434-32474/? D/MainActivity: emit 126
+01-20 16:58:48.993 32434-32474/? D/MainActivity: emit 127
+01-20 16:58:48.993 32434-32474/? D/MainActivity: emit 128
+01-20 16:58:49.003 32434-32434/? W/MainActivity: onError:
+ io.reactivex.exceptions.MissingBackpressureException: create: could not emit value due to lack of requests
+
+我们让Flowable发送129个事件，而Subscriber一个也不处理，就产生了异常。
+因此，ERROR即保证在异步操作中，事件累积不能超过128，超过即出现异常。消费者不能再接收事件了，但生产者并不会停止。
+
+BUFFER
+
+所谓BUFFER就是把RxJava中默认的只能存128个事件的缓存池换成一个大的缓存池，支持存很多很多的数据。
+这样，消费者通过request()即使传入一个很大的数字，生产者也会生产事件，并将处理不了的事件缓存。
+但是这种方式任然比较消耗内存，除非是我们比较了解消费者的消费能力，能够把握具体情况，不会产生OOM。
+总之BUFFER要慎用。
+
+DROP
+
+看名字就可以了解其作用：当消费者处理不了事件，就丢弃。
+消费者通过request()传入其需求n，然后生产者把n个事件传递给消费者供其消费。其他消费不掉的事件就丢掉。
+下面例子具体介绍：
+
+
+
+
+
+
+点击“开始”按钮，建立连接。生产者开始生产事件，刚开始消费者通过request()只要了50个事件消费。然后每次点击“消费”按钮，再次消费50个事件。
+mFlowable = Flowable.create(new FlowableOnSubscribe<Integer>() {
+            @Override
+            public void subscribe(FlowableEmitter<Integer> emitter) throws Exception {
+                for (int i = 0; ; i++) {
+
+                    emitter.onNext(i);
+                }
+            }
+        }, BackpressureStrategy.DROP);
+        mSubscriber = new Subscriber<Integer>() {
+            @Override
+            public void onSubscribe(Subscription s) {
+                mSubscription = s;
+                s.request(50);
+            }
+
+            @Override
+            public void onNext(Integer integer) {
+                Log.d(TAG, "onNext: " + integer);
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                Log.w(TAG, "onError: ", t);
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        };
+    }
+    public void start(View view){
+        mFlowable.subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(mSubscriber);
+
+    }
+    public void consume(View view){
+        mSubscription.request(50);
+
+    }
+
+
+01-20 17:25:44.331 3327-3327/com.lvr.rxjavalearning D/MainActivity: onNext: 0
+..........................................................
+01-20 17:25:44.331 3327-3327/com.lvr.rxjavalearning D/MainActivity: onNext: 49
+01-20 17:25:47.891 3327-3327/com.lvr.rxjavalearning D/MainActivity: onNext: 50
+..........................................................
+01-20 17:25:47.891 3327-3327/com.lvr.rxjavalearning D/MainActivity: onNext: 99
+01-20 17:25:50.241 3327-3327/com.lvr.rxjavalearning D/MainActivity: onNext: 100
+..........................................................
+01-20 17:25:50.241 3327-3327/com.lvr.rxjavalearning D/MainActivity: onNext: 127
+01-20 17:25:50.241 3327-3327/com.lvr.rxjavalearning D/MainActivity: onNext: 17749078
+..........................................................
+01-20 17:25:50.241 3327-3327/com.lvr.rxjavalearning D/MainActivity: onNext: 17749099
+
+可以看出，生产者一次性传入128个事件进入缓存池。点击“开始”按钮，消费了50个。然后第一次点击“消费”按钮，又消费了50个，第二次点击“消费”按钮，再次消费50个。然而此时原来的128个缓存只剩下28个了，所以先消费掉28个，然后剩下22个是后来传入的（其实后来的是在消费了96个后传入，并一次性在缓存池中又传入了96个，具体可以看源码，这里不解释了）。
+
+LATEST
+
+LATEST与DROP功能基本一致。
+消费者通过request()传入其需求n，然后生产者把n个事件传递给消费者供其消费。其他消费不掉的事件就丢掉。
+唯一的区别就是LATEST总能使消费者能够接收到生产者产生的最后一个事件。
+还是以上述例子展示，唯一的区别就是Flowable不再无限发事件，只发送1000000个。
+结果如下：
+
+
+01-20 17:50:30.459 25334-25334/com.lvr.rxjavalearning D/MainActivity: onNext: 0
+..........................................................
+01-20 17:50:30.459 25334-25334/com.lvr.rxjavalearning D/MainActivity: onNext: 49
+01-20 17:50:31.569 25334-25334/com.lvr.rxjavalearning D/MainActivity: onNext: 50
+..........................................................
+01-20 17:50:32.459 25334-25334/com.lvr.rxjavalearning D/MainActivity: onNext: 100
+01-20 17:50:32.459 25334-25334/com.lvr.rxjavalearning D/MainActivity: onNext: 101
+..........................................................
+01-20 17:50:32.459 25334-25334/com.lvr.rxjavalearning D/MainActivity: onNext: 127
+01-20 17:50:32.459 25334-25334/com.lvr.rxjavalearning D/MainActivity: onNext: 999999
+
+唯一的区别就在最后一行。这就是LATEST与DROP的区别。
+
+上述例子Flowable对象的获取都是通过create()获取的，自然可以通过BackpressureStrategy.LATEST之类的方式指定处理背压的策略。如果Flowable对象不是自己创建的，可以采用onBackpressureBuffer()、onBackpressureDrop()、onBackpressureLatest()的方式指定。
+ Flowable.just(1).onBackpressureBuffer()
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.io())
+                .subscribe(new Consumer<Integer>() {
+                    @Override
+                    public void accept(Integer integer) throws Exception {
+
+                    }
+                });
+
+以上就是关于Flowable及backpressure的内容。由于水平有限，关于RxJava 2.0 的学习内容就暂时只有这么多了。接下来会继续学习，如果有新的理解和认识，会再来分享。

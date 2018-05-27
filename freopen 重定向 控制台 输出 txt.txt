@@ -1,0 +1,226 @@
+在程序中控制台输出的内容写入.txt文本可以更方便的查看结果，当然可也用代码操作文本，还可以用cmd关联编译器生成的.exe文件。具体为：
+
+比如生成的.exe文件路径为：F:\bebut\Debug\bebut.exe， 含有input.txt
+打开电脑的cmd控制台，将路径定位到.exe所在的路径下，然后输入：bebut>name.txt（要回车确定）
+
+cmd将关联应用程序与txt文本，如果此时程序的根目录下没有txt文件的话，将自动生成。在程序的控制台打印出来的东西将同步写入txt文本里。
+
+
+C语言中输入输出重定向，freopen()妙用。
+
+
+    标签：
+    C /
+    freopen /
+    重定向
+
+C语言的文件操作 freopen
+
+今天做USACO  用到了文件的操作。 之前做USACO只是格式化的些 写  freopen("xxx.in","r",stdin)  和"freopen("xxx.out","w",stdout)"  
+
+百度百科上是这么介绍的：
+
+    函数名: freopen
+ 　功 能: 替换一个流，或者说重新分配文件指针，实现重定向。如果stream流已经打开，则先关闭该流。如果该流已经定向，则freopen将会清除该定向。此函数一般用于将一个指定的文件打开一个预定义的流：标准输入、标准输出或者标准出错。
+　 用 法: FILE *freopen(const char *filename,const char *type, FILE *stream);
+    头文件：stdio.h
+
+例1：
+#include <stdio.h>
+#include <stdlib.h>
+ 
+int main()
+{
+    if(freopen("file.txt","w",stdout)==NULL)
+        fprintf(stderr,"error\n");
+    printf("This is in the file\n");      //这句话会在file.txt中显示。
+    fclose(stdout);               //使用fclose()函数就可以把<a href="http://baike.baidu.com/view/266782.htm" target="_blank">缓冲区</a>内最后剩余的数据输出到磁盘文件中，并释放文件指针和有关的缓冲区。
+    return 0;
+}
+例2：
+//首先在同路径下创建一个in.txt文本文档写入若干数字
+#include <stdio.h>
+#include <stdlib.h>
+ 
+int main()
+{
+    freopen("in.txt","r",stdin);     //从in.txt 中读入数据
+    freopen("out.txt","w",stdout);  // 将最后数据写入out.txt中
+    int a,b;
+    while(scanf("%d%d",&a,&b)!=EOF)     //数据是从in.txt中输入的
+        printf("%d\n",a+b);             //写入out.txt中
+    fclose(stdin);
+    fclose(stdout);
+    return 0;
+}
+　freopen("CON","w",stdout)  表示在控制台窗口上写入数据；
+
+例3：
+#include <stdio.h>
+#include <stdlib.h>
+ 
+int main()
+{
+   // FILE *stream;
+    freopen("file1.txt","w",stdout);
+    printf("this is in file1.txt");      // 这句话在file1.txt中显示
+    freopen("CON","w",stdout);
+    printf("And this is in command.\n");    //这句话在控制台上显示
+    return 0;
+}
+例5：  关于fread   可以通过下面的程序，一看就知道什么意思了
+#include <stdio.h>
+#include <stdlib.h>
+
+int main()
+{
+    FILE *stream
+    char s[102400]="";
+    if((stream=freopen("file.txt","r",stdin))==null)
+        exit(-1);
+    fread(s,1,1024,stdin);    // 读取file.txt中1到1024位，放入s中 ，我是这么理解的
+    printf("%s\n",s);
+    return 0;
+}
+使用的理由（范围）：如果输入数据很庞大，需要一次又一次的重新输入和调试时可采用本函数。
+
+freopen （）函数：
+
+1.格式
+
+FILE * freopen ( const char * filename, const char * mode, FILE * stream );
+
+2.参数说明
+
+filename: 要打开的文件名
+
+mode: 文件打开的模式，和fopen中的模式(r/w)相同
+
+stream: 文件指针，通常使用标准流文件(stdin/stdout/stderr)
+
+返回值：成功，则返回一个path所指定文件的指针；失败，返回NULL。（一般可以不使用它的返回值） 
+功能：实现重定向，把预定义的标准流文件定向到由path指定的文件中。标准流文件具体是指stdin、stdout和stderr。其中stdin是标准输入流，默认为键盘；stdout是标准输出流，默认为屏幕；stderr是标准错误流，一般把屏幕设为默认。通过调用freopen，就可以修改标准流文件的默认值，实现重定向。
+
+3.使用方法
+
+因为文件指针使用的是标准流文件，因此我们可以不定义文件指针。
+
+接下来我们使用freopen()函数以只读方式r(read)打开输入文件slyar.in
+
+freopen("slyar.in", "r", stdin);
+
+然后使用freopen()函数以写入方式w(write)打开输出文件slyar.out
+
+freopen("slyar.out", "w", stdout);
+
+接下来的事情就是使用freopen()函数的优点了，我们不再需要修改scanf和printf，而是维持代码的原样就可以了。因为freopen()函数重定向了标准流，使其指向前面指定的文件。
+
+最后只要使用fclose关闭输入文件和输出文件即可。
+
+fclose(stdin);
+
+fclose(stdout);
+
+若要恢复句柄，可以重新打开标准控制台设备文件，只是这个设备文件的名字是与操作系统相关的。
+
+DOS/Windows:
+
+freopen("CON", "r", stdin);
+
+Linux:
+
+freopen("/dev/console", "r", stdin);
+
+4.算法实例
+
+输入一些整数，求出它们的最小值、最大值和平均值（保留3位小数）。输入保证这些数都是不超过1000的整数。
+
+样例输入：2 8 3 5 1 7 3 6
+
+样例输出：1 8 4.375
+
+参考程序1：
+
+#define TEST
+
+#include
+
+#define MM 1000
+
+main()
+
+{
+
+#ifdef TEST
+
+freopen("d:\\c2_4_in.txt","r",stdin);
+
+freopen("d:\\c2_4_out.txt","w",stdout);
+
+#endif
+
+int i=0,sum=0,n,max=-MM,min=MM;
+
+while(scanf("%d",&n)==1)
+
+{
+
+sum=sum+n;
+
+if(max<N)< SPAN>
+
+max=n;
+
+if(min>n)
+
+min=n;
+
+i++;
+
+}
+
+printf("%d %d %.3lf\n",min,max,(double)sum/i);
+
+}
+
+
+说明：（1）对于本题来说，我们使用了重定向简单地说，就是程序中用标准输入scanf()函数输入的数据从d:\c2_4_in.txt中读取，printf()函数输出的数据直接写入d:\c2_4_out.txt中去，屏幕上不在等待输入数据和不再显示输出结果。
+
+（2）如果把第一句去掉（#define TEST），
+
+#ifdef TEST
+
+freopen("d:\\c2_4_in.txt","r",stdin);
+
+freopen("d:\\c2_4_out.txt","w",stdout);
+
+#endif
+
+就不起任何作用，这时还必须用标准输入输出。
+
+ 
+
+参考程序2：
+
+#include
+#define MM 1000
+main()
+{
+ FILE *fin,*fout; 
+ fin=fopen("d:\\c2_4_in.txt","rb");
+ fout=fopen("d:\\c2_4_out.txt","wb");
+ int i=0,n,sum=0,max=-MM,min=MM;
+ while(fscanf(fin,"%d",&n)==1)
+ {
+  sum+=n;
+  if(max<N)
+   max=n;
+  if(min>n)
+   min=n;
+  i++;
+ }
+ fprintf(fout,"%d %d %.3lf",min,max,(double)sum/i);
+ fclose(fin);
+ fclose(fout);
+}
+

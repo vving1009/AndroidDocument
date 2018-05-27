@@ -1,0 +1,53 @@
+Android中代码设置RadioButton的高端技巧 
+
+
+
+
+不知道怎么起标题，就这样了。
+
+ 
+
+目前主要讲两个方面内容：
+1.代码方式 设置RadioButton的 android:button 、 android:background 等属性为 @null ；
+2.代码方式 通过布局模板动态创建固定参数的RadioButton等控件对象
+
+ 
+
+1、代码设置@null
+
+// 这里不能用null，必需采用以下方式设置
+radioButton.setButtonDrawable(getResources().getDrawable(android.R.color.transparent));
+
+// 对于background则可以简单使用null
+radioButton.setBackground(null);
+
+ 
+
+--------------------------------------------------------------------------------
+
+ 
+
+2、通过布局模板创建控件对象
+
+先创建包含所有默认参数的单个控件布局xml脚本模板，这里跟创建ListView使用的item布局脚本是差不多的东西
+
+
+复制代码
+<?xml version="1.0" encoding="utf-8"?>
+<RadioButton xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:layout_weight="1"
+    android:background="@null"
+    android:button="@null"
+    android:drawablePadding="-20dp"
+    android:drawableTop="@drawable/cat" />
+
+复制代码
+
+ 
+
+通过代码引入上面的模板，创建新对象
+
+RadioButton radioButton = (RadioButton) getLayoutInflater().inflate(R.layout.radiobutton, null);

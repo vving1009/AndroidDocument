@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<p>
+JavaScript 能够直接写入 HTML 输出流中：
+</p>
+
+<script>
+document.write("<h1>This is a heading</h1>");
+document.write("<p>This is a paragraph.</p>");
+</script>
+
+<p>
+您只能在 HTML 输出流中使用 <strong>document.write</strong>。
+如果您在文档已加载后使用它（比如在函数中），会覆盖整个文档。
+</p>
+
+</body>
+</html>
+--------------------------------------------------------------------
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>我的第一段 JavaScript</h1>
+
+<p>
+JavaScript 能够对事件作出反应。比如对按钮的点击：
+</p>
+
+<button type="button" onclick="alert('Welcome!')">点击这里</button>
+
+</body>
+</html>
+--------------------------------------------------------------------
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>我的第一段 JavaScript</h1>
+
+<p id="demo">
+JavaScript 能改变 HTML 元素的内容。
+</p>
+
+<script>
+function myFunction()
+{
+x=document.getElementById("demo");  // 找到元素
+x.innerHTML="Hello JavaScript!";    // 改变内容
+}
+</script>
+
+<button type="button" onclick="myFunction()">点击这里</button>
+
+</body>
+</html>
+
+--------------------------------------------------------------------
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+function changeImage()
+{
+element=document.getElementById('myimage')
+if (element.src.match("bulbon"))
+  {
+  element.src="/i/eg_bulboff.gif";
+  }
+else
+  {
+  element.src="/i/eg_bulbon.gif";
+  }
+}
+</script>
+
+<img id="myimage" onclick="changeImage()" src="/i/eg_bulboff.gif">
+
+<p>点击灯泡来点亮或熄灭这盏灯</p>
+
+</body>
+</html>
+
+--------------------------------------------------------------------
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>我的第一段 JavaScript</h1>
+
+<p id="demo">
+JavaScript 能改变 HTML 元素的样式。
+</p>
+
+<script>
+function myFunction()
+{
+x=document.getElementById("demo") // 找到元素
+x.style.color="#ff0000";          // 改变样式
+}
+</script>
+
+<button type="button" onclick="myFunction()">点击这里</button>
+
+</body>
+</html>
+
+--------------------------------------------------------------------
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>我的第一段 JavaScript</h1>
+
+<p>请输入数字。如果输入值不是数字，浏览器会弹出提示框。</p>
+
+<input id="demo" type="text">
+
+<script>
+function myFunction()
+{
+var x=document.getElementById("demo").value;
+if(x==""||isNaN(x))
+	{
+	alert("Not Numeric");
+	}
+}
+</script>
+
+<button type="button" onclick="myFunction()">点击这里</button>
+
+</body>
+</html>
+
+--------------------------------------------------------------------
+<!DOCTYPE html>
+<html>
+<body>
+
+<p>
+JavaScript 能够直接写入 HTML 输出流中：
+</p>
+
+<script>
+document.write("<h1>This is a heading</h1>");
+document.write("<p>This is a paragraph.</p>");
+</script>
+
+<p>
+您只能在 HTML 输出流中使用 <strong>document.write</strong>。
+如果您在文档已加载后使用它（比如在函数中），会覆盖整个文档。
+</p>
+
+</body>
+</html>
+
+--------------------------------------------------------------------
+<!DOCTYPE html>
+<html>
+<head>
+<script>
+function myFunction()
+{
+document.getElementById("demo").innerHTML="My First JavaScript Function";
+}
+</script>
+</head>
+
+<body>
+
+<h1>My Web Page</h1>
+
+<p id="demo">A Paragraph.</p>
+
+<button type="button" onclick="myFunction()">点击这里</button>
+
+</body>
+</html>
+
+--------------------------------------------------------------------
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>My Web Page</h1>
+
+<p id="demo">A Paragraph.</p>
+
+<button type="button" onclick="myFunction()">点击这里</button>
+
+<p><b>注释：</b>myFunction 保存在名为 "myScript.js" 的外部文件中。</p>
+
+<script type="text/javascript" src="/js/myScript.js"></script>
+
+</body>
+</html>
+
+--------------------------------------------------------------------
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>My First Web Page</h1>
+
+<p id="demo">A Paragraph.</p>
+
+<button type="button" onclick="myFunction()">点击这里</button>
+
+<script>
+function myFunction()
+{
+document.getElementById("demo").innerHTML="My First JavaScript Function";
+}
+</script>
+
+</body>
+</html>
+
+--------------------------------------------------------------------
+请使用 document.write() 仅仅向文档输出写内容。
+
+如果在文档已完成加载后执行 document.write，整个 HTML 页面将被覆盖：
+
+<!DOCTYPE html>
+<html>
+<body>
+
+<h1>My First Web Page</h1>
+
+<p>My First Paragraph.</p>
+
+<button onclick="myFunction()">点击这里</button>
+
+<script>
+function myFunction()
+{
+document.write("糟糕！文档消失了。");
+}
+</script>
+
+</body>
+</html>
+
+--------------------------------------------------------------------
+使用分号的另一用处是在一行中编写多条语句。
+提示：您也可能看到不带有分号的案例。
+在 JavaScript 中，用分号来结束语句是可选的。
+
+可以在文本字符串"..."中使用反斜杠\对代码行进行换行
+
+变量有很多种类型，但是现在，我们只关注数字和字符串。
+当您向变量分配文本值时，应该用双引号或单引号包围这个值。
+当您向变量赋的值是数值时，不要使用引号。如果您用引号包围数值，该值会被作为文本来处理。
+
+可以在一条语句中声明很多变量。该语句以 var 开头，并使用逗号分隔变量即可,也可横跨多行
+
+声明无值的变量。未使用值来声明的变量，其值实际上是 undefined
+
+如果重新声明 JavaScript 变量，该变量的值不会丢失
+
+可以在字符串中使用引号，只要不匹配包围字符串的引号即可
+--------------------------------------------------------------------
+<!DOCTYPE html>
+<html>
+<body>
+
+<script>
+var carname1="Bill Gates";
+var carname2='Bill Gates';
+var answer1="Nice to meet you!";
+var answer2="He is called 'Bill'";
+var answer3='He is called "Bill"';
+
+document.write(carname1 + "<br>")
+document.write(carname2 + "<br>")
+document.write(answer1 + "<br>")
+document.write(answer2 + "<br>")
+document.write(answer3 + "<br>")
+</script>
+
+</body>
+</html>
+--------------------------------------------------------------------
+布尔（逻辑）只能有两个值：true 或 false。
+--------------------------------------------------------------------
+<!DOCTYPE html>
+<html>
+<body>
+
+<script>
+var i;
+var cars = new Array();
+cars[0] = "Audi";
+cars[1] = "BMW";
+cars[2] = "Volvo";
+
+for (i=0;i<cars.length;i++)
+{
+document.write(cars[i] + "<br>");
+}
+</script>
+
+</body>
+</html>
+
+--------------------------------------------------------------------
+数组
+var cars=new Array();
+cars[0]="Audi";
+cars[1]="BMW";
+cars[2]="Volvo";
+
+或者 (condensed array):
+var cars=new Array("Audi","BMW","Volvo");
+
+或者 (literal array):
+var cars=["Audi","BMW","Volvo"];
+--------------------------------------------------------------------
+对象
+var person={firstname:"Bill", lastname:"Gates", id:5566};
+
+<!DOCTYPE html>
+<html>
+<body>
+
+<script>
+//可以跨行
+var person={
+firstname : "Bill",
+lastname  : "Gates",
+id        :  5566
+};
+//对象属性有两种寻址方式：
+document.write(person.lastname + "<br />");
+document.write(person["lastname"] + "<br />");
+</script>
+
+</body>
+</html>
+
+--------------------------------------------------------------------
+Undefined 和 Null
+Undefined 这个值表示变量不含有值。
+可以通过将变量的值设置为 null 来清空变量。
+
+<!DOCTYPE html>
+<html>
+<body>
+
+<script>
+var person;
+var car="Volvo";
+document.write(person + "<br />");
+document.write(car + "<br />");
+var car=null
+document.write(car + "<br />");
+</script>
+
+</body>
+</html>
+
+结果：
+undefined
+Volvo
+null
+--------------------------------------------------------------------
+
+声明变量类型
+
+当您声明新变量时，可以使用关键词 "new" 来声明其类型：
+
+var carname=new String;
+var x=      new Number;
+var y=      new Boolean;
+var cars=   new Array;
+var person= new Object;
+
+JavaScript 变量均为对象。当您声明一个变量时，就创建了一个新的对象。
+
+--------------------------------------------------------------------
+<!DOCTYPE html>
+<html>
+<body>
+
+<p>请点击其中的一个按钮，来调用带参数的函数。</p>
+
+<button onclick="myFunction('Harry Potter','Wizard')">点击这里</button>
+<button onclick="myFunction('Bob','Builder')">点击这里</button>
+
+<script>
+function myFunction(name,job)
+{
+alert("Welcome " + name + ", the " + job);
+}
+</script>
+
+</body>
+</html>
+
+
+--------------------------------------------------------------------
+<!DOCTYPE html>
+<html>
+<body>
+
+<p>本例调用的函数会执行一个计算，然后返回结果：</p>
+
+<p id="demo"></p>
+
+<script>
+function myFunction(a,b)
+{
+return a*b;
+}
+
+document.getElementById("demo").innerHTML=myFunction(4,3);
+</script>
+
+</body>
+</html>
+
+--------------------------------------------------------------------
+
+--------------------------------------------------------------------
+
+--------------------------------------------------------------------
+
+--------------------------------------------------------------------
+
+--------------------------------------------------------------------
+
+--------------------------------------------------------------------
+
+--------------------------------------------------------------------
+
+--------------------------------------------------------------------
+
+--------------------------------------------------------------------
+
+--------------------------------------------------------------------

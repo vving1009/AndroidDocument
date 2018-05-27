@@ -1,0 +1,47 @@
+1. 改成Build时自动生成apk
+
+build默认不生成apk，只有在run as application往target上部署时才生成，如果要默认生成，可以这样处理：
+
+在eclipse的Preferences -> Android -> Build中有一项“Skip packaging and dexing until export or launch....”，
+
+去掉选中。
+
+
+
+
+2. 手动生成apk
+
+有生成签名还是不签名两个选项
+
+
+
+
+A.选中项目，右键->Andoid Tools->Export Unsigned Application Package，直接保存就行，这是未签名的。
+或者
+B.选中项目，右键->Andoid Tools->Export Signed Application Package，后面一步步的去做，这是签过名的。
+ 
+不签名的会提示正式release时要签名，而且要进行zipalign等。
+
+
+
+
+题外话：关于签名
+
+APK签名用处：
+
+
+
+主要有两种:
+1. 使用特殊的key签名可以获取到一些不同的权限。
+2. APK如果使用一个key签名，发布时另一个key签名的文件将无法安装或覆盖老的版本，这样可以防止你已安装的应用被恶意的第三方覆盖或替换掉，这个很有用哦。
+ 我们使用Eclipse+ADT插件从开发环境安装到手机中的APK文件已经包含了ADT插件的Debug签名文件，最终发行的版本需要自己的key去签名。
+
+签名方法：
+
+signapk.jar，jarsigner等，windows下使用都比较简单，分别如下所示：
+
+
+
+a). Java -jar signapk.jar testkey.x509.pem testkey.pk8 YOURAPK.apk YOURAPK_signed.apk
+
+b). jarsigner -verbose -keystore platform.keystore -signedjar YOURAPK_signed.apk YOURAPK.apk platformkey

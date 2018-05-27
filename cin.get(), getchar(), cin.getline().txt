@@ -1,0 +1,125 @@
+C/C++——输入输出字符相关,cin.get()、getchar()和cin.getline()
+http://blog.csdn.net/sinat_36053757/article/details/68952508
+
+不带参数的get函数
+
+其调用形式为 
+cin.get() 
+用来从指定的输入流中提取一个字符（包括空白字符），函数的返回值就是读入的字符。 若遇到输入流中的文件结束符，则函数值返回文件结束标志EOF(End Of File)，一般以-1代表EOF，用-1而不用0或正值，是考虑到不与字符的ASCII代码混淆，但不同的C ++系统所用的EOF值有可能不同,windows系统中用Ctrl+Z来表示EOF。
+
+#include <iostream>
+using namespace std;
+int main( )
+{
+   int c;
+   cout<<"enter a sentence:"<<endl;
+   while((c=cin.get())!=EOF)
+      cout.put(c);
+   return 0;
+}
+
+运行情况如下： 
+enter a sentence: 
+ I study C++ very hard.↙(输入一行字符) 
+I study C++ very hard. (输出该行字符) 
+ ^Z↙(程序结束)
+
+C语言中的getchar函数与流成员函数cin.get( )的功能相同，C++保留了C的这种用法，可以用getchar(c)从键盘读入一个字符赋给c。
+
+有一个参数的get函数
+
+其调用形式为 
+cin.get(ch) 
+其作用是从输入流中读取一个字符，赋给字符变量ch。如果读取成功则函数返回true(真)，如失败(遇文件结束符) 则函数返回false(假)。例13.6可以改写如下：
+
+#include <iostream>
+using namespace std;
+int main( )
+{
+   char c;
+   cout<<"enter a sentence:"<<endl;
+   while(cin.get(c))  //读取一个字符赋给字符变量c,如果读取成功,cin.get(c)为真
+   {cout.put(c);}
+   cout<<"end"<<endl;
+   return 0;
+}
+
+有3个参数的get函数
+
+其调用形式为 
+cin.get(字符数组, 字符个数n, 终止字符) 
+或 
+cin.get(字符指针, 字符个数n, 终止字符) 
+其作用是从输入流中读取n-1个字符，赋给指定的字符数组(或字符指针指向的数组)，如果在读取n-1个字符之前遇到指定的终止字符，则提前结束读取。如果读取成功则函数返回true(真)，如失败(遇文件结束符) 则函数返回false(假)。再将例13.6改写如下：
+
+#include <iostream>
+using namespace std;
+int main( )
+{
+   char ch[20];
+   cout<<"enter a sentence:"<<endl;
+   cin.get(ch,10,'\\n');//指定换行符为终止字符
+  cout<<ch<<endl;
+   return 0;
+}
+
+运行情况如下： 
+enter a sentence: 
+ I study C++ very hard.↙ 
+ I study
+
+在输入流中有22个字符，但由于在get函数中指定的n为10，读取n -1个（即9个）字符并赋给字符数组ch中前9个元素。有人可能要问：指定n-10，为什么只读取9个字符呢？因为存放的是一个字符串，因此在9个字符之后要加入一个字符串结束标志，实际上存放到数组中的是10个字符。请读者思考：如果不加入字符串结束标志，会 出现什么情况？结果是：在用“cout<
+
+cin.getline()函数读入一行字符
+
+getline函数的作用是从输入流中读取一行字符,其用法与带3个参数的get函数类似。即 
+cin.getline(字符数组(或字符指针), 字符个数n, 终止标志字符)
+
+用getline函数读入一行字符。
+
+#include <iostream>
+using namespace std;
+int main( )
+{
+   char ch[20];
+   cout<<"enter a sentence:"<<endl;
+   cin>>ch;
+   cout<<"The string read with cin is:"<<ch<<endl;
+   cin.getline(ch,20,'/');  //读个字符或遇'/'结束
+   cout<<"The second part is:"<<ch<<endl;
+   cin.getline(ch,20);  //读个字符或遇'/n'结束
+   cout<<"The third part is:"<<ch<<endl;
+   return 0;
+}
+
+程序运行情况如下: 
+enter a sentence: I like C++./I study C++./I am happy.↙ 
+ The string read with cin is:I 
+ The second part is: like C++. 
+ The third part is:I study C++./I am h
+
+请仔细分析运行结果。用“cin>>”从输入流提取数据，遇空格就终止。因此只读取 一个字符’I’，存放在字符数组元素ch[0]中，然后在ch[1]中存放’\0’。因此用"cout<<ch"输出时，只输出一个字符’I’。然后用cin.getline(ch, 20, ‘/’)从输入流读取19个字符 （或遇/结束）。请注意：此时并不是从输入流的开头读取数据。在输入流中有一个字符指针，指向当前应访问的字符。在开始时，指针指向第一个字符，在读入第一个字符’I’后，指针就移到下一个字符（’I’后面的空格），所以getline函数从空格读起，遇到就停止，把字符串” like c++.”存放到ch[0]开始的10个数组元素中，然后用”cout<<ch“输出这10个字符。注意：遇终止标志字符”/”时停止读取并不放到数组中。再用cin.getline(ch, 20)读19个字符(或遇’/n’结束），由于未指定以’/’为结束标志，所以第2个’/’被当作一般字符读取，共读入19个字符，最后输出这19个字符。
+
+有几点说明并请读者思考： 
+1) 如果第2个cin.getline函数也写成cin. getline(ch, 20, ‘/”)，输出结果会如何？ 此时最后一行的输出为： 
+The third part is: I study C++.
+
+2) 如果在用cin.getline(ch, 20, ‘/’)从输入流读取数据时，遇到回车键(“\n”)，是否 结束读取？结论是此时”\n”不是结束标志”\n”被作为一个字符被读入。
+
+3) 用getline函数从输入流读字符时，遇到终止标志字符时结束，指针移到该终止标志字符之后，下一个getline函数将从该终止标志的下一个字符开始接着读入，如本程序运行结果所示那样。如果用cin.get函数从输入流读字符时，遇终止标志字符时停止读取，指针不向后移动，仍然停留在原位置。下一次读取时仍从该终止标志字符开始。这是getline函数和get函数不同之处。假如把上面程序中的两个cin.getline函数调用都改为以下函数调用： 
+cin.get(ch, 20, ‘/’); 
+则运行结果为： 
+enter a sentence: I like C++./I study C++./I am happy.↙ 
+ The string read with cin is: I 
+ The second part is: like C++. 
+ The third part is: (没有从输人流中读取有效字符）
+
+第2个cin. get(ch, 20, ‘/’)从指针当前位置起读取字符，遇到的第1个字符就是终止标志字符读入结束，只把”\0”存放到ch[0]中，所以用“cout<<ch”输出时无字符输出。
+
+因此用get函数时要特别注意，必要时用其他方法跳过该终止标志字符（如用后面介绍的ignore函数，详情请查看：一些与输入有关的istream类成员函数），但一般来说还是用getline函数更方便。
+
+4) 请比较用“cin<<”和用成员函数cin.getline()读数据的区别。用“cin<<”读数据时以空白字符(包括空格、tab键、回车键)作为终止标志，而用cin.getline()读数据时连续读取一系列字符，可以包括空格。用“cin <<”可以读取C++的标准类型的各类型数据（如果经过重载，还可以用于输入自定义类型的数据），而用cin.getline()只用于输入字符型数据。
+
+注：另一种getline()的用法在另一篇博客 
+http://blog.csdn.net/sinat_36053757/article/details/68489424
+

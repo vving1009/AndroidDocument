@@ -1,0 +1,198 @@
+Android开发技术学习之popupwindow的弹窗实现   
+ http://blog.csdn.net/csdnzouqi/article/details/51433633
+ 
+ 由于需要在代码中构建popupwindow的布局，所以这里先新建一个布局文件供构建布局时传入参数用。这里命名为popupwindow.xml。
+ <?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ListView
+        android:id="@+id/lsvMore"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:divider="@null"
+        android:layout_weight="1" />
+
+</LinearLayout>
+
+代码中divider属性设置为null是用于去掉item之间的分割线。像钉钉的popupwindow一样。
+
+4.我往popupwindow.xml的布局中给线性布局设置了一个background属性，
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/popupwindow_bg">
+
+    <ListView
+        android:id="@+id/lsvMore"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:divider="@null"
+        android:layout_weight="1" />
+
+</LinearLayout>
+
+目的是为了要使popupwindow的边框与周围有一定的明显对比。使效果更加的好看一些。 
+ 这个背景的设置用到了自定义的drawable。我给它命名为popupwindow_bg.xml，布局文件如下所示：
+ 
+ <?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- dashWidth指的是边线的长度 dashGap 指的是每条线之间的间距 width指的是边线的宽度 -->
+    <stroke
+        android:width="2dp"
+        android:color="#00AAEE"
+        android:dashGap="2dp"
+        android:dashWidth="10dp" />
+
+    <corners
+        android:bottomLeftRadius="2dp"
+        android:bottomRightRadius="2dp"
+        android:topLeftRadius="2dp"
+        android:topRightRadius="2dp" />
+
+</shape>
+
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- dashWidth指的是边线的长度 dashGap 指的是每条线之间的间距 width指的是边线的宽度 -->
+    <stroke
+        android:width="2dp"
+        android:color="#00AAEE"
+        android:dashGap="2dp"
+        android:dashWidth="10dp" />
+
+    <corners
+        android:bottomLeftRadius="2dp"
+        android:bottomRightRadius="2dp"
+        android:topLeftRadius="2dp"
+        android:topRightRadius="2dp" />
+
+</shape>
+
+在该xml资源下，stroke用来定义边框，corners用来定义四周的圆角。其中的属性代表的意思我都在代码中给出了注释，这里不过多说明了。将popupwindow.xml的布局背景设置好了以后就可以开始在MainActivity中写代码了。如下所示：
+
+package com.example.zq.popupwindowdemo;
+
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.text.AndroidCharacter;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ListView;
+import android.widget.PopupWindow;
+import android.widget.SimpleAdapter;
+
+public class MainActivity extends AppCompatActivity {
+
+    private Button btnPopup;
+    private String[] datas = {"选项1", "选项2", "选项3", "选项4", "选项5"};
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        // TODO: 2016/5/17 设置该Activity使用的布局文件
+        setContentView(R.layout.activity_main);
+        btnPopup = (Button) findViewById(R.id.btnPopup);// TODO: 2016/5/17 获取弹出按钮控件
+        // TODO: 2016/5/17 给按钮设置单击事件监听
+        btnPopup.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // TODO: 2016/5/17 构建一个popupwindow的布局
+                View popupView = MainActivity.this.getLayoutInflater().inflate(R.layout.popupwindow, null);
+
+                // TODO: 2016/5/17 为了演示效果，简单的设置了一些数据，实际中大家自己设置数据即可，相信大家都会。
+                ListView lsvMore = (ListView) popupView.findViewById(R.id.lsvMore);
+                lsvMore.setAdapter(new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_list_item_1, datas));
+
+                // TODO: 2016/5/17 创建PopupWindow对象，指定宽度和高度
+                PopupWindow window = new PopupWindow(popupView, 400, 600);
+                // TODO: 2016/5/17 设置动画
+                window.setAnimationStyle(R.style.popup_window_anim);
+                // TODO: 2016/5/17 设置背景颜色
+                window.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#F8F8F8")));
+                // TODO: 2016/5/17 设置可以获取焦点
+                window.setFocusable(true);
+                // TODO: 2016/5/17 设置可以触摸弹出框以外的区域
+                window.setOutsideTouchable(true);
+                // TODO：更新popupwindow的状态
+                window.update();
+                // TODO: 2016/5/17 以下拉的方式显示，并且可以设置显示的位置
+                window.showAsDropDown(btnPopup, 0, 20);
+            }
+        });
+    }
+}
+
+这里给出的代码中写的注释很详细，但是有几点需要大家注意，当你点击popupwindow以外的区域时要想使其消失，你不仅需要设置属性：window.setOutsideTouchable(true); 
+你还需要设置属性： 
+window.setBackgroundDrawable(Drawable background); 
+只有同时都设置了以上属性，你点击popupwindow以外的区域时该popupwindow才会消失。没有同时设置以上两个属性的话就不会起作用，大家可以亲自试一试。
+
+缺一不可属性设置
+
+window.setFocusable(true);方法是为了使popupwindow可以获取焦点，这样当你点击返回按钮的时候就不会立即退出Activity了，而只是使popupwindow消失不见。 
+ 如果不设置的话，点击返回按钮就直接退出该Activity了，大家试一试便知。 
+ 还有一个重要的方法不能忘记了，就是window.update();方法。用于实时的更新状态，很关键，别忘记写上。 
+ 最后需要以下拉的方式显示，调用方法即可： 
+window.showAsDropDown(btnPopup, 0, 20);
+
+5.在MainActivity中还设置了一个动画属性。如下图所示：
+
+这里用到了样式，所以需要在styles中添加样式：
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorAccent</item>
+    </style>
+
+    <!-- pupupwindow的弹出和消失动画 -->
+    <style name="popup_window_anim">
+        <item name="android:windowEnterAnimation">@anim/in</item>
+        <item name="android:windowExitAnimation">@anim/out</item>
+    </style>
+
+</resources>
+
+以上的样式是一个popupwindow的弹出和消失的动画。 
+ 显然，我还引用了两个动画xml文件。一个是in.xml用于显示popupwindow的弹出时候的动画，一个是out.xml用于显示popupwindow消失时候的动画。 
+ 这需要在res目录下新建一个anim文件夹，里面创建上面提到的两个资源文件in.xml和out.xml。 
+ 文件如下： 
+in.xml:
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <alpha
+        android:duration="1000"
+        android:fromAlpha="0.01"
+        android:toAlpha="1" />
+
+</set>
+
+很简单，透明度由透明渐渐的显示，持续时间1秒。
+
+out.xml:
+
+<?xml version="1.0" encoding="utf-8"?>
+<set xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <alpha
+        android:duration="1000"
+        android:fromAlpha="1"
+        android:toAlpha="0.01" />
+
+</set>
+
+DEMO的下载链接在这里： 
+http://download.csdn.net/detail/csdnzouqi/9522616 
+在这里说一句：不管用的是什么工具写项目，写demo，技术是不变的，掌握了技术，用不同的开发工具其实都一样，只是个人习惯而已。不否认Android studio越做越好了。嘿嘿！

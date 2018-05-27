@@ -1,0 +1,242 @@
+logcat的调试 比较有用的几个命令 
+
+
+
+ 
+
+http://blog.csdn.net/tiantianshangcha/article/details/6288537
+
+
+网上很多的logcat调试命令，但是太多的命令只会令人盐杂。
+
+（主要是adt工具带的调试功能容易死掉 每次都要重启太烦）
+
+个人认为有一下几个常用命令：
+
+adb logcat -c 清除所有以前的日志
+
+adb logcat -d 这个命令是在时间上倒过来用的 就是你先操作 然后敲这个命令 打出来的log就是你刚操作那段时间的log 而且自动退出log模式
+
+adb logcat -s XXX这个是设置过滤用的 比如你只想查看FirstDemo的日志 就替换最后的XXX
+
+
+
+
+补充：
+
+android的logcat详细用法
+
+
+
+
+Android日志系统提供了记录和查看系统调试信息的功能。日志都是从各种软件和一些系统的缓冲区中记录下来的，缓冲区可以通过 logcat 命 令来查看和使用.
+
+
+
+使用logcat命令
+
+你可以用 logcat 命令来查看系统日志缓冲区的内容:
+[adb] logcat [<option>] ... [<filter-spec>] ...
+
+请查看Listing of logcat Command Options ，它对logcat命 令有详细的描述 .
+
+你也可以在你的电脑或运行在模拟器/设备上的远程adb shell端来使用logcat命 令，也可以在你的电脑上查看日志输出。
+$ adb logcat
+
+你也这样使用：
+# logcat
+
+
+
+过滤 日志输出
+
+每一个输出的Android日志信息都有一个标签和它的优先级.
+日志的标签是系统部件原始信息的一个简要的标志。（比如：“View”就 是查看系统的标签）.
+优先级有下列集中，是按照从低到高顺利排列的: V — Verbose (lowest priority)
+D — Debug
+I — Info
+W — Warning
+E — Error
+F — Fatal
+S — Silent (highest priority, on which nothing is ever printed)
+
+
+在运行logcat的时候在前两列的信息中你就可以看到 logcat 的标签列表和优先级别,它是这样标出的:<priority>/<tag> .
+
+下面是一个logcat输出的例子,它的优先级就似乎I,标签 就是ActivityManage:
+I/ActivityManager(  585): Starting activity: Intent { action=android.intent.action...}
+
+为了让日志输出能体现管理的级别,你还可以用过滤器来控制日志输出,过滤器可以帮助你描述 系统的标签等级.
+
+过滤器语句按照下面的格式描tag:priority ... , tag 表 示是标签,priority 是表示标签的报告的最低等级. 从上面的tag的中可以得到日志的优先级. 你可以在过滤器中多次写tag:priority .
+
+这些说明都只到空白结束。下面有一个列子，例子表示支持所有的日志信息，除了那些标签 为”ActivityManager”和优先级为”Info”以上的和标签为” MyApp”和优先级为” Debug”以上的。 小等级,优先权报告为tag.
+adb logcat ActivityManager:I MyApp:D *:S
+
+上面表达式的最后的元素 *:S ,，是设置所有的标 签为”silent”，所有日志只显示有”View” and “MyApp”的，用 *:S 的另一个用处是 能够确保日志输出的时候是按照过滤器的说明限制的，也让过滤器也作为一项输出到日志中.
+
+下面的过滤语句指显示优先级为warning或更高的日志信息:
+adb logcat *:W
+
+如果你电脑上运行logcat ，相比在远程adbshell端，你还可以 为环境变量ANDROID_LOG_TAGS :输入一个参数来设置默认的过滤
+export ANDROID_LOG_TAGS="ActivityManager:I MyApp:D *:S"
+
+需要注意的是ANDROID_LOG_TAGS 过滤器如果 通过远程shell运行logcat 或 用adb shell logcat 来 运行模拟器/设备不能输出日志.
+
+
+
+控制 日志输出格式
+
+日志信息包括了许多元数据域包括标签和优先级。可以修改日志的输出格式，所以可以显示出特 定的元数据域。可以通过 -v 选项得到格式化输出日志的相关信息.
+brief — Display priority/tag and PID of originating process (the default format).
+process — Display PID only.
+tag — Display the priority/tag only.
+thread — Display process:thread and priority/tag only.
+raw — Display the raw log message, with no other metadata fields.
+time — Display the date, invocation time, priority/tag, and PID of the originating process.
+long — Display all metadata fields and separate messages with a blank lines.
+
+当启动了logcat ，你可以通过-v 选 项来指定输出格式:
+[adb] logcat [-v <format>]
+
+下面是用 thread 来产生的日志格式:
+adb logcat -v thread
+
+需要注意的是你只能-v 选项来规定输出格式 option.
+
+
+
+查看 可用日志缓冲区
+
+Android日志系统有循环缓冲区，并不是所有的日志系统都有默认循环缓冲区。为了得到 日志信息，你需要通过-b 选项来启动logcat 。如果要使用循环缓冲区，你需要查看剩余的 循环缓冲期:
+radio — 查看缓冲区的相关的信息.
+events — 查看和事件相关的的缓冲区.
+main — 查看主要的日志缓冲区
+
+-b 选项使用方法:
+[adb] logcat [-b <buffer>]
+
+下面的例子表示怎么查看日志缓冲区包含radio 和 telephony信息:
+adb logcat -b radio
+
+
+
+查看 stdout 和stderr
+
+在默认状态下，Android系统有stdout 和 stderr (System.out和System.err ) 输出到/dev/null ， 在运行Dalvik VM的进程中，有一个系统可以备份日志文件。在这种情况下，系统会用stdout 和stderr 和 优先级 I.来记录日志信息
+
+通过这种方法指定输出的路径，停止运行的模拟器/设备，然后通过用setprop 命 令远程输入日志
+$ adb shell stop $ adb shell setprop log.redirect-stdio true $ adb shell start
+
+系统直到你关闭模拟器/设备前设置会一直保留，可以通过添加/data/local.prop 可 以使用模拟器/设备上的默认设置
+
+
+
+Logcat命令列表
+
+
+Option
+
+Description
+
+-b <buffer> 加载一个可使用的日志缓冲区供查看，比如event 和radio . 默认值是main 。具体查看Viewing Alternative Log Buffers. 
+-c 清楚屏幕上的日志. 
+-d 输出日志到屏幕上. 
+-f <filename> 指定输出日志信息的<filename> ， 默认是stdout . 
+-g 输出指定的日志缓冲区，输出后退出. 
+-n <count> 设置日志的最大数目<count> .， 默认值是4，需要和 -r 选 项一起使用。 
+-r <kbytes> 每<kbytes> 时 输出日志，默认值为16，需要和-f 选 项一起使用. 
+-s 设置默认的过滤级别为silent. 
+-v <format> 设置日志输入格式，默认的是brief 格 式，要知道更多的支持的格式，参看Controlling Log Output Format . 
+
+
+
+
+
+
+
+
+发现一个新的命令：
+
+利用下面命令可直接在cmd中打开界面
+
+adb shell am start -n com.android.phone/.XXXXX
+
+
+
+
+android am命令
+
+
+am命令作用：管理Activity
+ usage: am [start|broadcast|instrument|profile]
+ am start -D INTENT
+ am broadcast INTENT
+ am instrument [-r] [-e <ARG_NAME> <ARG_VALUE>] [-p <PROF_FILE>]
+ [-w] <COMPONENT> 
+ am profile <PROCESS> [start <PROF_FILE>|stop]
+ INTENT is described with:
+ [-a <ACTION>] [-d <DATA_URI>] [-t <MIME_TYPE>]
+ [-c <CATEGORY> [-c <CATEGORY>] ...]
+ [-e|--es <EXTRA_KEY> <EXTRA_STRING_VALUE> ...]
+ [--ez <EXTRA_KEY> <EXTRA_BOOLEAN_VALUE> ...]
+ [-e|--ei <EXTRA_KEY> <EXTRA_INT_VALUE> ...]
+ [-n <COMPONENT>] [-f <FLAGS>] [<URI>]The start command starts activity. Use -D option to make 'DebugOption' true. 
+ The broadcast command sends broadcast. 
+ The instrument command starts instrumentation. 
+ Use -r option to make 'rawMode' true. 
+ Use -e option to add the pair of ARG_NAME and ARG_VALUE into Bundle. 
+ Use -p option to specify profileFile. 
+ Use -w option to make 'wait' true in order to new an instance of InstrumentationWatcher. 
+ Use COMPONENT to specify the name of the instrumentation component. 
+ The profile command turn on/off profiling in a particular process specified by PROCESS.
+ Use start option to turn on and stop to turn off.Use PROF_FILE to specify the file path of profile. 
+ Use -a to set action specified by ACTION to be performed. 
+ Use -d to create a Uri(data) which parses the given encoded URI string DATA_URI. 
+ Use -t to specify the type specified by MIME_TYPE. Use -c to add a new category specified by 
+ CATEGORY to the intent. 
+ Use -e or --es to add extended data to the intent.EXTRA_KEY specifies the name of the extra data and 
+ EXTRA_STRING_VALUE specifies the string data value. 
+ Use --ez to add extended data to the intent. EXTRA_KEY specifies the name of the extra data and 
+ EXTRA_BOOLEAN_VALUE specifies the serializable data value. 
+ Use -e or --ei to add extended data to the intent. EXTRA_KEY specifies the name of the extra data and
+ EXTRA_INT_VALUE specifies the serializable data value. 
+ Use -n to explicitly set the component specified by COMPONENT to handle the intent. 
+ Use -f to set special flags controlling how this intent is handled.FLAGS specifies the desired flags. 
+ Use URI to create an intent from a URI.
+在Android中，除了从界面上启动程序之外，还可以从命令行启动程序，使用的是命令行工具am.
+ usage: am [subcommand] [options]
+     start an Activity: am start [-D] <INTENT>
+         -D: enable debugging
+     send a broadcast Intent: am broadcast <INTENT>
+     start an Instrumentation: am instrument [flags] <COMPONENT>
+         -r: print raw results (otherwise decode REPORT_KEY_STREAMRESULT)
+         -e <NAME> <VALUE>: set argument <NAME> to <VALUE>
+         -p <FILE>: write profiling data to <FILE>
+         -w: wait for instrumentation to finish before returning
+     start profiling: am profile <PROCESS> start <FILE>
+     stop profiling: am profile <PROCESS> stop
+     <INTENT> specifications include these flags:
+         [-a <ACTION>] [-d <DATA_URI>] [-t <MIME_TYPE>]
+         [-c <CATEGORY> [-c <CATEGORY>] ...]
+         [-e|--es <EXTRA_KEY> <EXTRA_STRING_VALUE> ...]
+         [--ez <EXTRA_KEY> <EXTRA_BOOLEAN_VALUE> ...]
+         [-e|--ei <EXTRA_KEY> <EXTRA_INT_VALUE> ...]
+         [-n <COMPONENT>] [-f <FLAGS>] [<URI>]
+启动的方法为
+# am start -n 包(package)名/包名.活动(activity)名称
+ 启动的方法可以从每个应用的AndroidManifest.xml的文件中得到
+Music 和 Video（音乐和视频）的启动方法为：
+# am start -n com.android.music/com.android.music.MusicBrowserActivity
+ # am start -n com.android.music/com.android.music.VideoBrowserActivity
+ # am start -n com.android.music/com.android.music.MediaPlaybackActivity
+ Camera（照相机）的启动方法为：
+# am start -n com.android.camera/com.android.camera.Camera
+ Browser（浏览器）的启动方法为：
+# am start -n com.android.browser/com.android.browser.BrowserActivity
+启动浏览器 :
+am start -a android.intent.action.VIEW -d  http://www.google.cn/
+拨打电话 :
+am start -a android.intent.action.CALL -d tel:10086
+启动 google map 直接定位到北京 :
+am start -a android.intent.action.VIEW geo:0,0?q=beijing

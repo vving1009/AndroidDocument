@@ -1,0 +1,130 @@
+有时项目需要自带数据，所以就就把数据都放到一个SQLite的数据库文件中，之后把该文件放到了raw文件夹下面。程序启动的时候把该文件夹拷贝到手机的/data/data/应用程序报名/database文件夹下，之后就直接从这个地方使用了。
+
+import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
+
+import com.tao.lovelife.R;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
+/**
+ * 作者： WangJintao
+ * 时间： 2015/10/28.
+ */
+public class DataBaseUtil {
+
+    private Context context;
+    public static String dbName = "test.db";// 数据库的名字
+    private static String DATABASE_PATH;// 数据库在手机里的路径
+
+    public DataBaseUtil(Context context) {
+        this.context = context;
+        String packageName = context.getPackageName();
+        DATABASE_PATH = "/data/data/" + packageName + "/databases/";
+    }
+
+    /**
+     * 判断数据库是否存在
+     *
+     * @return false or true
+     */
+    public boolean checkDataBase() {
+        SQLiteDatabase db = null;
+        try {
+            String databaseFilename = DATABASE_PATH + dbName;
+            db = SQLiteDatabase.openDatabase(databaseFilename, null, SQLiteDatabase.OPEN_READONLY);
+        } catch (SQLiteException e) {
+
+        }
+        if (db != null) {
+            db.close();
+        }
+        return db != null ? true : false;
+    }
+
+
+    /**
+     * 复制数据库到手机指定文件夹下
+     *
+     * @throws IOException
+     */
+    public void copyDataBase() throws IOException {
+        String databaseFilenames = DATABASE_PATH + dbName;
+        File dir = new File(DATABASE_PATH);
+        if (!dir.exists())// 判断文件夹是否存在，不存在就新建一个
+            dir.mkdir();
+        FileOutputStream os = new FileOutputStream(databaseFilenames);// 得到数据库文件的写入流
+        InputStream is = context.getResources().openRawResource(R.raw.test);
+        byte[] buffer = new byte[8192];
+        int count = 0;
+        while ((count = is.read(buffer)) > 0) {
+            os.write(buffer, 0, count);
+            os.flush();
+        }
+        is.close();
+        os.close();
+    }
+
+}
+
+程序启动时拷贝： 
+
+    DataBaseUtil util = new DataBaseUtil(this);
+        if (!util.checkDataBase()){
+            try {
+                util.copyDataBase();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        
+读数据库表内容：
+import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * 作者： WangJintao
+ * 时间： 2015/10/28.
+ */
+public class CPCategoryDao {
+
+
+    // 数据库名称
+    private static String DB_NAME = DataBaseUtil.dbName;
+    private SQLiteDatabase db;
+
+    public CPCategoryDao(Context context) {
+        String packageName = context.getPackageName();
+        String DATABASE_PATH = "/data/data/" + packageName + "/databases/";
+        db = SQLiteDatabase.openOrCreateDatabase(DATABASE_PATH + "/" + DB_NAME, null);
+    }
+
+    public List<CPCategory> getAll() {
+        List<CPCategory> categorys = new ArrayList<CPCategory>();
+        Cursor cursor = db.query("TBL_CATEGORY", null, null, null, null, null, CPCategory.CP_CATEGORY_ID + " DESC");
+        cursor.moveToFirst();
+        while (!cursor.isAfterLast()) {
+            CPCategory category = new CPCategory();
+            category.setID(cursor.getString(0));
+            category.setNAME(cursor.getString(1));
+            category.setICON(cursor.getString(2));
+            category.setMEMO(cursor.getString(3));
+            categorys.add(category);
+            cursor.moveToNext();
+        }
+        cursor.close();
+        return categorys;
+
+    }
+
+
+}

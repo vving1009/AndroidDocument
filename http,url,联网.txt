@@ -1,0 +1,551 @@
+android之HttpURLConnection
+
+
+1.HttpURLConnection连接URL
+1)创建一个URL对象
+
+URL url = new URL(http://www.baidu.com);
+
+2)利用HttpURLConnection对象从网络中获取网页数据
+
+HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+3)设置连接超时
+
+conn.setConnectTimeout(6*1000);
+conn.setReadTimeout(6*1000);
+
+4)对响应码进行判断
+
+if (conn.getResponseCode() != 200)    //从Internet获取网页,发送请求,将网页以流的形式读回来
+
+throw new RuntimeException("请求url失败");
+
+5)得到网络返回的输入流
+
+InputStream is = conn.getInputStream();
+ 6)String result = readData(is, "GBK"); //文件流输入出文件用outStream.write
+ 7)conn.disconnect();
+
+总结:
+--记得设置连接超时,如果网络不好,Android系统在超过默认时间会收回资源中断操作.
+--返回的响应码200,是成功.
+--在Android中对文件流的操作和JAVA SE上面是一样的.
+--在对大文件的操作时,要将文件写到SDCard上面,不要直接写到手机内存上.
+--操作大文件是,要一遍从网络上读,一遍要往SDCard上面写,减少手机内存的使用.这点很重要,面试经常会被问到.
+--对文件流操作完,要记得及时关闭.
+
+
+2.向Internet发送请求参数
+步骤：
+1)创建URL对象:URL realUrl = new URL(requestUrl);
+ 2)通过HttpURLConnection对象,向网络地址发送请求
+
+HttpURLConnection conn = (HttpURLConnection) realUrl.openConnection();
+ 3)设置容许输出:conn.setDoOutput(true);
+ 4)设置不使用缓存:conn.setUseCaches(false);
+ 5)设置使用POST的方式发送:conn.setRequestMethod("POST");
+ 6)设置维持长连接:conn.setRequestProperty("Connection", "Keep-Alive");
+ 7)设置文件字符集:conn.setRequestProperty("Charset", "UTF-8");
+ 8)设置文件长度:conn.setRequestProperty("Content-Length", String.valueOf(data.length));
+ 9)设置文件类型:conn.setRequestProperty("Content-Type","application/x-www-form-urlencoded");
+ 10)以流的方式输出.
+总结:
+--发送POST请求必须设置允许输出
+--不要使用缓存,容易出现问题.
+--在开始用HttpURLConnection对象的setRequestProperty()设置,就是生成HTML文件头.
+
+
+3.向Internet发送xml数据
+XML格式是通信的标准语言,Android系统也可以通过发送XML文件传输数据.
+1)将生成的XML文件写入到byte数组中,并设置为UTF-8:byte[] xmlbyte = xml.toString().getBytes("UTF-8");
+ 2)创建URL对象,并指定地址和参数:URL url = new URL(http://localhost:8080/itcast/contanctmanage.do?method=readxml);
+ 3)获得链接:HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+ 4)设置连接超时:conn.setConnectTimeout(6* 1000);
+ 5)设置允许输出conn.setDoOutput(true);
+ 6)设置不使用缓存:conn.setUseCaches(false);
+ 7)设置以POST方式传输:conn.setRequestMethod("POST");           
+ 8)维持长连接:conn.setRequestProperty("Connection", "Keep-Alive");
+ 9)设置字符集:conn.setRequestProperty("Charset", "UTF-8");
+ 10)设置文件的总长度:conn.setRequestProperty("Content-Length", String.valueOf(xmlbyte.length));
+ 11)设置文件类型:conn.setRequestProperty("Content-Type", "text/xml; charset=UTF-8");
+ 12)以文件流的方式发送xml数据:outStream.write(xmlbyte);
+总结:
+--我们使用的是用HTML的方式传输文件,这个方式只能传输一般在5M一下的文件.
+--传输大文件不适合用HTML的方式,传输大文件我们要面向Socket编程.确保程序的稳定性
+--将地址和参数存到byte数组中:byte[] data = params.toString().getBytes();
+
+
+=======================================================================================================
+
+Android - HttpURLConnection 抛出异常
+
+Http的URL链接, 会发生错误, 主要原因是 在主UI线程中, 使用网络调用(network call), 就抛出NetworkOnMainThreadException异常.
+
+版本: API level 11以上.
+
+可以使用一个简单的线程, 在后台(asynctask)调用程序, 可以避免此情况;
+
+否则 在getResponseCode()函数处, 抛出异常.
+
+Android API : http://developer.android.com/reference/android/os/AsyncTask.html.
+
+ 
+
+代码:
+
+String quakeFeed = getString(R.string.quake_feed);
+url = new URL(quakeFeed);
+ 
+URLConnection connection;
+connection = url.openConnection();
+ 
+HttpURLConnection httpConnection = (HttpURLConnection)connection;
+int responseCode = httpConnection.getResponseCode();
+ 
+
+修改: 
+ 
+Thread t = new Thread(new Runnable() {
+    @Override
+    public void run() {
+        refreshEarthquakes();
+    }
+});
+ 
+t.start();
+ 
+
+即, 把需要网络调用(network call)的程序, 放入线程(thread)中执行. 
+ 
+===========================================================================================
+
+Runnable runnable = new Runnable() {
+        // 重写run()方法，此方法在新的线程中运行
+        @Override
+        public void run() {
+            HttpClient httpClient = new DefaultHttpClient();
+            // 从网络上获取图片
+            HttpGet httpGet = new HttpGet(
+                    "http://www.oschina.net/img/logo.gif");
+            final Bitmap bitmap;
+            try {
+                HttpResponse httpResponse = httpClient.execute(httpGet);
+                // 解析为图片
+                bitmap = BitmapFactory.decodeStream(httpResponse.getEntity()
+                        .getContent());
+            } catch (Exception e) {
+                mHandler.obtainMessage(MSG_FAILURE).sendToTarget();// 获取图片失败
+                return;
+            }
+ 
+            // 获取图片成功，向UI线程发送MSG_SUCCESS标识和bitmap对象
+            mHandler.obtainMessage(MSG_SUCCESS, bitmap).sendToTarget();
+        }
+    };
+ 
+---------------------------------------------------------------------------------------------------
+
+
+我们开发安卓应用程序,难免需要连接网络,那么安卓开发中的网络如何使用呢?Android平台的网络应用绝大部分都是基于Java的编程接口的，也就是说我们开发类似的运用的时候可以有多种选择，比J2me确实好多了。
+
+    本文给介绍目前Android平台中的三种网络接口，这三种网络接口分别是：java.net.*(标准Java接口)，org.apache(Apache接口)，和android.net.*（android网络接口）,本文分别实例的方式解释这三个网络接口的使用。
+
+    1、Android网络接口
+
+        Android网络接口android.net.* 实际上是通过对 Apache 的 HttpClient 的封装来实现的一个 HTTP 编程接口，同时还提供了 HTTP 请求队列管理，以及 HTTP 连接池管理，以提高并发请求情况下（如转载网页时）的处理效率，除此之外还有网络状态监视等接口，访问网络的Socket ，常用的Uri类以及有关WIFI相关的类。
+
+        以下是一个通过 AndroidHttpClient 访问服务器的最简例子：
+
+            /**设置IP地址*/
+            InetAddress inetAdderess = InetAddress.getByName(＂192.168.1.110＂); 
+            /**设置Port(端口号)*/
+            Socket client = new Socket(inetAdderess,61203,true); 
+            /**获取相应数据*/
+            InputStream in = client.getInputStream(); 
+            OutputStream out = client.getOutputStream(); 
+            /**处理相应数据*/
+            out.close(); 
+            in.close(); 
+
+    2、标准Java接口
+
+        标准Java接口java.net.* 提供了许多与联网有关的类，包括流和数据包套接字、Internet协议、常见HTTP处理,我们可以使用他来连接网络。
+
+        比如：创建URL以及URLConnection/HttpURLConnection对象，设置连接参数 ，连接到服务器 ，向服务器写数据 ，从服务器读取数据等通信。
+
+        下面就是常见的使用java.net包的HTTP例子。
+
+            //定义一个url地址 
+            URL url=new URL(＂http://www.android-study.net＂); 
+            //打开当前地址连接 
+            HttpURLConnection http=(HttpURLConnection)url.openConnection(); 
+            //这里取得连接状态 
+            int nRC=http.getResponseCode(); 
+            if(nRC==HttpURLConnection.HTTP_OK) 
+            { 
+                //这里获取相应数据 
+                InputStream is = http.getInputStream(); 
+                //这里处理相应数据
+            } 
+
+        注意：由于是连接网络，不免出现一些异常，所以必须处理这些异常。
+
+    3、Apache接口
+
+        安卓开发中,由于Http协议是Internet使用的最多、最重要的通信协议，所以越来越多的Java应用程序需要通过Http协议来访问网络资源。在安卓平台中,虽然JDK的java.net包中已经提供了访问Http协议的基本功能，但是这个对于大部分APP来说，JDK库提供的功能太少,太单一,远远不够我们使用。这里我们就需要Android提供的Apache HttpClient,他提供的功能还是比较强大的。
+
+        Apache HttpClient 是一个开源项目，弥补了 java.net.* 灵活性不足的缺点，为客户端的HTTP编程提供高效、最新、功能丰富的工具包支持。
+
+        Android 平台引入了 Apache HttpClient 的同时还提供了对它的一些封装和扩展，例如设置缺省的HTTP超时和缓存大小等。
+
+        早期的 Android 曾同时包括 CommonsHttpClient （org.apache.commons.httpclient.*） 和 HttpComponents  （org.apache.http.client.*），不过当前版本 (1.5) 中开发者只能使用后者，也就是说类似以下的一些类：使用这部分接口的基本操作与 java.net.* 基本类似，主要包括： 创建 HttpClient 以及 GetMethod / PostMethod， HttpRequest 等对象，设置连接参数，执行HTTP操作，处理服务器返回结果。
+
+            //创建HttpClient 这里使用DefaultHttpClient表示默认属性 
+            HttpClient hc = new DefaultHttpClient(); 
+            //创建HttpGet实例 
+            HttpGet get = new HttpGet(＂http://www.android-study.net＂); 
+            //创建连接 
+            HttpResponse rp = hc.execute(get); 
+            if(rp.getStatusLine().getStatusCode()==HttpStatus.SC_OK) 
+            { 
+                InputStream is = rp.getEntity().getContent(); 
+                //这里处理相应数据 
+            } 
+
+本文来自Android开发学习网，原文网址为：http://www.android-study.net/listxx.aspx?id=393
+
+--------------------------------------------------------------------------------------------------------
+
+ Android HttpURLConnection Socket Http (网络编程)  
+ http://blog.csdn.net/fanmengke_im/article/details/9178095
+ 
+
+在Android的网络通讯中，通常会使用Socket进行设备间数的数据通讯，使用Http来对网络数据进行请求。
+1、Socket（套接字）
+
+
+不管是有过Java开发经验还是.NET开发经验的同学都应该对Socket有或多或少的了解，常见的TCP或者UDP协议其实都是基于Socket来实现的。
+
+
+Socket是用于描述网络上的一个设备中的一个进程或者应用程序的，Socket由IP地址和端口号两部分组成。IP地址用来定位设备，端口号用来定位应用程序或者进程，比如我们常见的运行在80端口上的HTTP协议。Socket的常见格式为：192.168.1.1:1234。
+
+
+那么应用程序是如何通过Socket来与网络中的其他设备进行通讯的呢？通常情况下，Socket通信有两部分，一部分为监听的Server端，一部分为主动请求连接的Client端。Server端会一直监听Socket中的端口直到有请求为止，当Client端对该端口进行连接请求时，Server端就给予应答并返回一个Socket对象，以后在Server端与Client端的数据交换就可以使用这个Socket来进行操作了。
+2、Android中使用Socket进行数据交换 
+
+
+ServerSocket
+　　建立服务端（Server）时，需要使用ServerSocket对象，这个对象会自动对其构造函数中传入的端口号进行监听，并在收到连接请求后，使用ServerSocket.accept()方法返回一个连接的的Socket对象。这个方法并不需要我们像在.NET中那样使用Start方法，它会自动进行监听的。
+
+
+Socket
+　　不管建立客户端（Client）还是在进行其他数据交换方面的操作时，都需要使用Socket类。Socket类在进行初始化时需要出入Server端的IP地址和端口号，并返回连接到Server端的一个Socket对象，如果是连接失败，那么将返回异常。同ServerSocket，也是自动进行连接请求的。
+
+
+，并返回连接到Server端的一个Socket对象，如果是连接失败，那么将返回异常。同ServerSocket，也是自动进行连接请求的。
+
+通过上面两个步骤后，Server端和Client端就可以连接起来了，但是仅仅连接起来是没有任何作用的，数据交换才是我们的目的，这时候就需要用到IO流中的OutputStream类和InputStream类。
+OutputStream——可写流
+ 　　当应用程序需要对流进行数据写操作时，可以使用Socket.getOutputStream()方法返回的数据流进行操作。
+InputStream——可读流
+ 　　当应用程序要从流中取出数据时，可以使用Socket.getInputStream()方法返回的数据流进行操作。
+
+
+
+
+
+
+[java] view plain copy 
+01.<span style="font-size: 10px;">View Code   
+02. package LiB.Demo;  
+03.   
+04. import java.io.BufferedReader;  
+05. import java.io.BufferedWriter;  
+06. import java.io.IOException;  
+07. import java.io.InputStreamReader;  
+08. import java.io.OutputStreamWriter;  
+09. import java.net.ServerSocket;  
+10. import java.net.Socket;  
+11.   
+12. public class SocketHelper {  
+13.     private static ServerSocket serverSocket = null;  
+14.     private static Socket client = null;  
+15.     private final static int port = 9048;  
+16.     private static BufferedReader br= null;   
+17.     private static BufferedWriter bw = null;  
+18.       
+19.     /** 
+20.      * 创建一个SocketServer对象用来建立服务器 
+21.      * @throws IOException 
+22. */  
+23.     public static void CreateServer() throws IOException  
+24.     {  
+25.         serverSocket = new ServerSocket(port,10);  
+26.         System.out.println("start listening...");  
+27.     }  
+28.       
+29.     /** 
+30.      * 创建一个Socket对象用来连接SocketServer对象 
+31.      * @param dstName Server对象的ip地址 
+32.      * @return  
+33.      * @throws IOException 
+34. */  
+35.     public static Socket CreateClient(String dstName) throws IOException  
+36.     {  
+37.         Socket socket = new Socket(dstName, port);  
+38.         //Socket sockets = new Socket("192.168.8.12",port);  
+39.         return socket;  
+40.     }  
+41.       
+42.     /** 
+43.      * 返回一个已经连接到服务器上的Socket对象 
+44.      * @throws IOException 
+45. */  
+46.     public static void GetClinetSocket() throws IOException  
+47.     {  
+48.         client = serverSocket.accept();  
+49.         System.out.println("get a connected client");  
+50.     }  
+51.       
+52.     /** 
+53.      * 向socket对象所获取的流中发送数据 
+54.      * @param socket 
+55.      * @param msg 
+56.      * @throws IOException 
+57. */  
+58.     public static void SendMsg(Socket socket , String msg) throws IOException  
+59.     {  
+60.         bw = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));  
+61.         bw.write(msg);  
+62.         bw.flush();  
+63.         bw.close();  
+64.     }  
+65.       
+66.     /** 
+67.      * 获取socket对象流中数据 
+68.      * @param socket 
+69.      * @param msg 
+70.      * @return 
+71.      * @throws IOException 
+72. */  
+73.     public static String ReceiveMsg(Socket socket, String msg) throws IOException  
+74.     {  
+75.         br = new BufferedReader(new InputStreamReader(socket.getInputStream()));  
+76.         String receiveMsg = "Receive msg:"+ br.readLine();  
+77.         br.close();  
+78.         return receiveMsg;  
+79.     }  
+80.       
+81.     /** 
+82.      * 释放socket对象 
+83.      * @throws IOException 
+84. */  
+85.     public static void Close() throws IOException  
+86.     {  
+87.         if(client != null)  
+88.         {  
+89.             client.close();  
+90.         }  
+91.         if(serverSocket != null)  
+92.         {  
+93.             serverSocket.close();  
+94.         }  
+95.     }  
+96. }</span>  
+
+
+
+3、HTTP通讯
+ 　　在开始前先简单介绍下HTTP协议中的两种不同的请求方式——GET和POST。GET方式在进行数据请求时，会把数据附加到URL后面传递给服务器，比如常见的：http://XXX.XXX.XXX/XX.aspx?id=1，POST方式则是将请求的数据放到HTTP请求头中，作为请求头的一部分传入服务器。所以，在进行HTTP编程前，首先要明确究竟使用的哪种方式进行数据请求的。
+ 　　在Android中，可以有两种方式可以用来进行Http编程：1、HttpURLConnection；2、HttpClient。
+HttpURLConnection
+　　HttpURLConnection是继承自URLConnection的一个抽象类，在HTTP编程时，来自HttpURLConnection的类是所有操作的基础，获取该对象的代码如下：
+
+
+
+[java] view plain copy 
+01.<span style="font-size: 10px;">View Code   
+02.     public HttpURLConnection urlconn= null;  
+03.     private void Init() throws IOException  
+04.     {  
+05.         if (urlStr=="")  
+06.         {  
+07.             urlStr="http://www.baidu.com";  
+08.         }  
+09.         URL url = new URL(urlStr);  
+10.         //打开一个URL所指向的Connection对象  
+11.         urlconn = (HttpURLConnection)url.openConnection();  
+12.     }</span>  
+
+
+
+
+
+HttpURLConnection对网络资源的请求在默认情况下是使用GET方式的，所以当使用GET方式时，不需要我们做太多的工作：
+
+
+
+
+
+
+[java] view plain copy 
+01.<span style="font-size: 10px;">View Code   
+02.     public HttpURLConnection urlconn= null;  
+03.     private void Init() throws IOException  
+04.     {  
+05.         if (urlStr=="")  
+06.         {  
+07.             urlStr="http://www.baidu.com";  
+08.         }  
+09.         URL url = new URL(urlStr);  
+10.         //打开一个URL所指向的Connection对象  
+11.         urlconn = (HttpURLConnection)url.openConnection();  
+12.     }  
+13.     /** 
+14.      * Http中的get请求，在Url中带有请求的参数，请求的URL格式通常为:"http://XXX.XXXX.com/xx.aspx?param=value" 
+15.      * 在android中默认的http请求为get方式 
+16.      * @return 
+17.      * @throws IOException 
+18. */  
+19.     public String HttpGetMethod() throws IOException  
+20.     {  
+21.         if(urlconn == null)  
+22.         {  
+23.             Init();  
+24.         }  
+25.         String result = StreamDeal(urlconn.getInputStream());  
+26.         urlconn.disconnect();  
+27.         return result;  
+28.     }</span>  
+
+
+
+
+当我们需要使用POST方式时，就需要使用setRequestMethod()来设置请求方式了。
+
+
+
+
+[java] view plain copy 
+01.<span style="font-size: 10px;">View Code   
+02.     /** 
+03.      * Http中的post请求，不在Url中附加任何参数，这些参数都会通过cookie或者session等其他方式以键值对的形式key=value传送到服务器上，完成一次请求 
+04.      * 请求的URL格式通常为:"http://XXX.XXXX.com/xx.aspx" 
+05.      * @param param 请求的键名 
+06.      * @param value 请求的数据值 
+07.      * @throws IOException 
+08. */  
+09.     public String HttpPostMethod(String key,String value) throws IOException  
+10.     {  
+11.         if (urlconn==null)  
+12.         {  
+13.             Init();  
+14.         }  
+15.         //设置该URLConnection可读  
+16.         urlconn.setDoInput(true);  
+17.         //设置该URLConnection可写  
+18.         urlconn.setDoOutput(true);  
+19.         //使用POST方式来提交数据  
+20.         urlconn.setRequestMethod("POST");  
+21.         //不运行缓存  
+22.         urlconn.setUseCaches(false);  
+23.         //当使用POST方式进行数据请求时，我们可以手动执行connect动作，当然，这个动作其实在getOutputStream()方法中会默认执行的  
+24. //上面那些设置URLConnection属性的动作，一定要在connect动作执行前，因为一旦动作已经执行，熟悉设置就没有任何作用了  
+25.         urlconn.connect();  
+26.         //使用POST方式时，我们需要自己构造部分Http请求的内容，因此我们需要使用OutputStream来进行数据写如操作  
+27.         OutputStreamWriter writer = new OutputStreamWriter(urlconn.getOutputStream());  
+28.           
+29.         String urlQueryStr = key+"="+URLEncoder.encode(value, "Utf-8");  
+30.         writer.write(urlQueryStr);  
+31.           
+32.         writer.flush();  
+33.         writer.close();  
+34.         //获取返回的内容  
+35.         String result = StreamDeal(urlconn.getInputStream());  
+36.         return result;  
+37.           
+38.     }</span>  
+
+
+
+
+
+HttpClient
+　　这个类并不是来自Android的，而是来自org.apache.http。和HttpURLConnection相同，HttpClient也存在GET和POST两种方式。
+HttpGet
+　　　　　　在HttpClient中，我们可以非常轻松使用HttpGet对象来通过GET方式进行数据请求操作，当获得HttpGet对象后我们可以使用HttpClient的execute方法来向我们的服务器发送请求。在发送的GET请求被服务器相应后，会返回一个HttpResponse响应对象，利用这个响应的对象我们能够获得响应回来的状态码，如：200、400、401等等。
+
+
+
+[java] view plain copy 
+01.<span style="font-size: 10px;">View Code   
+02.     public String HttpGetMethod()  
+03.     {  
+04.         String result = "";  
+05.         try  
+06.         {  
+07.         HttpGet httpRequest = new HttpGet(urlStr);  
+08.         HttpClient httpClient = new DefaultHttpClient();  
+09.         HttpResponse httpResponse = httpClient.execute(httpRequest);  
+10.         if(httpResponse.getStatusLine().getStatusCode()==HttpStatus.SC_OK)  
+11.         {  
+12.             result = EntityUtils.toString(httpResponse.getEntity());  
+13.         }  
+14.         else  
+15.         {  
+16.             result = "null";  
+17.         }  
+18.         return result;  
+19.         }  
+20.         catch(Exception e)  
+21.         {  
+22.             return null;  
+23.         }  
+24.     }</span>  
+
+
+
+HttpPost
+ 
+　　　　　　当我们使用POST方式时，我们可以使用HttpPost类来进行操作。当获取了HttpPost对象后，我们就需要向这个请求体传入键值对，这个键值对我们可以使用NameValuePair对象来进行构造，然后再使用HttpRequest对象最终构造我们的请求体，最后使用HttpClient的execute方法来发送我们的请求，并在得到响应后返回一个HttpResponse对象。其他操作和我们在HttpGet对象中的操作一样。
+
+
+
+
+[java] view plain copy 
+01.<span style="font-size: 10px;">View Code   
+02. public String HttpPostMethod(String key,String value)  
+03.     {  
+04.         String result = "";  
+05.         try  
+06.         {  
+07.         // HttpPost连接对象  
+08.         HttpPost httpRequest = new HttpPost(urlStr);  
+09.         // 使用NameValuePair来保存要传递的Post参数  
+10.         List<NameValuePair> params = new ArrayList<NameValuePair>();  
+11.         // 添加要传递的参数  
+12.         params.add(new BasicNameValuePair(key, value));  
+13.         // 设置字符集  
+14.         HttpEntity httpentity = new UrlEncodedFormEntity(params, "Utf-8");  
+15.         // 请求httpRequest  
+16.         httpRequest.setEntity(httpentity);  
+17.         // 取得默认的HttpClient  
+18.         HttpClient httpclient = new DefaultHttpClient();  
+19.         // 取得HttpResponse  
+20.         HttpResponse httpResponse = httpclient.execute(httpRequest);  
+21.         // HttpStatus.SC_OK表示连接成功  
+22.         if (httpResponse.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {  
+23.             // 取得返回的字符串  
+24.             result = EntityUtils.toString(httpResponse.getEntity());  
+25.             return result;   
+26.         } else {  
+27.              return "null";  
+28.         }  
+29.         }  
+30.         catch(Exception e)  
+31.         {  
+32.             return null;  
+33.         }  
+34.     }</span>  
+

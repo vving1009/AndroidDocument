@@ -1,0 +1,71 @@
+ java list三种遍历方法性能比较    .
+ .
+
+    从c/c++语言转向Java开发，学习java语言list遍历的三种方法，顺便测试各种遍历方法的性能，测试方法为在ArrayList中插入1千万条记录，然后遍历ArrayList，发现了一个奇怪的现象，测试代码如下：
+
+
+package com.hisense.tiger.list;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+
+public class ListTest {
+	public static void main(String[] args)
+	{
+		List<String> list = new ArrayList<String>();
+		long t1,t2;
+		for(int j = 0; j < 10000000; j++)
+		{
+			list.add("aaaaaa" + j);
+		}
+		System.out.println("List first visit method:");
+		t1=System.currentTimeMillis();
+		for(String tmp:list)
+		{
+			//System.out.println(tmp);
+		}
+		t2=System.currentTimeMillis();
+		System.out.println("Run Time:" + (t2 -t1) + "(ms)");
+		System.out.println("List second visit method:");
+		
+		t1=System.currentTimeMillis();
+		for(int i = 0; i < list.size(); i++)
+		{
+			list.get(i);
+			//System.out.println(list.get(i));
+		}
+		t2=System.currentTimeMillis();
+		System.out.println("Run Time:" + (t2 -t1) + "(ms)");
+		
+		System.out.println("List Third visit method:");
+		Iterator<String> iter = list.iterator();
+		
+		t1=System.currentTimeMillis();
+		while(iter.hasNext())
+		{
+			iter.next();
+			//System.out.println(iter.next());
+		}
+		t2=System.currentTimeMillis();
+		System.out.println("Run Time:" + (t2 -t1) + "(ms)");
+				
+		System.out.println("Finished!!!!!!!!");
+		
+		
+	}
+}
+
+
+
+
+    测试结果如下： 
+List first visit method:
+ Run Time:170(ms)
+ List second visit method:
+ Run Time:10(ms)
+ List Third visit method:
+ Run Time:34(ms)
+ Finished!!!!!!!!
+
+    测试的结论很奇怪，第一种方法是java语言支持的新语法，代码最简洁，但是在三种方法中，性能确是最差的，取size进行遍历性能是最高的，求牛人解释？

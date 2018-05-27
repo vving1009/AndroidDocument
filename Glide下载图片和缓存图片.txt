@@ -1,0 +1,281 @@
+Glide下载图片和缓存图片
+
+为了使后台线程加载和处理媒体资源更容易，Glide新增了两个API：
+
+    downloadOnly(int, int)
+    into(int, int)
+
+Glide的downloadOnly(int, int)API允许你下载图片的字节流到磁盘中，以便你之后用到。你可以在UI线程中异步地使用(需要一个Target作为参数)或者在后台线程中同步地使用(需要整数的宽高值作为参数)。 
+
+在后台线程中同步下载图片（仅下载图片到磁盘而不做任何处理）：
+
+FutureTarget<File> future = Glide.with(applicationContext)
+        .load(yourUrl)
+        .downloadOnly(500, 500);
+File cacheFile = future.get();
+
+之后，如果你想显示这个已缓存的图片，可以这样：
+
+Glide.with(yourFragment)
+        .load(yourUrl)
+        .diskCacheStrategy(DiskCacheStrategy.ALL)
+        .into(yourView);
+        
+使用DiskCacheStrategy.ALL或DiskCacheStrategy.SOURCE以确保Glide使用这个已缓存的图片资源（全尺寸的缓存）。 
+如果你确实想在后台线程中处理一下已解码的图片，就不要用downloadOnly(int, int)了，可以用into(int, int) API获取一个 FutureTarget，然后使用.get()就可以拿到Bitmap了。如获取一个500*500的centerCrop图片:
+
+Bitmap myBitmap = Glide.with(applicationContext)
+        .load(yourUrl)
+        .asBitmap()
+        .centerCrop()
+        .into(500, 500)
+        .get()
+
+但要注意，.get()会阻塞主线程，影响App的性能和交互，所以最好不要在主线程中使用。
+
+给大家举个使用的场景：
+
+当大家做微信分享的时候，当图片过大的时候，微信分享不显示图片。这个时候就可以用Glide，加载图片，获取一个bitmap对象。
+
+//解决微信分享 图片过大，不显示图片的问题
+new Thread(new Runnable() {
+    @Override
+    public void run() {
+        try {
+            if(!TextUtils.isEmpty(shareImageUrl)){
+                myBitmap = Glide.with(SpecialTopicDetailActivity.this)
+                        .load(shareImageUrl)
+                        .asBitmap()
+                        .centerCrop()
+                        .into(100, 100)
+                        .get();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}).start();
+
+清理缓存：
+//清理内存中的缓存。
+Glide.get(this).clearMemory();
+
+//清理硬盘中的缓存。
+Glide.get(this).clearDiskCache();
+
+以上两个方法清除全局的内存缓存和硬盘缓存，虽然可以一劳永逸的解决缓存导致的资源陈旧问题，但是将严重影响全局性能，所以慎用，除非是在APP整体要做全新的开始或者恢复原始状态，否则尽量避免使用。
+
+或者
+ImageView image= (ImageView) findViewById(R.id.image);  
+Glide.with(this).load("http://avatar.csdn.net/9/7/A/1_zhangphil.jpg")  
+        .skipMemoryCache(true)  
+        .diskCacheStrategy(DiskCacheStrategy.NONE)  
+        .into(image);  
+        
+关键代码：skipMemoryCache(true).diskCacheStrategy(DiskCacheStrategy.NONE)
+skipMemoryCache(true) ，跳过内存缓存。
+diskCacheStrategy(DiskCacheStrategy.NONE) ，不要在disk硬盘中缓存。
+
+这两个函数同时联合使用，使得Glide针对这一次的资源加载放弃内存缓存和硬盘缓存，相当于一次全新的请求。这样就迫使Glide从给定的资源地址发起全新的数据加载，而非从旧有的缓存中取缓存使用。
+
+==========================================================================================================================================
+
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.net.Uri;
+import android.os.Environment;
+
+import com.bumptech.glide.Glide;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+/** 图片下载
+*/
+public class DownLoadImage implements Runnable {
+    private String url;
+    private Context context;
+    private ImageDownLoadCallBack callBack;
+    private File currentFile;
+    public DownLoadImage(Context context, String url, ImageDownLoadCallBack callBack) {
+        this.url = url;
+        this.callBack = callBack;
+        this.context = context;
+    }
+
+    @Override
+    public void run() {
+        File file = null;
+        Bitmap bitmap = null;
+        try {
+//            file = Glide.with(context)
+//                    .load(url)
+//                    .downloadOnly(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL)
+//                    .get();
+            bitmap = Glide.with(context)
+                    .load(url)
+                    .asBitmap().into(200, 200)
+                    .get();
+            if (bitmap != null){
+                // 在这里执行图片保存方法
+                saveImageToGallery(context,bitmap);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+//            if (file != null) {
+//                callBack.onDownLoadSuccess(file);
+//            } else {
+//                callBack.onDownLoadFailed();
+//            }
+            if (bitmap != null && currentFile.exists()) {
+                callBack.onDownLoadSuccess(bitmap);
+            } else {
+                callBack.onDownLoadFailed();
+            }
+        }
+    }
+
+    public void saveImageToGallery(Context context, Bitmap bmp) {
+        // 首先保存图片
+         File file = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsoluteFile();//注意小米手机必须这样获得public绝对路径
+        String fileName = "ningjing";
+        File appDir = new File(file ,fileName);
+        if (!appDir.exists()) {
+            appDir.mkdirs();
+        }
+         fileName = System.currentTimeMillis() + ".jpg";
+        currentFile = new File(appDir, fileName);
+
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(currentFile);
+            bmp.compress(Bitmap.CompressFormat.JPEG, 100, fos);
+            fos.flush();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (fos != null) {
+                    fos.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        // 其次把文件插入到系统图库
+//        try {
+//            MediaStore.Images.Media.insertImage(context.getContentResolver(),
+//                    currentFile.getAbsolutePath(), fileName, null);
+//        } catch (FileNotFoundException e) {
+//            e.printStackTrace();
+//        }
+
+        // 最后通知图库更新
+        context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE,
+                Uri.fromFile(new File(currentFile.getPath()))));
+    }
+}
+
+=================================================================================================================================
+
+Glide是Google推荐的图片加载库, 加载图片一般以下面的形式:
+Glide.with(context).load(ImgUrl)
+      .asBitmap()
+      .error(R.drawable.error)
+      .placeholder(R.drawable.loading)
+      .dontAnimate()
+      .diskCacheStrategy(DiskCacheStrategy.ALL)
+      .into(ImageView);
+      
+load对象: String(文件路径，网络地址)，File(文件资源)，Integer(资源id)；
+asGif:表示的gif动画，asBitmap：表示静态图
+diskCacheStrategy磁盘缓存策略:
+(1). DiskCacheStrategy.RESULT:展示小大的图片缓存
+(2). DiskCacheStrategy.ALL; 展示在控件中大小图片尺寸和原图都会缓存
+(3). DiskCacheStrategy.NONE：不设置缓存
+(4). DiskCacheStrategy.SOURCE：原图缓存
+
+placeholder(R.drawable.loading): 目标从加载到展示时的控件的显示状态（多用网络加载动画）
+error(R,drawable,error): 加载失败时，控件显示的图片。
+into(ImageView): 展示的控件
+
+Glide加载网络图片时, 会将图片缓存一份到本地, 下次再加载的时候优先从缓存中拿取, 提高速度.
+
+如果想获取Glide缓存的图片, 怎么办?
+我们都知道 开源框架Universal_Image_Loader 提供 “getDiskCache().get(url)” 去获取图片的本地缓存.
+但是Glide并没有提供类似方法.
+
+那么Glide如何获取本地的缓存 ?
+Glide提供 downloadOnly() 接口, 可以通过此接口来获取缓存文件. 但是有一个前提:
+使用Glide加载图片时, 必须指定diskCacheStrategy磁盘缓存策略为DiskCacheStrategy.ALL 或 DiskCacheStrategy.SOURCE
+
+使用downloadOnly()获取缓存文件(此方法需要在线程中执行, 如果确定文件有缓存, 它会从缓存中读取文件, 很快):
+private class GetImageCacheTask extends AsyncTask<String, Void, File> {
+        private final Context context;
+
+        public SaveImageTask(Context context) {
+            this.context = context;
+        }
+
+        @Override
+        protected File doInBackground(String... params) {
+            String imgUrl =  params[0];
+            try {
+                return Glide.with(context)
+                        .load(imgUrl)
+                        .downloadOnly(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL)
+                        .get();
+            } catch (Exception ex) {
+                return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(File result) {
+            if (result == null) {
+                return;
+            }
+            //此path就是对应文件的缓存路径
+            String path = result.getPath();
+            //将缓存文件copy, 命名为图片格式文件
+            copyFile(path, newPath);
+        }
+    }
+    
+上面的path就是对应图片的缓存地址, 类似于: /data/data/包名/cache/image_manager_disk_cache/6872faf4075a6461f3d7ceb2e5ff625beeaae67d3b7e44a0d1e3cd332aa471dc.0
+
+Glide对文件缓存时, 采用SHA-256加密算法, 所以如果需要获得图片, 需要将获得的文件copy一份, 命名为图片格式的文件.
+对应代码:
+
+    /**
+    * oldPath: 图片缓存的路径
+    * newPath: 图片缓存copy的路径
+    */
+    public static void copyFile(String oldPath, String newPath) {
+        try {
+            int byteRead;
+            File oldFile = new File(oldPath);
+            if (oldFile.exists()) {
+                InputStream inStream = new FileInputStream(oldPath);
+                FileOutputStream fs = new FileOutputStream(newPath);
+                byte[] buffer = new byte[1024];
+                while ( (byteRead = inStream.read(buffer)) != -1) {
+                    fs.write(buffer, 0, byteRead);
+                }
+                inStream.close();
+            }
+        }
+        catch (Exception e) {
+            System.out.println("复制文件操作出错");
+            e.printStackTrace();
+        }
+    }
+    
+这样就会在新的路径下生成所需要的图片文件. 通过这种方式就可以获取Glide的磁盘缓存. 

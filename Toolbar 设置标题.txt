@@ -1,0 +1,18 @@
+Toolbar设置标题的问题
+
+在使用Toolbar时，如果需要修改标题必须在onCreate()方法执行完成之后修改。因为在onCreate()方法中设置任何标题值都会被重置为AndroidManifest中android:lable的值。为了抵消这种行为，我们可以在onCreate()执行之后执行的onPostCreate()方法中执行修改标题的。
+
+ /**
+     * Called when activity start-up is complete (after onStart() and onRestoreInstanceState(Bundle) have been called).
+     *
+     * @param savedInstanceState
+     */
+    @Override
+    public void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        //Toolbar 必须在onCreate()之后设置标题文本，否则默认标签将覆盖我们的设置
+        if (toolbar != null) {
+            toolbar.setTitle("零钱");
+            toolbar.setSubtitle("微信安全支付");
+        }
+    }

@@ -1,0 +1,94 @@
+P160421-01538
+2001161
+
+MAT工具：
+环境变量：C:\Users\VV\AppData\Local\Android\sdk\tools
+CMD：hprof-conv a.hprof b.hprof
+转换后使用MAT打开
+
+
+
+
+
+
+
+
+
+
+
+ Android 内存优化 (防Memory Leak)   .
+
+
+标签： 内存优化memory leakoom  
+
+2014-11-22 14:48 5569人阅读 评论(0) 收藏 举报 
+.
+
+  
+
+ 分类： 
+
+Android（9）   
+
+
+ . 
+
+版权声明：本文为博主原创文章，未经博主允许不得转载。
+
+
+在之前的 Android 内存管理 &Memory Leak & OOM 分析 中，说到了Android的内存管理相关的原理，也能了解到Android Memory Leak 和 OOM为什么会发生。这次主要说说编码层面，如何来预防Memory Leak的发生。
+
+对象都是有生命周期的，对象的生命周期有的是进程级别的，有的是Activity所在的生命周期，随Activity消亡；有的是Service所在的生命周期，随Service消亡。很多情况下判断对象是否合理存在的一个很重要的理由就是它实际的生命周期是否符合它本来的生命周期。很多Memory Leak的发生，很大程度上都是生命周期的错配，本来在随Activity销毁的对象变成了进程级别的对象，Memory Leak就无法避免了。
+
+1、常见的MemoryLeak分析
+
+1.1 频繁的使用static关键字修饰
+ 很多初学者非常喜欢用static类static变量，声明赋值调用都简单方便。由于static声明变量的生命周期其实是和APP的生命周期一样的（进程级别）。大量的使用的话，就会占据内存空间不释放，积少成多也会造成内存的不断开销，直至挂掉。static的合理使用一般用来修饰基本数据类型或者轻量级对象，尽量避免修复集合或者大对象，常用作修饰全局配置项、工具类方法、内部类。
+
+1.2 BitMap隐患
+Bitmap的不当处理极可能造成OOM，绝大多数情况应用程序OOM都是因这个原因出现的。Bitamp位图是Android中当之无愧的胖子，所以在操作的时候必须小心。
+1.2.1 及时释放recycle。由于Dalivk并不会主动的去回收，需要开发者在Bitmap不被使用的时候recycle掉。
+1.2.2 设置一定的压缩率。需求允许的话，应该去对BItmap进行一定的缩放，通过BitmapFactory.Options的inSampleSize属性进行控制。如果仅仅只想获得Bitmap的属性，其实并不需要根据BItmap的像素去分配内存，只需在解析读取Bmp的时候使用BitmapFactory.Options的inJustDecodeBounds属性。
+1.2.3最后建议大家在加载网络图片的时候，使用软引用或者弱引用并进行本地缓存，推荐使用android-universal-imageloader或者xUtils。
+
+1.3 页面背景图
+ 在布局和代码中设置背景和图片的时候，如果是纯色，尽量使用color；如果是规则图形，尽量使用shape画图；如果稍微复杂点，可以使用9patch图；如果不能使用9patch的情况下，针对几种主流分辨率的机型进行切图。
+
+1.4 View缓存
+ 在ListView和GridView中，列表中的很多项(convertView)是可以重用的，不需要每次getView就重新生成一项。另外，页面的绘制其实是很耗时的，findViewById也比较慢。所以不重用View，在有列表的时候就尤为显著了，经常会出现滑动很卡的现象。
+
+1.5 引用地狱
+Activity中生成的对象原则上是应该在Activity生命周期结束之后就释放的。Activity对象本身也是，所以应该尽量避免有appliction进程级别的对象来引用Activity级别的对象，如果有的话也应该在Activity结束的时候解引用。如不应用applicationContext在Activity中获取资源。
+Service也一样。
+
+1.6 BroadCastReceiver、Service 解绑
+ 绑定广播和服务，一定要记得在不需要的时候给解绑。
+
+1.7 handler 清理
+ 在Activity的onDestroy方法中调用handler.removeCallbacksAndMessages(null);取消所有的消息的处理，包括待处理的消息；
+
+1.8 Cursor及时关闭
+ 在查询SQLite数据库时，会返回一个Cursor，当查询完毕后，及时关闭，这样就可以把查询的结果集及时给回收掉。
+
+1.9 I/O流
+I/O流操作完毕，读写结束，记得关闭。
+
+1.10 线程
+ 线程不再需要继续执行的时候要记得及时关闭，开启线程数量不易过多，一般和自己机器内核数一样最好，推荐开启线程的时候，使用线程池。
+
+1.11 String/StringBuffer
+当有较多的字符创需要拼接的时候，推荐使用StringBuffer。
+
+
+
+
+
+2、总结
+
+如果以上做的都比较完美了，可以肯定你的程序会运行的非常好。
+
+
+当然，有的时候我们也会为了程序的效率性能把本来是Activity级里才用的资源提升到进程级别，比如ImageCache，或者其它DataManager等。
+
+
+我只能说，空间和时间是相对的，有的时候需要牺牲时间换取空间，有的时候需要牺牲空间换取时间。内存是空间的存在，性能是时间的存在。完美的程序是在一定条件下的完美。

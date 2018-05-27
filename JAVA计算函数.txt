@@ -1,0 +1,105 @@
+
+java中的数学计算函数
+
+
+
+ Math类：
+  java.lang.Math类中包含基本的数字操作，如指数、对数、平方根和三角函数。
+  java.math是一个包，提供用于执行任意精度整数(BigInteger)算法和任意精度小数(BigDecimal)算法的类。
+
+ 
+
+  java.lang.Math类中包含E和PI两个静态常量，以及进行科学计算的类(static)方法，可以直接通过类名调用。
+
+  public static final Double E = 2.7182818284590452354 
+  public static final Double PI = 3.14159265358979323846
+
+ 
+
+  public static long abs(double x)：传回 x 的绝对值。X也可int long float
+  public static long sin(double x): 传回x径度的正弦函数值  
+  public static long cos(double x)：传回x径度的余弦函数值   
+  public static long tan(double x): 传回x径度的正切函数值 
+  public static long asin(double x)：传回x值的反正弦函数值。
+  public static long acos(double x)：传回x值的反余弦函数值。
+  public static long atan(double x)：传回x值的反正切函数值。 
+  public static long atan2(double x, double y)：传回极坐标（polar）的θ值 
+  public static long floor(double x)：传回不大于x的最大整数值 
+  public static long ceil(double x)：传回不小于x的最小整数值。 
+  public static long exp(double x)：传回相当于ex值 
+  public static long log(double x)：传回x的自然对数函数值 
+  public static long max(double x,double y)：传回x、y较大数 
+  public static long min(double x,double y)：传回x、y较小数 
+  public static long pow(double x,double y)：传回x的y次幂值 
+  public static long sqrt(double x): 传回x开平方值 
+  public static long rint(double x):传回最接近x的整数值 
+  public static long round(double x):传回x的四舍五入值 
+  public static long toDegrees(double angrad):传回将angrad径度转换成角度 
+  public static long toRadians(double angdeg): 传回将angdeg角度转换成径度
+  public static long random():传回随机数值,产生一个0-1之间的随机数(不包括0和1)
+
+ 
+
+NumberFormat类：
+
+　
+
+(public abstract class NumberFormat extends Format)
+用java.text.NumberFormat类对输出的数字结果进行必要的格式化。
+
+
+  使用该类如下方法类实例化一个NumberFormat对象：
+   public static final NumberFormat getInstance()
+  然后用该对象调用如下方法可以格式化数字number(返回字符串对象)：
+   public final String format(double number)
+
+ 
+
+  NumberFormat类有如下常用方法：
+  public void setMaximumFractionDigits(int newValue)//设置数的小数部分所允许的最大位数。
+  public void setMaximumIntegerDigits(int newValue)//设置数的整数部分所允许的最大位数。
+  public void setMinimumFractionDigits(int newValue)//设置数的小数部分所允许的最小位数。
+  public void setMinimumIntegerDigits(int newValue)//设置数的整数部分所允许的最小位数。
+
+  (更多方法及用法看JDK6API参考。)
+
+ 
+
+
+ BigInteger类、BigDecimal类：
+
+
+  java.math包中的BigInteger类和BigDecimal类分别提供任意精度的整数和小数运算。
+  两个类设计思想一样，这里只对BigInterger类稍做介绍，细节可以查看JDK6API参考。
+
+ 
+
+  构造方法如下：
+   BigInteger(String val)  //将 BigInteger 的十进制字符串表示形式转换为 BigInteger。
+   还有很多考虑周全的构造函数，建议要准备写特殊需求的BigInteger前先认真翻下JDK。
+
+ 
+
+  常用方法：
+   abs()  //返回其值是此BigInteger的绝对值的BigInteger。
+   add(BigInteger val)  //返回其值为(this+val)的BigInteger。
+   subtract(BigInteger val)  //返回其值为(this-val)的BigInteger。
+   multiply(BigInteger val)  // 返回其值为(this*val)的BigInteger。
+   divide(BigInteger val)  //返回其值为(this/val)的BigInteger。
+   remainder(BigInteger val)  //返回其值为(this%val)的BigInteger。
+   compareTo(BigInteger val)  //将此BigInteger与指定的BigInteger进行比较。返回值1、0、-1分别表示大于、等于、小于
+   pow(int exponent)  //返回当前大数的exponent次幂。
+   toString()  //返回此BigInteger的十进制字符串表示形式。
+   toString(int radix)  //返回此BigInteger的给定基数(radix进制)的字符串表示形式。
+
+补充：
+
+(1)abs():返回某数字的绝对值.参数可以是float、double、long或int。如果是byte或short类型，那么它们会被强制转换成int类型。
+(2)ceil()会找到下一个最大整数。例如参数为9.01时，返回10.0。为-0.1时，返回-0.0。返回比参数大的整数，而且都是双精度类型的。如果参数是整数，则该方法会返回这个参数的双精度型。
+(3)floor()返回紧邻的最小整数。作用与ceil()正好相反，返回的是比参数小的整数，而且都是双精度型。如果参数为整数，则返回这个参数的双精度型。
+(4)max()返回两个值中的最大值，只支持float double long int 不支持byte short。
+(5)min()返回两个值中的最小值，只支持float double long int 不支持byte short。
+(6)random()返回一个随机数，一个在0.0到1.0之间的双精度数。
+(7)round()返回与某浮点数值最接近的整数值。参数可以为double和folat两种，而且支持四舍五入。例如：参数为9.01时，返回9，参数为9.5时，返回10，参数为-9.5时，返回-9。
+(8)sqrt()返回某数值的平方根。如果该参数是"非数字"类型（NaN），或者小于零，则返回是NaN。
+

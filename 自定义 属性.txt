@@ -1,0 +1,372 @@
+android 自定义View属性 
+
+玩android上层应用很多年了。对很多东西一直不透彻，可怎么整，人生的路该怎么走。干啥都不容易。得尝试学习下View的属性设置。这里我还不能介绍如何写View,只是说下如何设置View的属性。
+
+public class MyView extends View {
+    private Paint mPaint;
+    private Context mContext;
+    public MyView(Context context,AttributeSet attrs)
+    {
+        super(context,attrs);
+        mPaint = new Paint();
+
+        TypedArray a = context.obtainStyledAttributes(attrs,
+                R.styleable.MyView);
+
+        int textColor = a.getColor(R.styleable.MyView_textColor,
+                0XFFFFFFFF);
+        float textSize = a.getDimension(R.styleable.MyView_textSize, 36);
+
+        mPaint.setTextSize(textSize);
+        mPaint.setColor(textColor);
+
+        a.recycle();
+    }
+
+所有的View都这样写，关键研究下这些xml的关系。首先我们在整个layout里会有这样的东西
+
+<com.example.test.MyView
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            test:textSize="20px"
+            test:textColor="#fff"/>
+
+这个就比较诡异了。第一句声明了那个View. 勉强可以接受，关键这两句
+
+ test:textSize="20px"
+ test:textColor="#fff"/>
+
+为什么要这样写呢，我这样行不行 qisda:changer = "20px" 肯定不行，那这个test:textSize是谁定义的呢？
+
+这需要我们在写个文件，知名自定义View有哪些属性，在attrs.xml里
+
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="MyView">
+        <attr name="textColor" format="color" />
+        <attr name="textSize" format="dimension" />
+    </declare-styleable>
+</resources>
+
+  奥，哪就有些明白了，哪这样，我在这个文件里，我再加个声明
+
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="MyView">
+        <attr name="textColor" format="color" />
+        <attr name="textSize" format="dimension" />
+    </declare-styleable>
+
+    <declare-styleable name="View">
+        <attr name="changer1_color" format="color" />
+        <attr name="changer2_size" format="dimension" />
+    </declare-styleable>
+</resources>
+
+那我的xml layout属性是否可以写成
+
+<com.example.test.MyView
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            test:textSize="20px"
+            test:changer1_color="#fff"
+            test:changer2_size="20px"
+            test:textColor="#fff"/>
+
+哎，开发环境没拨错，好。原来是可以的。那这不乱套了，诡异，原来问题出在这里。
+
+ TypedArray a = context.obtainStyledAttributes(attrs,
+                R.styleable.MyView);
+
+这句话的意思，attrs读了layout xml用户的设定值，都包含进来了，R.styleable,myView指定了该View关心或者可以设定哪些值。 这个意思就是虽然你多设定了一些属性值，但是我读取也没用的。相当于系统从style里读键，从attrs找键对应的值，统一整理存放到Typearray里。
+
+哎，android博大精深，可怎么整，要不要换个工作呢。
+
+------------------------------------------------------------------------------------
+
+自定义View自定义属性   .
+
+
+标签： androidlayoutstringencodingeclipsereference  
+
+2012-04-27 12:06 16180人阅读 评论(5) 收藏 举报 
+.
+
+  
+
+ 分类： 
+
+Android（1）   
+
+
+ .
+
+版权声明：本文为博主原创文章，未经博主允许不得转载。
+
+在Android开发中常常需要自定义View，在自定义View后，常常需要一些特别的属性，这里一并讲解如何自定义属性。
+
+
+1.自定义一个View类：MyNewElement.java
+
+
+
+
+
+[java] view plain copy 
+01.package com.ixgsoft.space;  
+02.  
+03.  
+04.import android.content.Context;  
+05.import android.content.res.TypedArray;  
+06.import android.graphics.Canvas;  
+07.import android.graphics.Color;  
+08.import android.graphics.Paint;  
+09.import android.util.AttributeSet;  
+10.import android.util.Log;  
+11.import android.view.MotionEvent;  
+12.import android.view.View;  
+13.import android.widget.Button;  
+14.import android.widget.TextView;  
+15.import android.widget.Toast;  
+16.  
+17.  
+18./** 
+19. * @Description:  
+20. */  
+21.public class NewMyElement extends View {  
+22.  
+23.  
+24.      
+25.    private String TAG = "NewMyElement";  
+26.    private String text;  
+27.      
+28.    public NewMyElement(Context context) {  
+29.        super(context);  
+30.          
+31.    }  
+32.    public NewMyElement(Context context, AttributeSet attrs) {  
+33.        super(context, attrs);  
+34.        init(attrs);  
+35.  
+36.  
+37.  
+38.  
+39.    }  
+40.    public NewMyElement(Context context, AttributeSet attrs, int defStyle) {  
+41.        super(context, attrs, defStyle);  
+42.        init(attrs);  
+43.    }  
+44.  
+45.  
+46.    public void init(AttributeSet attrs){  
+47.          
+48.        TypedArray t = getContext().obtainStyledAttributes(attrs,R.styleable.NewMyElement);  
+49.          
+50.        String textValue = t.getString(R.styleable.NewMyElement_textValue);  
+51.        float textSize = t.getDimension(R.styleable.NewMyElement_textSize, 36);  
+52.        int textColor = t.getColor(R.styleable.NewMyElement_textColor, 0xff000000);  
+53.    }  
+54.      
+55.  
+56.  
+57.  
+58.  
+59.      
+60.      
+61.  
+62.  
+63.}  
+
+
+
+
+
+经过以上编码，就成功的创建一个自己的View类了。如果要把这个View类放到layout文件中，那么应该这样写：
+
+
+
+
+
+[html] view plain copy 
+01.<?xml version="1.0" encoding="utf-8"?>  
+02.<LineanLayout   
+03.    xmlns:android="http://schemas.android.com/apk/res/android"  
+04.    xmlns:my="http://schemas.android.com/apk/res/com.ixgsoft.space"  
+05.    android:layout_width="match_parent"  
+06.    android:layout_height="match_parent"  
+07.    >  
+08.      
+09.    <com.ixgsoft.space.NewMyElement  
+10.        my:textValue="草了1"  
+11.        android:layout_width="wrap_content"  
+12.        android:layout_height="wrap_content"  
+13.        />  
+14.    <com.ixgsoft.space.NewMyElement   
+15.        my:textValue="草了2"  
+16.        android:layout_width="wrap_content"  
+17.        android:layout_height="wrap_content"  
+18.        />  
+19.  
+20.  
+21.</LineanLayout>   
+
+
+
+在LinearLayout中，我定义了两个NewMyElement元素，注意，自定义的View类，在Layout布局文件中必须使用完全包名，我这里使用的是com.ixgsoft.space.NewMyElement。
+
+
+2.创建自定义属性
+
+
+ 在Android中要增加自定义属性，需要依靠attrs.xml文件。这里指定的自定义属性，是在layout布局文件中使用的不是以android开头的属性，例如my:textValue。
+ 首先，我们需要在/res/values目录下新建一个名为 attrs.xml的文件。
+
+
+
+
+
+[html] view plain copy 
+01.<?xml version="1.0" encoding="utf-8"?>  
+02.<resources>  
+03.    <declare-styleable name="NewMyElement">  
+04.        <attr name="textColor" format="color" />  
+05.        <attr name="textSize" format="dimension" />  
+06.        <attr name="textValue" format="string" />  
+07.    </declare-styleable>  
+08.</resources>  
+
+
+
+这是一个android的resource文件，其中有一个域，名为 declare-styleable(声明属性)。这个域的有一个name属性为NewMyElement，这里很重要，这个name属性其实就是这个属性的在R类中的id。在这里域内部有3个attr域，他们都拥有两个属性，一个是name，代表这个属性的名字以及在layout布局文件中的调用名。format代表着这个属性的类型。这个属性怎么看呢？这里教大家一个方法。
+ 在layout布局文件中，使用eclipse的提示功能（Alt+/），可以看到所有属性，这个时候按方向键，能够切换焦点，同时右部的提示也在变换。每一个android默认的属性，在提示的最后都有一个以[]包含的单词，这个就是这个属性的类型。 
+
+
+
+
+
+
+
+目前已知的属性有这些：
+reference      资源类型，通常是@开头，例如@+id/xxxx，@id/xxxxx
+ string             字符串类型，通常是文字信息
+dimension   浮点类型，通常是尺寸度量，单位有很多px，dp，sp，dip等
+color             颜色类型，通常是颜色16进制代码，支持ARGB。
+boolean       布尔类型，true和false
+ enum           枚举类型，通常是代表这个属性提供了几种值来进行选择，并且只能选择这几种中的一个
+flag             与enum基本没有区别。
+integer         整数类型，通常是整数
+
+
+ 创建完attrs.xml文件，现在我们需要把这个属性用到layout文件中。
+
+
+
+
+
+[html] view plain copy 
+01.<?xml version="1.0" encoding="utf-8"?>  
+02.<LineanLayout   
+03.    xmlns:android="http://schemas.android.com/apk/res/android"  
+04.    xmlns:my="http://schemas.android.com/apk/res/com.ixgsoft.space"  
+05.    android:layout_width="match_parent"  
+06.    android:layout_height="match_parent"  
+07.    >  
+08.      
+09.    <com.ixgsoft.space.NewMyElement  
+10.        my:textValue="草了1"  
+11.        android:layout_width="wrap_content"  
+12.        android:layout_height="wrap_content"  
+13.        />  
+14.    <com.ixgsoft.space.NewMyElement   
+15.        my:textValue="草了2"  
+16.        android:layout_width="wrap_content"  
+17.        android:layout_height="wrap_content"  
+18.        />  
+19.  
+20.</LineanLayout>   
+
+
+
+
+以上代码中，在根元素的中增加了一个额外的命名空间，xmlns:my="
+ http://schemas.android.com/apk/res/com.ixgsoft.space
+ "
+最后的com.ixgsoft.space需要更改为你自己的包名。
+ 做好之后，就可以在元素中使用以my开头的属性了，当然这里是没有Eclipse提示的，只能自己对照着写。
+
+
+
+
+3.在代码中调用自定义属性
+
+
+
+回到我们的View类MyNewElement。
+
+
+
+
+
+[java] view plain copy 
+01.package com.ixgsoft.space;  
+02.  
+03.  
+04.import android.content.Context;  
+05.import android.content.res.TypedArray;  
+06.import android.graphics.Canvas;  
+07.import android.graphics.Color;  
+08.import android.graphics.Paint;  
+09.import android.util.AttributeSet;  
+10.import android.util.Log;  
+11.import android.view.MotionEvent;  
+12.import android.view.View;  
+13.import android.widget.Button;  
+14.import android.widget.TextView;  
+15.import android.widget.Toast;  
+16.  
+17.  
+18./** 
+19. * @Description:  
+20. */  
+21.public class NewMyElement extends View {  
+22.  
+23.  
+24.      
+25.    private String TAG = "NewMyElement";  
+26.    private String text;  
+27.      
+28.    public NewMyElement(Context context) {  
+29.        super(context);  
+30.          
+31.    }  
+32.    public NewMyElement(Context context, AttributeSet attrs) {  
+33.        super(context, attrs);  
+34.        init(attrs);  
+35.  
+36.  
+37.  
+38.  
+39.    }  
+40.    public NewMyElement(Context context, AttributeSet attrs, int defStyle) {  
+41.        super(context, attrs, defStyle);  
+42.        init(attrs);  
+43.    }  
+44.  
+45.  
+46.    public void init(AttributeSet attrs){  
+47.          
+48.        TypedArray t = getContext().obtainStyledAttributes(attrs,R.styleable.NewMyElement);  
+49.          
+50.        String textValue = t.getString(R.styleable.NewMyElement_textValue);  
+51.        float textSize = t.getDimension(R.styleable.NewMyElement_textSize, 36);  
+52.        int textColor = t.getColor(R.styleable.NewMyElement_textColor, 0xff000000);  
+53.    }  
+54.      
+55.  
+56.  
+57.}  
+
+
+
+在init方法中，接收了一个AttributeSet 对象，然后使用getContext方法得到当前Context，调用Context.obtainStyledAttributes方法，传入AttributeSet 和R.styleable.NewMyElement，这里的R.styleable.NewMyElement，就是我们在attrs.xml中定义的名称，通过R.styleable来访问。
+ 方法返回一个 typedArray对象。按照attrs,xml中定义的属性的类型，使用不同的get方法获取指定属性的值。看一看就懂了。

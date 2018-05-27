@@ -1,0 +1,18 @@
+System.currentTimeMillis()与日期 之间是可以相互转换的，大多数Android开发者都知道 通过 
+SimpleDateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+String dateStr = dateformat.format(System.currentTimeMillis());
+
+可以获取如“ 2016-09-02 23:02:17 ”这样的一个字符串，但是反过来呢？如果给我们一个“ 2016-09-02 23:02:17 ”字符串，我们能否得到当前日期对应的毫秒值呢？ 答案是肯定的。
+SimpleDateFormat dateformat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+try {
+    long time = dateformat.parse("2016-09-02 23:02:17").getTime();
+    System.out.println(time);
+} catch (ParseException e) {
+    e.printStackTrace();
+}
+
+输出：1472828537000； 
+ 由此可见，毫秒值与日期之间是可以互转的。
+
+
+总结：测试时候可能会出现当前获取的毫秒值转换为日期后，再转为毫秒值时候 与前者不一致，这个是因为获取的是毫秒值，而转换为日期后是以秒为单位了，所以转换后才会出现这种情况。 如果想要解决那么就得在时间格式化的时候写成 SimpleDateFormat dateformat = new SimpleDateFormat(“yyyy-MM-dd HH:mm:ss.SSS”); 

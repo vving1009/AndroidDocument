@@ -1,0 +1,62 @@
+    /**
+     * 将项目下的数据库拷贝到内存卡中
+     */
+    public static boolean copyDbToSdCard()
+    {
+        FileInputStream fis = null;
+        FileOutputStream ops = null;
+        try
+        {
+            File file = VerifyApp.getInstance().getFilesDir();
+            File dir = new File(file.getParent(), "databases");
+            File db = new File(dir, "map.db3");
+            File sddb = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + "/自己指定SD卡保存目录", "map.db3");
+                    fis = new FileInputStream(db);
+            ops = new FileOutputStream(sddb);
+            byte[] buffer = new byte[4096];
+            int index = 0;
+            while ((index = fis.read(buffer)) != -1)
+            {
+                ops.write(buffer, 0, index);
+            }
+            ops.flush();
+            ops.close();
+            fis.close();
+        }
+        catch (FileNotFoundException e)
+        {
+            return false;
+        }
+        catch (IOException e)
+        {
+            return false;
+        }
+        finally
+        {
+            try
+            {
+                if (ops != null)
+                {
+                    ops.close();
+                    ops = null;
+                }
+            }
+            catch (IOException e)
+            {
+
+            }
+            try
+            {
+                if (fis != null)
+                {
+                    fis.close();
+                    fis = null;
+                }
+            }
+            catch (IOException e)
+            {
+
+            }
+        }
+        return true;
+    }

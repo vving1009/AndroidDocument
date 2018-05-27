@@ -1,0 +1,9 @@
+异步：AsyncTask, Handler, RxJava
+网络：OKHttp, Retrofit
+开源框架：RxJava, Retrofit, Glide, Dagger2， Butterknife, OKHttp，PullToRefresh
+XML, JSON解析(Gson, Fastjson)
+数据持久化：SharedPreference, SQLite, 文件，ContentProvider
+内存优化：LeakCanary
+material design
+
+http://blog.csdn.net/yue31313/article/details/51967562

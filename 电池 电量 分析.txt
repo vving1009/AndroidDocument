@@ -1,0 +1,32 @@
+
+
+方法：
+
+手机自带的电量监控、GT
+
+命令（5.0以上系统才可以）：
+
+1.下载historian.py脚本，下载地址：https://github.com/google/battery-historian，后面用
+
+2.执行步骤
+
+1)初始化batterystats数据
+
+adb shell dumpsys batterystats--reset
+
+2）拔掉手机，操作app，操作完成后，重新连接手机，执行下面的命令，收集系统整体的Battery数据:
+
+adb shell dumpsys batterystats > batterystats.txt
+
+3）得到这些数据后，这个时候使用我们的battery-historian来生成我们可见HTML报告:
+
+python historian.py batterystats.txt > batterystats.html
+
+4）用google浏览器打开此文件即可
+
+http://blog.csdn.net/itfootball/article/details/49004699
+http://blog.csdn.net/tiandixuhuang/article/details/50628700
+http://www.jianshu.com/p/6e958c8b4b21
+http://www.jianshu.com/p/a7d9a3aec423
+http://blog.csdn.net/gqiang3/article/details/78149116
+http://blog.csdn.net/ragnaro/article/details/53024251

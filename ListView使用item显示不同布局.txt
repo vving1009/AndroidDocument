@@ -1,0 +1,471 @@
+/**
+     * 自定义城市列表适配器
+     */
+    private class MyCityListAdapter extends BaseAdapter {
+
+        final int VIEW_TYPE = 2;
+        final int TYPE_1 = 0;
+        final int TYPE_2 = 1;
+
+        @Override
+        public int getCount() {
+            return cityList.size();
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return cityList.get(position);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
+
+        @Override
+        public int getItemViewType(int position) {
+
+            if (position == 3||position == 5||position == 10)
+                return TYPE_1;
+            else
+                return TYPE_2;
+        }
+
+        @Override
+        public int getViewTypeCount() {
+            return VIEW_TYPE;
+        }
+
+        ViewHolder viewHolder;
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+
+            viewHolder = new ViewHolder();
+            if (convertView == null) {
+
+                //对listView设置不同布局
+                int type = getItemViewType(position);
+                Log.e("打印值", "getView " + position + " " + convertView + " type = " + type);
+
+                switch (type) {
+                    case TYPE_1:
+                        convertView = LayoutInflater.from(getApplicationContext()).inflate(R.layout.city_view_item_sort, null);
+                        break;
+                    case TYPE_2:
+                        convertView = LayoutInflater.from(getApplicationContext()).inflate(R.layout.city_view_item, null);
+                        break;
+                }
+                convertView.setTag(viewHolder);
+            } else {
+                viewHolder = (ViewHolder) convertView.getTag();
+
+            }
+
+            viewHolder.textView = (TextView) convertView.findViewById(R.id.cityName);
+            viewHolder.textView.setText(cityList.get(position).getCityName());
+            return convertView;
+        }
+    }
+
+    private class ViewHolder {
+        private TextView textView;
+    }
+    
+    
+    
+    -----------------------------------------------------------------------------------------------------------------
+    /**
+ * 比原来的多了getItemViewType和getViewTypeCount这两个方法，
+ * 
+ * */
+public class ChatAdapter extends BaseAdapter {
+
+	public static final String KEY = "key";
+	public static final String VALUE = "value";
+
+	public static final int VALUE_TIME_TIP = 0;// 7种不同的布局
+	public static final int VALUE_LEFT_TEXT = 1;
+	public static final int VALUE_LEFT_IMAGE = 2;
+	public static final int VALUE_LEFT_AUDIO = 3;
+	public static final int VALUE_RIGHT_TEXT = 4;
+	public static final int VALUE_RIGHT_IMAGE = 5;
+	public static final int VALUE_RIGHT_AUDIO = 6;
+	private LayoutInflater mInflater;
+
+	private List<Message> myList;
+
+	public ChatAdapter(Context context, List<Message> myList) {
+		this.myList = myList;
+
+		mInflater = (LayoutInflater) context
+				.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+	}
+
+	@Override
+	public int getCount() {
+		return myList.size();
+	}
+
+	@Override
+	public Object getItem(int arg0) {
+		return myList.get(arg0);
+	}
+
+	@Override
+	public long getItemId(int arg0) {
+		return arg0;
+	}
+
+	@Override
+	public View getView(int position, View convertView, ViewGroup arg2) {
+
+		Message msg = myList.get(position);
+		int type = getItemViewType(position);
+		ViewHolderTime holderTime = null;
+		ViewHolderRightText holderRightText = null;
+		ViewHolderRightImg holderRightImg = null;
+		ViewHolderRightAudio holderRightAudio = null;
+		ViewHolderLeftText holderLeftText = null;
+		ViewHolderLeftImg holderLeftImg = null;
+		ViewHolderLeftAudio holderLeftAudio = null;
+		
+		if (convertView == null) {
+			switch (type) {
+			case VALUE_TIME_TIP:
+				holderTime = new ViewHolderTime();
+				convertView = mInflater.inflate(R.layout.list_item_time_tip,
+						null);
+				holderTime.tvTimeTip = (TextView) convertView
+						.findViewById(R.id.tv_time_tip);
+				holderTime.tvTimeTip.setText(msg.getValue());
+				convertView.setTag(holderTime);
+				break;
+			// 左边
+			case VALUE_LEFT_TEXT:
+				holderLeftText = new ViewHolderLeftText();
+				convertView = mInflater.inflate(R.layout.list_item_left_text,
+						null);
+				holderLeftText.ivLeftIcon = (ImageView) convertView
+						.findViewById(R.id.iv_icon);
+				holderLeftText.btnLeftText = (Button) convertView
+						.findViewById(R.id.btn_left_text);
+				holderLeftText.btnLeftText.setText(msg.getValue());
+				convertView.setTag(holderLeftText);
+				break;
+
+			case VALUE_LEFT_IMAGE:
+				holderLeftImg = new ViewHolderLeftImg();
+				convertView = mInflater.inflate(R.layout.list_item_left_iamge,
+						null);
+				holderLeftImg.ivLeftIcon = (ImageView) convertView
+						.findViewById(R.id.iv_icon);
+				holderLeftImg.ivLeftImage = (ImageView) convertView
+						.findViewById(R.id.iv_left_image);
+				holderLeftImg.ivLeftImage.setImageResource(R.drawable.test);
+				convertView.setTag(holderLeftImg);
+				break;
+
+			case VALUE_LEFT_AUDIO:
+				holderLeftAudio = new ViewHolderLeftAudio();
+				convertView = mInflater.inflate(R.layout.list_item_left_audio,
+						null);
+				holderLeftAudio.ivLeftIcon = (ImageView) convertView
+						.findViewById(R.id.iv_icon);
+				holderLeftAudio.btnLeftAudio = (Button) convertView
+						.findViewById(R.id.btn_left_audio);
+				holderLeftAudio.tvLeftAudioTime = (TextView) convertView
+						.findViewById(R.id.tv_left_audio_time);
+				holderLeftAudio.tvLeftAudioTime.setText(msg.getValue());
+				convertView.setTag(holderLeftAudio);
+				break;
+			// 右边
+			case VALUE_RIGHT_TEXT:
+				holderRightText= new ViewHolderRightText();
+				convertView = mInflater.inflate(R.layout.list_item_right_text,
+						null);
+				holderRightText.ivRightIcon = (ImageView) convertView
+						.findViewById(R.id.iv_icon);
+				holderRightText.btnRightText = (Button) convertView
+						.findViewById(R.id.btn_right_text);
+				holderRightText.btnRightText.setText(msg.getValue());
+				convertView.setTag(holderRightText);
+				break;
+
+			case VALUE_RIGHT_IMAGE:
+				holderRightImg= new ViewHolderRightImg();
+				convertView = mInflater.inflate(R.layout.list_item_right_iamge,
+						null);
+				holderRightImg.ivRightIcon = (ImageView) convertView
+						.findViewById(R.id.iv_icon);
+				holderRightImg.ivRightImage = (ImageView) convertView
+						.findViewById(R.id.iv_right_image);
+				holderRightImg.ivRightImage.setImageResource(R.drawable.test);
+				convertView.setTag(holderRightImg);
+				break;
+
+			case VALUE_RIGHT_AUDIO:
+				holderRightAudio=new ViewHolderRightAudio();
+				convertView = mInflater.inflate(R.layout.list_item_right_audio,
+						null);
+				holderRightAudio.ivRightIcon = (ImageView) convertView
+						.findViewById(R.id.iv_icon);
+				holderRightAudio.btnRightAudio = (Button) convertView
+						.findViewById(R.id.btn_right_audio);
+				holderRightAudio.tvRightAudioTime = (TextView) convertView
+						.findViewById(R.id.tv_right_audio_time);
+				holderRightAudio.tvRightAudioTime.setText(msg.getValue());
+				convertView.setTag(holderRightAudio);
+				break;
+
+			default:
+				break;
+			}
+			
+		} else {
+			Log.d("baseAdapter", "Adapter_:"+(convertView == null) );
+			switch (type) {
+			case VALUE_TIME_TIP:
+				holderTime=(ViewHolderTime)convertView.getTag();
+				holderTime.tvTimeTip.setText(msg.getValue());
+				break;
+			case VALUE_LEFT_TEXT:
+				holderLeftText=(ViewHolderLeftText)convertView.getTag();
+				holderLeftText.btnLeftText.setText(msg.getValue());
+				break;
+			case VALUE_LEFT_IMAGE:
+				holderLeftImg=(ViewHolderLeftImg)convertView.getTag();
+				holderLeftImg.ivLeftImage.setImageResource(R.drawable.test);
+				break;
+			case VALUE_LEFT_AUDIO:
+				holderLeftAudio=(ViewHolderLeftAudio)convertView.getTag();
+				holderLeftAudio.tvLeftAudioTime.setText(msg.getValue());
+				break;
+			case VALUE_RIGHT_TEXT:
+				holderRightText=(ViewHolderRightText)convertView.getTag();
+				holderRightText.btnRightText.setText(msg.getValue());
+				break;
+			case VALUE_RIGHT_IMAGE:
+				holderRightImg=(ViewHolderRightImg)convertView.getTag();
+				holderRightImg.ivRightImage.setImageResource(R.drawable.test);
+				break;
+			case VALUE_RIGHT_AUDIO:
+				holderRightAudio=(ViewHolderRightAudio)convertView.getTag();
+				holderRightAudio.tvRightAudioTime.setText(msg.getValue());
+				break;
+
+			default:
+				break;
+			}
+			
+			//holder = (ViewHolder) convertView.getTag();
+		}
+		return convertView;
+	}
+
+	/**
+	 * 根据数据源的position返回需要显示的的layout的type
+	 * 
+	 * type的值必须从0开始
+	 * 
+	 * */
+	@Override
+	public int getItemViewType(int position) {
+
+		Message msg = myList.get(position);
+		int type = msg.getType();
+		Log.e("TYPE:", "" + type);
+		return type;
+	}
+
+	/**
+	 * 返回所有的layout的数量
+	 * 
+	 * */
+	@Override
+	public int getViewTypeCount() {
+		return 7;
+	}
+
+	class ViewHolderTime {
+		private TextView tvTimeTip;// 时间
+	}
+
+	class ViewHolderRightText {
+		private ImageView ivRightIcon;// 右边的头像
+		private Button btnRightText;// 右边的文本
+	}
+
+	class ViewHolderRightImg {
+		private ImageView ivRightIcon;// 右边的头像
+		private ImageView ivRightImage;// 右边的图像
+	}
+
+	class ViewHolderRightAudio {
+		private ImageView ivRightIcon;// 右边的头像
+		private Button btnRightAudio;// 右边的声音
+		private TextView tvRightAudioTime;// 右边的声音时间
+	}
+
+	class ViewHolderLeftText {
+		private ImageView ivLeftIcon;// 左边的头像
+		private Button btnLeftText;// 左边的文本
+	}
+
+	class ViewHolderLeftImg {
+		private ImageView ivLeftIcon;// 左边的头像
+		private ImageView ivLeftImage;// 左边的图像
+	}
+
+	class ViewHolderLeftAudio {
+		private ImageView ivLeftIcon;// 左边的头像
+		private Button btnLeftAudio;// 左边的声音
+		private TextView tvLeftAudioTime;// 左边的声音时间
+	}
+
+}
+
+--------------------------------------------------------------------------------
+
+	class RunRankAdapter extends BaseAdapter {
+		ArrayList<HashMap<String, Object>> ls;
+		Context mContext;
+		LinearLayout linearLayout = null;
+		LayoutInflater inflater;
+		TextView tex;
+		final int VIEW_TYPE = 3;
+		final int TYPE_1 = 0;
+		final int TYPE_2 = 1;
+		final int TYPE_3 = 2;
+
+		public RunRankAdapter(Context context,
+				ArrayList<HashMap<String, Object>> list) {
+			ls = list;
+			mContext = context;
+		}
+
+		@Override
+		public int getCount() {
+			return ls.size();
+		}
+
+		@Override
+		public Object getItem(int position) {
+			return ls.get(position);
+		}
+
+		@Override
+		public long getItemId(int position) {
+			return 0;
+		}
+
+		// 每个convert view都会调用此方法，获得当前所需要的view样式
+		@Override
+		public int getItemViewType(int position) {
+			int p = position;
+			if (p == 0)
+				return TYPE_1;
+			else if (p == 1)
+				return TYPE_2;
+			else
+				return TYPE_3;
+		}
+
+		@Override
+		public int getViewTypeCount() {
+			return 3;
+		}
+
+		@Override
+		public View getView(int position, View convertView, ViewGroup parent) {
+			ViewHolder1 holder1 = null;
+			ViewHolder2 holder2 = null;
+			ViewHolder3 holder3 = null;
+			int type = getItemViewType(position);
+			if (convertView == null) {
+				inflater = LayoutInflater.from(mContext);
+				// 按当前所需的样式，确定new的布局
+				switch (type) {
+				case TYPE_1:
+
+					convertView = inflater.inflate(R.layout.item_runrank1,
+							parent, false);
+					holder1 = new ViewHolder1();
+					holder1.rank1 = (TextView) convertView
+							.findViewById(R.id.tv_list1_rank);
+					holder1.time1 = (TextView) convertView
+							.findViewById(R.id.tv_list1_time);
+					convertView.setTag(holder1);
+					break;
+				case TYPE_2:
+					convertView = inflater.inflate(R.layout.item_runrank2,
+							parent, false);
+					holder2 = new ViewHolder2();
+					holder2.rank2 = (TextView) convertView
+							.findViewById(R.id.tv_list2_rank);
+					holder2.time2 = (TextView) convertView
+							.findViewById(R.id.tv_list2_time);
+					convertView.setTag(holder2);
+					break;
+				case TYPE_3:
+					convertView = inflater.inflate(R.layout.item_runrank3,
+							parent, false);
+					holder3 = new ViewHolder3();
+					holder3.rank3 = (TextView) convertView
+							.findViewById(R.id.tv_list3_rank);
+					holder3.time3 = (TextView) convertView
+							.findViewById(R.id.tv_list3_time);
+					convertView.setTag(holder3);
+					break;
+				default:
+					break;
+				}
+
+			} else {
+				switch (type) {
+				case TYPE_1:
+					holder1 = (ViewHolder1) convertView.getTag();
+					break;
+				case TYPE_2:
+					holder2 = (ViewHolder2) convertView.getTag();
+					break;
+				case TYPE_3:
+					holder3 = (ViewHolder3) convertView.getTag();
+					break;
+				}
+			}
+			// 设置资源
+			switch (type) {
+			case TYPE_1:
+				holder1.rank1.setText("" + (position + 1));
+				holder1.time1.setText(ls.get(position).get("time").toString());
+				break;
+			case TYPE_2:
+				holder2.rank2.setText("" + (position + 1));
+				holder2.time2.setText(ls.get(position).get("time").toString());
+				holder2.totaldistance2.setText(ls.get(position)
+				break;
+			case TYPE_3:
+				holder3.rank3.setText("" + (position + 1));
+				holder3.time3.setText(ls.get(position).get("time").toString());
+				break;
+			}
+
+			return convertView;
+		}
+
+		public class ViewHolder1 {
+			TextView rank1;
+			TextView time1;
+		}
+
+		public class ViewHolder2 {
+			TextView rank2;
+			TextView time2;
+		}
+
+		public class ViewHolder3 {
+			TextView rank3;
+			TextView time3;
+		}
+	}

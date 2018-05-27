@@ -1,0 +1,20 @@
+        /*
+         * 窗口居中显示1
+         */
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        setPreferredSize(new Dimension(300,200));            
+        int frameWidth = getPreferredSize().width;
+        int frameHeight = getPreferredSize().height;
+        setSize(frameWidth, frameHeight);
+        setLocation((screenSize.width - frameWidth) / 2,(screenSize.height - frameHeight) / 2);
+        /*
+         * 窗口居中显示2
+         */
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        Dimension frameSize = getSize();
+        if (frameSize.height > screenSize.height)
+            frameSize.height = screenSize.height;
+        if (frameSize.width > screenSize.width)
+            frameSize.width = screenSize.width;
+        setLocation((screenSize.width - frameSize.width) / 2, (screenSize.height - frameSize.height) / 2);

@@ -1,0 +1,16 @@
+  android自定义View设置大小的方法   .
+
+
+
+
+onMeasure使用的是父类的处理方法，如果我们需要解决 自定义View的大小，可以尝试下面的方法
+
+view plaincopy to clipboardprint?
+ @Override  
+ protected void onMeasure (int widthMeasureSpec, int heightMeasureSpec)     
+ {   
+     height = View.MeasureSpec.getSize(heightMeasureSpec);    
+     width = View.MeasureSpec.getSize(widthMeasureSpec);    
+     setMeasuredDimension(width,height);  //这里面是原始的大小，需要重新计算可以修改本行   
+   //dosomething   
+ }  

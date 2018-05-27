@@ -1,0 +1,116 @@
+
+Android开发之子线程操作UI的几种方法
+
+作者：SEU_Calvin 字体：[增加 减小] 类型：转载 时间：2016-08-07 我要评论
+
+
+这篇文章主要介绍了Android开发之子线程操作UI的几种方法的相关资料,非常不错，具有参考借鉴价值，需要的朋友可以参考下
+
+
+
+
+ 在Android项目中经常有碰到这样的问题，在子线程中完成耗时操作之后要更新UI，下面就自己经历的一些项目总结一下更新的方法：
+
+
+在看方法之前需要了解一下Android中的消息机制。
+
+方法1 Activity.runOnUiThread
+
+方法如下：
+
+
+runOnUiThread(new Runnable() { 
+@Override 
+public void run() { 
+tv.setText("Hello"); 
+} 
+}); 
+
+这种方法简单易用，如果当前线程是UI线程，那么行动是立即执行。如果当前线程不是UI线程，就发布到事件队列的UI线程。其实和Handler差不多，都是将这个更新UI的请求消息，加入到事件队列，等待主线程空闲的时候执行。
+
+方法2 Handler
+
+主线程中定义Handler如下：
+
+Handler mHandler = new Handler() { 
+@Override 
+public void handleMessage(Message msg) { 
+super.handleMessage(msg); 
+switch (msg.what) { 
+case 0: 
+String data = (String)msg.obj; 
+textView.setText(data); 
+break; 
+default: 
+break; 
+} 
+} 
+}; 
+
+子线程发消息，通知Handler完成UI更新，代码如下：
+
+new Thread(new Runnable(){ 
+@Override 
+public void run() { 
+//耗时操作 
+mHandler.sendEmptyMessage(0); 
+Message msg =new Message(); 
+msg.obj = "数据";//可以是基本类型，可以是对象，可以是List、map等 
+mHandler.sendMessage(msg); 
+} 
+}).start(); 
+
+方法3 View.post
+
+final Button btn =(Button)findViewById(R.id.btn); 
+btn.post(new Runnable(){ 
+@Override 
+publicvoid run() { 
+btn.setText("Hello"); 
+} 
+}); 
+
+上面的代码就是更新btn中的内容，同样下面的代码也可以达到这种效果。
+
+Handler handler = new Handler(); 
+final Button btn = (Button)findViewById(R.id.btn); 
+handler.post(new Runnable(){ 
+@Override 
+public void run() { 
+btn.setText("Hello"); 
+} 
+}); 
+
+这个是用handler.post方法，一个是用View.post方法，handler.post方法已经在Android的消息机制中介绍过了，其实最终也是调用了方法2中的send方法。
+
+现在看一下View.post方法的源代码：
+
+public boolean post(Runnable action) { 
+Handler handler; 
+AttachInfo attachInfo = mAttachInfo; 
+if (attachInfo != null) { 
+handler = attachInfo.mHandler; 
+} else { 
+// Assume that post will succeed later 
+ViewRootImpl.getRunQueue().post(action); 
+return true; 
+} 
+return handler.post(action); 
+} 
+
+方法中主要的功能代码就是attachInfo.mHandler,获取当前线程（即UI线程）的Hanlder，然后将action对象post到Handler里。在Handler里的处理过程上面链接文已经分析的很清楚了，它将传递过来的action对象包装成一个Message（Message的callback为action），然后将其投入UI线程的消息循环中。在Handler的dispatchMessage方法里，第一句话就是为它所设，直接调用runnable的run方法。而此时，已经路由到UI线程里，因此，我们可以毫无顾虑的来更新UI。
+
+方法4 广播
+
+子线程中发送广播，主线程中接收广播并更新UI。
+
+方法5 使用AsyncTask
+
+为了简化子线程中访问UI，系统提供给了我们AsyncTask。
+
+AsyncTask是一种轻量级的异步任务类，它可以在线程池中执行后台任务，然后把执行进度和结果传递给主线程并更新UI。本质上来说AsyncTask封装了Thread和Handler，但是AsyncTask不适合进行特别耗时的后台任务，如果需要进行特别耗时的任务，建议使用线程池。
+
+
+不同API版本的AsyncTask具有不同的表现，因此需要注意。为了控制篇幅，具体的AsyncTask的使用方法和工作原理，我打算后面单独成文进行介绍。
+
+以上所述是小编给大家介绍的Android开发之子线程操作UI的几种方法，希望对大家有所帮助，如果大家有任何疑问欢迎给我留言，小编会及时回复大家的！

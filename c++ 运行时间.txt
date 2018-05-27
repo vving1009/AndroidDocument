@@ -1,0 +1,6 @@
+#include <Windows.h>
+DWORD start = GetTickCount();
+Sleep(3000);
+DWORD end = GetTickCount();
+
+end - start

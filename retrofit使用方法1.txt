@@ -1,0 +1,195 @@
+利用retrofit进行网络访问和解析的步骤，标准的按照如下5步来你就绝对不会错！：
+
+1.定义一个接口（封装URL地址和数据请求）
+2.实例化Retrofit
+3.通过retrofit实例创建接口服务对象
+4.接口服务对象调用接口中方法，获得Call对象
+5.Call对象执行请求（异步、同步）
+
+private void initRetrofit() {  
+//实例化retrofit   
+    Retrofit retrofit=new Retrofit  
+            .Builder()  
+            .baseUrl(http://www.syby8.com/)  
+            .addConverterFactory(GsonConverterFactory.create())  
+            .build();  
+//通过retrofit实例创建接口服务对象  
+    RetrofitService myRetrofitService=retrofit.create(RetrofitService.class);  
+
+接口服务对象调用接口中方法，获得Call对象  
+    call=myRetrofitService.getShopData();  
+
+Call对象执行请求（异步、同步）  
+    call.enqueue(new Callback<Shop>() {  
+        @Override  
+        public void onResponse(Call<Shop> call, Response<Shop> response) {  
+               
+Toast.makeText(Activity().this,"下载失败",Toast.LENGTH_LONG).show();  
+//然后就可以在里面具体获得需要的额list，然后适配到适配器，更新UI就OK了。  
+        }  
+
+        @Override  
+        public void onFailure(Call<Shop> call, Throwable t) {  
+              
+Toast.makeText(Activity().this,"下载失败",Toast.LENGTH_LONG).show();  
+            Log.i("tag","-----"+t.getMessage());//打印错误日志  
+        }  
+    });  
+}  
+          
+=========================================================================================
+
+在Retrofit的使用中，有两种方法进行拼接和解析JSON字符串：
+
+JSON的字符串如果有这么长：
+http://www.syby8.com/apptools/productlist.aspx?act=getproductlist&v=34&pages=1&bc=0&sc=0&sorts=&channel=0&ckey=&daynews=&lprice=0&hprice=0&tbclass=0&actid=0&brandid=0&predate=2016-08-28+17%3A43%3A19&index=1
+
+那么使用Retrofit的时候，会感到拼接字符串非常麻烦。而拆分的规律如下：
+
+1.基本的URL地址的一部分：
+http://www.syby8.com/  
+需要注意的是后面一定要跟/ 而可变的不需要加。
+
+2.网络请求的URL地址一部分：
+apptools/productlist.aspx?
+
+3.？(问号) 后面拼接字符串的URL地址：act=getproductlist&v=34&pages=1&bc=0&sc=0&sorts=&channel=0&ckey=&daynews=&lprice=0&hprice=0&tbclass=0&actid=0&brandid=0&predate=2016-08-28+17%3A43%3A19&index=1
+
+同样需要注意的是如果你是直接使用的话，可以不拼接字符串，直接在接口RetrofitService的@GET()里面填写就可以的，具体的可以参考我下面的写的代码。
+
+1.如果对于我而言，我只需要json字符串直接的显示，不需要动态的改变后面拼接参数的值得大小的话。
+可以有以下代码：在接口RetrofitService：
+
+public interface RetrofitService {    
+ @GET("apptools/productlist.aspx?act=getproductlist&v=34&pages=1&bc=0&sc=0&sorts=&channel=0&ckey=&daynews=&lprice=0&hprice=0&tbclass=0&actid=0&brandid=0&predate=2016-08-28+17%3A43%3A19&index=1")  
+  
+//定义一个call，回调方法，。  
+  Call<Shop> getShopData();  
+}  
+
+=========================================================================================
+使用 @QueryMap
+public interface RetrofitService {
+
+/*使用一个QueryMap，创建一个 Map<String,String> 前面一个String代表的是：拼接字符串的名字，后面一个则是字符串的具体值，如果没有值则用""代替。
+看到这你也许有点疑惑的是，@GET（UrlConfig.Path.SHOP_URL）是啥？一脸懵逼
+这个就是我说的用第二种方法，漂亮规范的写代码，封装字符串。所以，创建一个类，专门用来存储JSON的值：*/
+
+  @GET(UrlConfig.Path.SHOP_URL) //JSON字符中baseUrl的后面，？前面的字符 
+  	/*定义一个call，回调方法，在获得Call对象的时候，传入拼接？（问号）后面的字符串的值。
+  	有点绕口其实就是在fragment/activity类中这句话： call=myRetrofitService.getShopData(params);其中params已经拼接了字符串，所以需要回调传入值。*/
+
+    Call<Shop> getShopData( @QueryMap Map<String,String> params)
+}
+创建的封装类：
+public class UrlConfig {
+ public static class Path{
+
+  //JSON的字符串
+  //http://www.syby8.com/
+  // apptools/productlist.aspx?
+  // act=getproductlist&v=34&pages=1
+  // &bc=0&sc=0&sorts=&channel=0&ckey=
+  // &daynews=&lprice=0&hprice=0&tbclass=0
+  // &actid=0&brandid=0&predate=2016-08-28+17%3A43%3A19&index=1
+
+  public  static  final  String SHOP_BASEURL="http://www.syby8.com/";
+
+  public static final String SHOP_URL="apptools/productlist.aspx?";
+
+ }
+ public static class key{
+  //JSON所对应的字符串的名字
+  public static final String ACT="act";
+  public static final String V="v";
+  public static final String PAGES="pages";
+  public static final String BC="bc";
+  public static final String SC="sc";
+  public static final String SORTS="sorts";
+  public static final String CHANNEL="channel";
+  public static final String CKEY="ckey";
+  public static final String DAYNEWS="daynews";
+  public static final String LPRICE="lprice";
+  public static final String HPRICE="hprice";
+  public static final String TBCLASS="tbclass";
+  public static final String ACTID="actid";
+  public static final String BRANDID="brandid";
+  public static final String PREDITE="predate";
+  public static final String INDEX="index";
+ }
+
+//JSON所对应的字符串的具体的值
+ public static class DefaultValue{
+  public static final String ACT="getproductlist";
+  public static final String V="34";
+  public static final String PAGES="1";
+  public static final String BC="0";
+  public static final String SC="0";
+  public static final String SORTS="";
+  public static final String CHANNEL="0";
+  public static final String CKEY="";
+  public static final String DAYNEWS="";
+  public static final String LPRICE="0";
+  public static final String HPRICE="0";
+  public static final String TBCLASS="0";
+  public static final String ACTID="0";
+  public static final String BRANDID="0";
+  public static final String PREDITE="2016-08-28+17%3A43%3A19";
+  public static final String INDEX="1";
+
+ }
+}
+
+在Activity中:
+
+//拼接字符串：
+params.put(UrlConfig.key.ACT,UrlConfig.DefaultValue.ACT);
+params.put(UrlConfig.key.V,UrlConfig.DefaultValue.V);
+params.put(UrlConfig.key.PAGES,UrlConfig.DefaultValue.PAGES);
+params.put(UrlConfig.key.BC,UrlConfig.DefaultValue.BC);
+params.put(UrlConfig.key.SC,UrlConfig.DefaultValue.SC);
+params.put(UrlConfig.key.SORTS,UrlConfig.DefaultValue.SORTS);
+params.put(UrlConfig.key.CHANNEL,UrlConfig.DefaultValue.CHANNEL);
+params.put(UrlConfig.key.CKEY,UrlConfig.DefaultValue.CKEY);
+params.put(UrlConfig.key.DAYNEWS,UrlConfig.DefaultValue.DAYNEWS);
+params.put(UrlConfig.key.LPRICE,UrlConfig.DefaultValue.LPRICE);
+params.put(UrlConfig.key.HPRICE,UrlConfig.DefaultValue.HPRICE);
+params.put(UrlConfig.key.TBCLASS,UrlConfig.DefaultValue.TBCLASS);
+params.put(UrlConfig.key.ACTID,UrlConfig.DefaultValue.ACTID);
+params.put(UrlConfig.key.BRANDID,UrlConfig.DefaultValue.BRANDID);
+params.put(UrlConfig.key.PREDITE,UrlConfig.DefaultValue.PREDITE);
+params.put(UrlConfig.key.INDEX,UrlConfig.DefaultValue.INDEX);
+
+
+private void initRetrofit() {
+
+//实例化retrofit 
+    Retrofit retrofit=new Retrofit
+            .Builder()
+            .baseUrl(UrlConfig.Path.SHOP_BASEURL) 
+            .addConverterFactory(GsonConverterFactory.create()) //这个方法是利用gson网络解析json字符串
+            .build();
+
+//通过retrofit实例创建接口服务对象
+    RetrofitService myRetrofitService=retrofit.create(RetrofitService.class);
+
+//接口服务对象调用接口中方法，获得Call对象
+    call=myRetrofitService.getShopData(params);//传入params，哈哈回调哦~
+
+//Call对象执行请求（异步、同步）
+    call.enqueue(new Callback<Shop>() {
+        @Override
+        public void onResponse(Call<Shop> call, Response<Shop> response) {
+             
+Toast.makeText(Activity().this,"下载失败",Toast.LENGTH_LONG).show();
+//然后就可以在里面具体获得需要的额list，然后适配到适配器，更新UI就OK了。
+        }
+
+        @Override
+        public void onFailure(Call<Shop> call, Throwable t) {
+            
+Toast.makeText(Activity().this,"下载失败",Toast.LENGTH_LONG).show();
+            Log.i("tag","-----"+t.getMessage());//打印错误日志
+        }
+    });
+}

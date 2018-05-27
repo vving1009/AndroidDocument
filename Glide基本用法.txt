@@ -1,0 +1,216 @@
+最基本用法
+
+glide采用的都是流接口方式
+简单的从网络加载图片
+
+Glide.with(context).load(internetUrl).into(targetImageView);
+
+从文件加载
+
+File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),"Test.jpg");
+Glide.with(context).load(file).into(imageViewFile);
+
+从资源id
+
+int resourceId = R.mipmap.ic_launcher;
+Glide.with(context).load(resourceId).into(imageViewResource);
+
+从uri
+
+Glide.with(context).load(uri).into(imageViewUri);
+
+加载gif
+
+String gifUrl = "xxxxx";
+Glide.with( context ).load( gifUrl ).into( imageViewGif );
+
+一些常规方法(待加载时显示，加载出错时显示)
+
+Glide.with( context ).load( gifUrl ).placeholder( R.drawable.cupcake ).error( R.drawable.full_cake ).into( imageViewGif );
+
+强制转化为gif
+
+Glide.with( context ).load( gifUrl ).asGif().error( R.drawable.full_cake ).into( imageViewGif );
+
+用bitMap播放Gif
+
+Glide.with( context ).load( gifUrl ).asBitmap().into( imageViewGifAsBitmap );
+
+播放本地mp4,只能是本地
+
+String filePath = "/storage/emulated/0/Pictures/example_video.mp4";
+Glide.with( context ).load( Uri.fromFile( **new **File( filePath ) ) ).into( imageViewGifAsBitmap );
+
+进一步
+RecyclerView的结合（同样适用于ListView,GridView等）
+
+在上面这些等价ScrollView中，Glide会自动的请求取消，清楚ImageView，在合适的ImageView中加载合适的Image.当需要裁剪大小时，有个*.centerCrop*方法，这个方法的裁剪会让你的ImageView周围不会留白，还有一个.fitCenter()方法，表示让你的Image完全显示，尺寸不对时，周围会留白。这里有惊喜，圆ImageView
+
+等会儿补充
+
+Glide的缓存
+
+用过手机的都知道，当划上划下一个ListView的时候，第二次都比第一次快，就是因为为GlideView对资源进行了缓存，而且封装的很好，甚至不需要自己去设定缓存大小，Glide会智能地自己给我们根据设备设置缓存大小。
+placeHolder
+
+听名字都知道这家伙是干嘛的，加载图片，但是图片还没有加载完的时候，总不能给用户看空白吧，这个就是用来填充着一段是时间的。
+
+Glide.with(context).
+        load(UsageExampleListViewAdapter.eatFoodyImages[0])
+            .placeholder(R.mipmap.ic_launcher) *// 同样也可以是drawble
+            .into(imageViewPlaceholder);
+
+这里只能用本地资源，不能用网络资源，因为网络资源也有可能加载不出来。
+当加载出错，或者加载不出来的时候.error()方法来帮忙
+
+其实大多数时候用placeHolder就可以了。
+
+Glide.with(context)
+.load("http://futurestud.io/non_existing_image.png")
+.placeholder(R.mipmap.ic_launcher) // 同样也可以是drawble
+.error(R.mipmap.future_studio_launcher)// 当不能加载时载入
+
+.fallback
+
+除了上面两种‘异常情况’，还有一种情形就是打开手机的通讯录的时候，可以看到你给有些喜欢的人设置了照片，然而有些可怜的人并没给有，总不能在那里留下一片空白吧，这个时候相当于传递了Null,传递null时，这个callback方法就会被调用，推荐在这里给我设置一张吴彦祖或者小贝的照片。嗯。。（QAQ）
+
+Glide.with(context)
+.load( null)//加载空指针的时候
+.fallback( R.drawable.wuyanzu)//嗯，吴彦祖。
+.into( imageViewNoFade );
+
+加点动画
+
+嗯，其实这个是默认的，但是你还是可以写出来,渐显动画
+
+Glide.with(context)
+.load().placeholder(R.mipmap.ic_launcher) 
+.error(R.mipmap.future_studio_launcher)
+.crossFade()
+.into(imageViewFade);
+
+这里还有一个.fadeFade(int duration)，设置动画时间。如果你不想要动画可以加上.dontAnimate()
+调整图片大小.resize(int ,int )
+
+单位是像素，裁剪你的图片大小。其实Glide已经会自动根据你mageView裁剪照片来放在缓存中了。但是不想适应ImageView大小的时候，可以调用这个方法.override()。
+
+Glide.with(context)
+.load(image)
+.override(600, 200) 
+.into(imageViewResize);
+
+裁剪图片
+
+就是上名讲的.fitCenter和.CenterCrop
+来点缩略图
+
+缩略图有什么用就不说了，方正在一些条件下好处大大的，相当于一个动态的placeHolder。还有一种方法。
+.thumbnail()方法的目的就是让用户先看到一个低解析度的图，点开后，再加载一个高解析度的图。
+
+Glide.
+with( context )
+.load(image)
+.thumbnail( 0.1f )//表示为原图的十分之一
+.into( imageView2 );
+
+一种更高级的缩略图加载方式
+
+当缩略图也需要通过网络加载全部解析度的时候。
+
+private void loadImageThumbnailRequest() {
+DrawableRequestBuilder<String> thumbnailRequest = Glide.with( context ).load( eatFoodyImages[2] );
+Glide.with( context ).load( UsageExampleGifAndVideos.gifUrl ).thumbnail( thumbnailRequest ).into( imageView3 );
+}
+
+关于缓存
+
+要想性能好，怎可以不用缓存。缓存就是为了减少或者杜绝多的网络请求。为了避免缓存，Glide用了内存缓存和‘外存缓存机制’,并且 提供了相应的方法，完全封装，不需要处理细节。Glide会自动缓存到内存，除非调用. skipMemoryCache( true )。尽管调用了这个，Glide还是会缓存到外存，还有一种情形，就是有一张图片，但是这张图变化非常快，这个时候可能并不想缓存到外存中，就使用.diskCacheStrategy( DiskCacheStrategy.NONE )。如果你两种都不需要，可以两个方法组合着一起使用。
+自定义外存缓存机制
+
+Glide默认会缓存Image的很多个版本，比如原图，如果你的imageView大小的缓存。.diskCacheStrategy( )有以下几种缓存策略：
+
+    DiskCacheStrategy.NONE 什么都不缓存
+    DiskCacheStrategy.SOURCE 只缓存最高解析图的image
+    DiskCacheStrategy.RESULT 缓存最后一次那个image,比如有可能你对image做了转化
+    DiskCacheStrategy.ALL image的所有版本都会缓存
+
+    Glide
+    .with( context ).load( image )
+    .diskCacheStrategy( DiskCacheStrategy.SOURCE )
+    .into( imageViewFile );
+
+    请求优先级.request()
+    加载图片肯定也是有先后顺序，Glide提供了.request()这个方法，它接收以下几个参数：
+    Priority.LOW
+    Priority.NORMAL
+    Priority.HIGH
+    Priority.IMMEDIATE
+    但是Glide并不一定会按照你的顺序来，只是尽量按照你的顺序来。（比如给一张很大的图片最高的优先权，但是它并不一定比低优先级的图先加载出来，这个时候只有使用缩略图了）
+
+利用callback在非标准情况下加载图片
+
+上名所有的情况都是加载图片到ImageView中，但是并不是所有的情况都是这样。
+Glide中的回调：Targets
+
+从上面的介绍，已经可以看出Glide内部封装了所有的细节，什么网络请求，什么缓存机制，当所有都就绪过后，自动切换回UI线程，更新ImageView。Targets就是Glide中的回调，当异步线程中所有的工作做完过后返回结果。说白了就是，当请求图片完成后，需要回调的方法。
+SimplerTarget
+
+private SimpleTarget target = new SimpleTarget<Bitmap>() {
+@Override
+public void onResourceReady(Bitmap bitmap, GlideAnimation glideAnimation) {
+// do something with the bitmap
+// for demonstration purposes, let's just set it to an ImageView
+imageView1.setImageBitmap( bitmap );
+  }
+};
+private void loadImageSimpleTarget() {
+Glide.with( context ) *// could be an issue!*
+.load( eatFoodyImages[0] )
+.asBitmap()//强制Glide返回一个Bitmap
+.into( target );}
+
+注意事项：
+
+    上面这段代码不要写成匿名内部类的机制，原因就是java的自动垃圾回收机制可能在图片还没有加载好的时候就已经把你的Target回收了。
+    注意.with()里面的参数，Glide的请求是和传进去的Context共存亡的，如果传一个Activity进去，当Activity GG过后，你的请求也就GG了，但是如果这样传：.with(context.getApplicationContext() ).当你的Activity GG过后，请求还是会继续，回调还是会继续。
+    有size的Target
+    如果传给.into()的是一个ImageView,但是图片的size比ImageView的Size打，Glide为了节省时间，会加载小的那个size的Image。但是这对Target并不适用，以为这里并不知道SIze。但是如果知道image应该多大，可以传递给Target.就像下面这样：
+
+    private SimpleTarget target2 = new SimpleTarget<Bitmap>( 250, 250 ) {
+    @Override
+    public void onResourceReady(Bitmap bitmap, GlideAnimation glideAnimation) {imageView2.setImageBitmap( bitmap );
+    }
+    };
+    private void loadImageSimpleTargetApplicationContext() {
+    Glide.with( context.getApplicationContext() ) *// safer!*
+    .load( eatFoodyImages[1] )
+    .asBitmap()
+    .into( target2 );
+    }
+
+    ViewTarget
+    适用于想Glide加载到自定义View中去，
+
+    public class FutureStudioView extends FrameLayout {
+    ImageView iv;
+    TextView tv;
+    public void nitialize(Context context) {
+    inflate( context, R.layout.custom_view_futurestudio, this );
+    iv = (ImageView) findViewById( R.id.custom_view_image );
+    tv = (TextView) findViewById( R.id.custom_view_text );
+    }
+    public FutureStudioView(Context context, AttributeSet attrs) {
+    super( context, attrs );
+    initialize( context );
+    }
+    public FutureStudioView(Context context,AttributeSet attrs,int defStyleAttr) {
+    super( context, attrs, defStyleAttr );
+    initialize( context );
+    }
+    public void setImage(Drawable drawable) {
+    iv = (ImageView) findViewById( R.id.custom_view_image );
+    iv.setImageDrawable( drawable );
+    }}
+
+    notificationTarget 和AppWidget中的使用
+    这个下一篇再补充，有点点复杂。

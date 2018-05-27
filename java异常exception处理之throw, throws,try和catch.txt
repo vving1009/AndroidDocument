@@ -1,0 +1,151 @@
+java异常处理之throw, throws,try和catch   .
+
+
+标签： javaexceptionstringclass磁盘null  
+
+2007-11-29 20:19 30037人阅读 评论(0) 收藏 举报 
+.
+
+   
+
+版权声明：本文为博主原创文章，未经博主允许不得转载。
+
+
+    程序运行过程中可能会出现异常情况，比如被0除、对负数计算平方根等，还有可能会出现致命的错误，比如内存不足，磁盘损坏无法读取文件等，对于异常和错误情况的处理，统称为异常处理。
+    Java异常处理主要通过5个关键字控制：try、catch、throw、throws和finally。try的意思是试试它所包含的代码段中是否会发生异常；而catch当有异常时抓住它，并进行相应的处理，使程序不受异常的影响而继续执行下去；throw是在程序中明确引发异常；throws的作用是如果一个方法可以引发异常，而它本身并不对该异常处理，那么它必须将这个异常抛给调用它的方法；finally是无论发不发生异常都要被执行的代码
+    
+    关键字:throw,throws,try和catch的用法如下：
+        1、throws出现在方法的声明中，表示该方法可能会抛出的异常，允许throws后面跟着多个异常类型
+        2、throw出现在方法体中，用于抛出异常。当方法在执行过程中遇到异常情况时，将异常信息封装为异常对象，然后throw。
+        3、try出现在方法体中，它自身是一个代码块，表示尝试执行代码块的语句。如果在执行过程中有某条语句抛出异常，那么代码块后面的语句将不被执行。
+        4、catch出现在try代码块的后面，自身也是一个代码块，用于捕获异常try代码块中可能抛出的异常。catch关键字后面紧接着它能捕获的异常类型，所有异常类型的子类异常也能被捕获。
+        
+    演示实例
+
+ 
+
+
+    package book.exception;
+/**
+ * 抛出异常和声明异常
+ * @author joe
+ *
+ */
+
+public class ThrowAndThrows {
+    /**
+     * 计算一个数字的平方根
+     * @param nStr    以字符串的形式提供数字
+     * @return    返回平方根
+     * @throws Exception    当用户输入的字符串为空，
+     * 或者字符串无法转换成数字，或者转换成的数字小于0，都会抛出异常
+     */
+    public static double sqrt(String nStr) throws Exception {
+        if (nStr == null) {
+            //用trow关键字抛出异常，当异常被抛出时，程序会跳出该方法
+            throw new Exception("输入的字符不能为空！");
+        }
+        double n = 0;
+        try {
+            n = Double.parseDouble(nStr);
+        } catch(NumberFormatException e) {
+            //将parseDouble方法可能抛出的异常NumberFormatException捕获，
+            //然后将捕获的异常重新封装并输出
+            throw new Exception("输入的字符串必须能够转化成数字！", e);
+        }
+        if (n < 0 ){
+            throw new Exception("输入的字符串转化成的数字必须大于0！");
+        }
+        return Math.sqrt(n);
+    }
+    
+    public static void main(String[] args) throws Exception {
+        try{
+            ThrowAndThrows.sqrt("-124.56");
+        } catch(Exception e) {
+            //将sqrt方法声明的可能抛出的Exception异常捕获
+            //打印捕获的异常的堆栈信息，从堆栈信息中可以发现异常发生的位置和原因
+            System.out.println("Got a Exception：" + e.getMessage());
+            e.printStackTrace();
+            throw e;    //不做进一步处理，将异常向外抛出
+        }
+        
+        //将sqrt声明了可能会抛出的异常向外抛出，必须在方法声明中使用throws
+        ThrowAndThrows.sqrt("-124.56");
+    }
+
+}
+
+ 
+
+程序输出结果：
+
+ 
+
+
+Got a Exception：输入的字符串转化成的数字必须大于0！
+java.lang.Exception: 输入的字符串转化成的数字必须大于0！
+    at book.exception.ThrowAndThrows.sqrt(ThrowAndThrows.java:30)
+    at book.exception.ThrowAndThrows.main(ThrowAndThrows.java:37)
+Exception in thread "main" java.lang.Exception: 输入的字符串转化成的数字必须大于0！
+    at book.exception.ThrowAndThrows.sqrt(ThrowAndThrows.java:30)
+    at book.exception.ThrowAndThrows.main(ThrowAndThrows.java:37)
+
+源码分析：
+    在main方法里，由于sqrt方法的声明中有throws关键字，所以，在调用该方法时，必须对throws后面声明的异常进行处置，处置的方法有两种：
+    （1）main方法处理该异常，使用try.....catch语句，将可能会出现的异常的代码放在try块内，将处理异常的代码放在catch块内，并指明catch能够捕获的异常的类型，当异常被捕获时，执行catch块内的语句。
+    （2）main方法不处理该异常，将异常向外层程序抛出。在方法声明中使用throws关键字抛出异常，方法体中不需要使用try...catch语句。
+    
+    异常类Exception的getMessage方法用来获取一场的描述信息，printStackTrace方法用来打印异常的堆栈信息，通过堆栈信息能够查明异常发生的原因和位置，在调试的时候常用。
+
+======================================================================================================
+
+
+1、将预见可能引发异常的代码包含在try语句块中。
+2、如果发生了异常，则转入catch的执行。catch有几种写法：
+catch
+这将捕获任何发生的异常。
+catch(Exception e)
+这将捕获任何发生的异常。另外，还提供e参数，你可以在处理异常时使用e参数来获得有关异常的信息。
+catch(Exception的派生类 e)
+这将捕获派生类定义的异常，例如，我想捕获一个无效操作的异常，可以如下写：
+catch(InvalidOperationException e)
+{
+  ....
+}
+这样，如果try语句块中抛出的异常是InvalidOperationException，将转入该处执行，其他异常不处理。
+
+catch 可以有多个，也可以没有，每个catch可以处理一个特定的异常。.net按照你catch的顺序查找异常处理块，如果找到，则进行处理，如果找不到，则 向上一层次抛出。如果没有上一层次，则向用户抛出，此时，如果你在调试，程序将中断运行，如果是部署的程序，将会中止。
+
+如果没有catch块，异常总是向上层（如果有）抛出，或者中断程序运行。
+
+3、finally
+finally可以没有，也可以只有一个。无论有没有发生异常，它总会在这个异常处理结构的最后运行。即使你在try块内用return返回了，在返回前，finally总是要执行，这以便让你有机会能够在异常处理最后做一些清理工作。如关闭数据库连接等等。
+注意：如果没有catch语句块，那么finally块就是必须的。
+
+如果你不希望在这里处理异常，而当异常发生时提交到上层处理，但在这个地方无论发生异常，都要必须要执行一些操作，就可以使用try finally，
+很典型的应用就是进行数据库操作：
+用下面这个原语来说明：
+try
+{
+  DataConnection.Open();
+  DataCommand.ExecuteReader();
+  ...
+  return;
+}
+finally
+{
+  DataConnection.Close();
+}
+
+无论是否抛出异常，也无论从什么地方return返回，finally语句块总是会执行，这样你有机会调用Close来关闭数据库连接（即使未打开或打开失败，关闭操作永远是可以执行的），以便于释放已经产生的连接，释放资源。
+
+顺便说明，return是可以放在try语句块中的。但不管在什么时机返回，在返回前，finally将会执行。
+
+小结：
+
+try { //执行的代码，其中可能有异常。一旦发现异常，则立即跳到catch执行。否则不会执行catch里面的内容 }
+
+catch { //除非try里面执行代码发生了异常，否则这里的代码不会执行 }
+
+finally { //不管什么情况都会执行，包括try catch 里面用了return ,可以理解为只要执行了try或者catch，就一定会执行 finally }

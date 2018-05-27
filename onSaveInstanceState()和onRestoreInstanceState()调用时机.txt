@@ -1,0 +1,25 @@
+
+onSaveInstanceState(Bundle outState)会在以下情况被调用： 
+1、当用户按下HOME键时。
+2、从最近应用中选择运行其他的程序时。
+3、按下电源按键（关闭屏幕显示）时。
+4、从当前activity启动一个新的activity时。
+5、屏幕方向切换时(无论竖屏切横屏还是横屏切竖屏都会调用)。
+
+在前4种情况下，当前activity的生命周期为：
+onPause -> onSaveInstanceState -> onStop。
+
+onRestoreInstanceState(Bundle savedInstanceState)只有在activity确实是被系统回收，重新创建activity的情况下才会被调用。
+第5种情况屏幕方向切换时，activity生命周期如下：
+onPause -> onSaveInstanceState -> onStop -> onDestroy -> onCreate -> onStart -> onRestoreInstanceState -> onResume
+
+按HOME键返回桌面，又马上点击应用图标回到原来页面时，activity生命周期如下：
+onPause -> onSaveInstanceState -> onStop -> onRestart -> onStart -> onResume
+因为activity没有被系统回收，因此onRestoreInstanceState没有被调用。
+
+因为onSaveInstanceState 不一定会被调用，所以onCreate()里的Bundle参数可能为空，如果使用onCreate()来恢复数据，一定要做非空判断。
+
+而onRestoreInstanceState的Bundle参数一定不会是空值，因为它只有在上次activity被回收了才会调用。
+
+而且onRestoreInstanceState是在onStart()之后被调用的。有时候我们需要onCreate()中做的一些初始化完成之后再恢复数据，用onRestoreInstanceState会比较方便。用onRestoreInstanceState方法恢复数据，你可以决定是否在方法里调用父类的onRestoreInstanceState方法，即是否调用super.onRestoreInstanceState(savedInstanceState);
+而用onCreate()恢复数据，你必须调用super.onCreate(savedInstanceState); 

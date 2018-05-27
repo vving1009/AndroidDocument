@@ -1,0 +1,123 @@
+JAVA:事件监听器之键盘监听 
+
+
+
+
+作者：@keenleung
+本文为作者原创，转载请注明出处：http://www.cnblogs.com/KeenLeung/archive/2012/05/27/2520657.html
+
+--------------------------------------------------------------------------------
+
+
+目录
+addKeyListener
+java.awt.event 
+接口 KeyListener
+
+addKeyListener
+public void addKeyListener(KeyListener l)
+
+添加指定的按键侦听器，以接收发自此组件的按键事件。如果 l 为 null，则不会抛出异常并且不执行动作。 
+
+java.awt.event 
+接口 KeyListener
+
+用于接收键盘事件（击键）的侦听器接口。旨在处理键盘事件的类要么实现此接口（及其包含的所有方法），要么扩展抽象 KeyAdapter 类（仅重写有用的方法）。
+
+然后使用组件的 addKeyListener 方法将从该类所创建的侦听器对象向该组件注册。按下、释放或键入键时生成键盘事件。然后调用侦听器对象中的相关方法并将该 KeyEvent 传递给它。 
+
+
+方法摘要
+
+void keyPressed(KeyEvent e) 
+按下某个键时调用此方法。 
+void keyReleased(KeyEvent e) 
+释放某个键时调用此方法。 
+void keyTyped(KeyEvent e) 
+键入某个键时调用此方法。 
+
+——摘自：JDK6API
+
+ 
+
+例子：
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+public class KeyDemo
+{
+    //定义该图形中所需的组件的引用
+    private Frame f;
+    private Button bt; 
+    private TextField tf;
+    
+    //方法
+    KeyDemo()//构造方法
+    {
+        madeFrame();
+    }
+    
+    public void madeFrame()
+    {
+        f = new Frame("My Frame");
+        
+        //对Frame进行基本设置。
+        f.setBounds(300,100,600,500);//对框架的位置和大小进行设置
+        f.setLayout(new FlowLayout(FlowLayout.CENTER,5,5));//设计布局
+        
+        bt = new Button("My Button");
+        tf = new TextField(20);
+        
+        //将组件添加到Frame中
+        f.add(tf);
+        f.add(bt);
+        
+        //加载一下窗体上的事件
+        myEvent();
+        
+        //显示窗体
+        f.setVisible(true);
+    }
+    
+    private void myEvent()
+    {
+        f.addWindowListener(new WindowAdapter()//窗口监听
+        {
+            public void windowClosing(WindowEvent e)
+            {
+                System.out.println("窗体执行关闭！");
+                System.exit(0);
+            }
+        });
+        bt.addKeyListener(new KeyAdapter()//键盘监听按钮
+        {
+            public void keyPressed(KeyEvent e)
+            {
+                if(e.getKeyCode()==KeyEvent.VK_ESCAPE)
+                   System.exit(0);
+                //组合键
+                else if(e.isControlDown()&&e.getKeyCode()==KeyEvent.VK_ENTER)
+                   System.exit(0);
+                else System.out.println(e.getKeyChar()+"..."+KeyEvent.getKeyText(e.getKeyCode()));
+            }
+            
+        });
+        tf.addKeyListener(new KeyAdapter()
+        {
+            public void keyPressed(KeyEvent e)
+            {
+                int code = e.getKeyCode();
+                if(!(code>=KeyEvent.VK_0&&code<=KeyEvent.VK_9))
+                {
+                    System.out.println(code+"..."+"是非法的");
+                    e.consume();
+                }
+            }
+        });
+    }
+    
+    public static void main(String[] agrs)
+    {
+        new KeyDemo();
+    }
+}

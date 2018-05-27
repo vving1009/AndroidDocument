@@ -1,0 +1,432 @@
+FileInputStream/FileOutputStream的应用 
+
+
+
+这是一对继承于InputStream和OutputStream的类，用于本地文件读写（二进制格式读写并且是顺序读写，读和写要分别创建出不同的文件流对象）； 
+
+本地文件读写编程的基本过程为： 
+
+①  生成文件流对象（对文件读操作时应该为FileInputStream类，而文件写应该为FileOutputStream类）； 
+
+②  调用FileInputStream或FileOutputStream类中的功能函数如read()、write(int b)等）读写文件内容； 
+
+③  关闭文件（close()）。 
+
+实例：流文件读写 
+
+流文件的单元是字节，所以它不但可以读写文本文件，也可以读写图片、声音、影像文件，这种特点非常有用，因为我们可以把这种文件变成流，然后在网络上传输。 
+
+问题是有了通用的流文件以后，为什么还要专门的字符流呢？这是因为文本可以用不同的方式存储，可以是普通的文本（UTF-8编码方式），ASCII文本和Unicode文本，字符流对象可以进行必要的转换，从而读出正确的文本。 
+
+有人认为流文件不能读写文本文件，这其实是个误会，因为文本文件本质上也是由字节组成的，当然是流文件的一种。作为读写文件的全体，这是没问题的，但是，如果要处理每次读入的内容，就最好使用字符流。 
+
+所以在文本文件处理时，使用字符流是个最常用的方法。 
+
+样例： 
+
+import java.io.*; 
+
+public class FileStreamDemo { 
+
+public static void main(String[] args) throws IOException { 
+
+//创建两个文件,face.gif是已经存在文件,newFace.gif是新创建的文件 
+
+File inFile = new File("face.gif"); 
+
+File outFile = new File("newFace.gif"); 
+
+//创建流文件读入与写出类 
+
+FileInputStream inStream = new FileInputStream(inFile); 
+
+FileOutputStream outStream = new FileOutputStream(outFile); 
+
+//通过available方法取得流的最大字符数 
+
+byte[] inOutb = new byte[inStream.available()]; 
+
+inStream.read(inOutb);  //读入流,保存在byte数组 
+
+outStream.write(inOutb);  //写出流,保存在文件newFace.gif中 
+
+inStream.close(); 
+
+outStream.close(); 
+
+} 
+
+} 
+
+实例：读写任意大文件应用 
+
+因为byte数组最大存储值不超过64M，所以当一个文件大于60M 的时候，需要分开几个流操作。我们把上面的程序作一个修改，就可以写入任意大小的文件。这个程序应用了FileInputStream类的方法如下： 
+
+read(byte[] b,int off,int len) 
+
+把特定位置的流内容读入数组，已经读入byte[]数组的内容，会在流文件中删除。 
+
+程序运行的结果会产生一个新文件。 
+
+样例： 
+
+import java.io.*; 
+
+public class FileStreamDemo2 { 
+
+public static void main(String[] args) throws IOException { 
+
+//创建两个文件 
+
+File inFile = new File("tcty36.rm"); 
+
+File outFile = new File("newtcty36.rm"); 
+
+//最大的流为60Mb,当文件的容量大于60Mb的时候便分开流 
+
+final int MAX_BYTE = 60000000; 
+
+long streamTotal = 0;  //接受流的容量 
+
+int streamNum = 0;  //流需要分开的数量 
+
+int leave = 0;  //文件剩下的字符数 
+
+byte[] inOutb;  //byte数组接受文件的数据 
+
+//创建流文件读入与写出类 
+
+FileInputStream inStream = new FileInputStream(inFile); 
+
+FileOutputStream outStream = new FileOutputStream(outFile); 
+
+//通过available方法取得流的最大字符数 
+
+streamTotal = inStream.available(); 
+
+//取得流文件需要分开的数量 
+
+streamNum = (int)Math.floor(streamTotal/MAX_BYTE); 
+
+//分开文件之后,剩余的数量 
+
+leave = (int)streamTotal % MAX_BYTE; 
+
+//文件的容量大于60Mb时进入循环 
+
+if (streamNum > 0) { 
+
+for(int i = 0; i < streamNum; ++i){ 
+
+inOutb = new byte[MAX_BYTE]; 
+
+//读入流,保存在byte数组 
+
+inStream.read(inOutb, 0, MAX_BYTE); 
+
+outStream.write(inOutb);  //写出流 
+
+outStream.flush();  //更新写出的结果 
+
+} 
+
+} 
+
+//写出剩下的流数据 
+
+inOutb = new byte[leave]; 
+
+inStream.read(inOutb, 0, leave); 
+
+outStream.write(inOutb); 
+
+outStream.flush(); 
+
+inStream.close(); 
+
+outStream.close(); 
+
+} 
+
+} 
+
+六、管道PipedInputStream/PipedOutputStream类： 
+
+当需要在两个线程中读写数据的时候，由于线程的并发执行，读写的同步问题可能会发生困难，这时候可以使用管道，管道事实上是一个队列。 
+
+管道是由系统维护的一个缓冲区，当然程序员也可以自己直接指定该缓冲区的大小（只需要设置管道流类中的PIPE_SIZE属性的值）。当生产者生产出数据后，只需要将数据写入管道中，消费者只需要从管道中读取所需要的数据。利用管道的这种机制，可以将一个线程的输出结果直接连接到另一个线程的输入端口，实现两者之间的数据直接传送。 
+
+线程1
+线程2
+临时文件
+管道 
+
+1．管道的连接： 
+
+方法之一是通过构造函数直接将某一个程序的输出作为另一个程序的输入，在定义对象时指明目标管道对象 
+
+PipedInputStream pInput=new PipedInputStream(); 
+
+PipedOutputStream pOutput= new PipedOutputStream(pInput); 
+
+方法之二是利用双方类中的任一个成员函数 connect()相连接 
+
+PipedInputStream pInput=new PipedInputStream(); 
+
+PipedOutputStream pOutput= new PipedOutputStream(); 
+
+pinput.connect(pOutput); 
+
+2．管道的输入与输出： 
+
+输出管道对象调用write()成员函数输出数据（即向管道的输入端发送数据）；而输入管道对象调用read()成员函数可以读起数据（即从输出管道中获得数据）。这主要是借助系统所提供的缓冲机制来实现的。 
+
+实例：Java的管道的输入与输出 
+
+import java.io.*; 
+
+public class PipedIO //程序运行后将sendFile文件的内容拷贝到receiverFile文件中 
+
+{  
+
+public static void main(String args[]) 
+
+{  
+
+try 
+
+{ 
+
+//构造读写的管道流对象 
+
+PipedInputStream pis=new PipedInputStream(); 
+
+PipedOutputStream pos=new PipedOutputStream(); 
+
+//实现关联 
+
+pos.connect(pis); 
+
+//构造两个线程，并且启动。  
+
+new Sender(pos,"c:\\text2.txt").start();  
+
+new Receiver(pis,"c:\\text3.txt").start();  
+
+} 
+
+catch(IOException e) 
+
+{ 
+
+System.out.println("Pipe Error"+ e); 
+
+}  
+
+} 
+
+} 
+
+//线程发送 
+
+class Sender extends Thread 
+
+{  
+
+PipedOutputStream pos; 
+
+File file; 
+
+//构造方法 
+
+Sender(PipedOutputStream pos, String fileName) 
+
+{ 
+
+this.pos=pos; 
+
+file=new File(fileName); 
+
+}  
+
+//线程运行方法 
+
+public void run() 
+
+{  
+
+try 
+
+{ 
+
+//读文件内容 
+
+FileInputStream fs=new FileInputStream(file); 
+
+int data; 
+
+while((data=fs.read())!=-1) 
+
+{ 
+
+//写入管道始端 
+
+pos.write(data); 
+
+} 
+
+pos.close();  
+
+} 
+
+catch(IOException e) 
+
+{ 
+
+System.out.println("Sender Error" +e); 
+
+} 
+
+} 
+
+} 
+
+//线程读 
+
+class Receiver extends Thread 
+
+{  
+
+PipedInputStream pis; 
+
+File file; 
+
+//构造方法 
+
+Receiver(PipedInputStream pis, String fileName) 
+
+{  
+
+this.pis=pis; 
+
+file=new File(fileName); 
+
+}  
+
+//线程运行 
+
+public void run() 
+
+{  
+
+try 
+
+{ 
+
+//写文件流对象 
+
+FileOutputStream fs=new FileOutputStream(file); 
+
+int data; 
+
+//从管道末端读 
+
+while((data=pis.read())!=-1) 
+
+{ 
+
+//写入本地文件 
+
+fs.write(data); 
+
+} 
+
+pis.close();  
+
+} 
+
+catch(IOException e) 
+
+{ 
+
+System.out.println("Receiver Error" +e); 
+
+} 
+
+} 
+
+} 
+
+七、随机文件读写：RandomAccessFile类 
+
+它直接继承于Object类而非InputStream/OutputStream类，从而可以实现读写文件中任何位置中的数据（只需要改变文件的读写位置的指针）。 
+
+编程步骤： 
+
+① 生成流对象并且指明读写类型； 
+
+② 移动读写位置； 
+
+③ 读写文件内容； 
+
+④ 关闭文件。 
+
+另外由于RandomAccessFile类实现了DataOutput与DataInput接口，因而利用它可以读写Java中的不同类型的基本类型数据（比如采用readLong()方法读取长整数，而利用readInt()方法可以读出整数值等）。 
+
+程序实例： 
+
+利用随机数据流RandomAccessFile类来实现记录用户在键盘的输入，每执行一次，将用户的键盘输入存储在指定的UserInput.txt文件中。 
+
+import java.io.*; 
+
+public class RandomFileRW 
+
+{ 
+
+public static void main(String args[]) 
+
+{ 
+
+StringBuffer buf=new StringBuffer(); 
+
+char ch; 
+
+try 
+
+{ 
+
+while( (ch=(char)System.in.read()) !='\n') 
+
+{ 
+
+buf.append(ch); 
+
+} 
+
+//读写方式可以为"r" or "rw" 
+
+RandomAccessFile myFileStream=new RandomAccessFile("c:\\UserInput.txt","rw"); 
+
+myFileStream.seek(myFileStream.length()) ; 
+
+myFileStream.writeBytes(buf.toString()); 
+
+//将用户从键盘输入的内容添加到文件的尾部 
+
+myFileStream.close(); 
+
+} 
+
+catch(IOException e) 
+
+{ 
+
+} 
+
+} 
+
+} 
+
+八、DataInput/DataOutput接口： 
+
+实现与机器无关的各种数据格式读写（如readChar() 、readInt()、readLong()、readFloat()，而readLine()将返回一个String）。其中RandomAccessFile类实现了该接口，具有比FileInputStream或FileOutputStream类更灵活的数据读写方式。

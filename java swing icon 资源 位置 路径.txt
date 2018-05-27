@@ -1,0 +1,67 @@
+一、问题
+
+ImageIcon icon = new ImageIcon("a.gif");
+
+执行结果是icon无法显示
+
+ 
+
+二、解决
+
+ 
+
+类中有如下调用：
+
+ImageIcon icon = new ImageIcon("a.gif");
+
+ 
+
+很自然地认为当前类文件和图片在同一路径下即可。
+
+其实所谓的相对路径起点是工程的根目录，即project。
+
+这行代码执行时在project目录下查找名为a.gif的文件，结果当然是找不到。
+
+要得到工程的相对路径可通过System.getProperty("user.dir")得到。
+
+对图片和对文件的查找应该是一致的，如new File()。
+
+假如你的工程根目录为：project1
+
+你的图片文件放在：project1/src/images/a.gif
+
+ 
+
+所以正确的调用是：
+
+ImageIcon icon = new ImageIcon("src//images//a.gif");
+
+这行代码执行时在project/test目录下查找到了文件
+
+ 
+
+总结起来就是一句话：所谓相对路径就是相对于工程根目录的位置^_^
+
+ 
+
+三、其他
+
+查看了一下ImageIcon的构造函数。
+
+Public ImageIcon(String filename)//参数可以是绝对路径也可以是相对路径
+
+Public ImageIcon(URL url)
+
+ 
+
+第一种构造不在赘述。
+
+第二种通过URL来得到图片
+
+URL url = getClass().getResource("a.gif"); //当前编译后class文件所在目录查找
+
+ImageIcon icon = new ImageIcon(url);
+
+ 
+
+ImageIcon支持GIF、JPG、PNG等格式。

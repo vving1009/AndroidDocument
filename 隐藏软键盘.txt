@@ -1,0 +1,58 @@
+
+Android点击空白的地方隐藏掉软键盘
+
+
+隐藏软键盘的函数
+
+
+/*隐藏软键盘*/
+
+    private boolean hideInputMethodManager(){
+
+        InputMethodManager mInputMethodManager = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+
+        return mInputMethodManager.hideSoftInputFromWindow(this.getCurrentFocus().getWindowToken(), 0);
+
+    } 
+
+重写onTouchEvent方法。
+
+
+/**
+
+ * 直接写在activity中
+
+ */
+
+public boolean onTouchEvent(MotionEvent event) {
+
+    if(null != this.getCurrentFocus()){
+
+        return hideInputMethodManager();
+
+    }
+
+    return super .onTouchEvent(event);
+
+} 
+
+
+或者控件监听OnTouchListener方法
+
+
+
+ScrollView scrollView11 = (ScrollView) findViewById(R.id.scrollView11);
+
+scrollView11.setOnTouchListener(new OnTouchListener(){
+
+    @Override
+
+    public boolean onTouch(View v, MotionEvent event) {
+
+    // TODO Auto-generated method stub
+
+    return hideInputMethodManager();
+
+    }       
+
+}); 

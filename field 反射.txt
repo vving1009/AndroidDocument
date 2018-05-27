@@ -1,0 +1,49 @@
+利用反射机制能获得什么信息 
+         一句话，类中有什么信息，它就可以获得什么信息，不过前提是得知道类的名字，要不就没有后文了 
+    首先得根据传入的类的全名来创建Class对象。 
+    Class c=Class.forName("className");注明：className必须为全名，也就是得包含包名，比如，cn.netjava.pojo.UserInfo; 
+    Object obj=c.newInstance();//创建对象的实例 
+    OK，有了对象就什么都好办了，想要什么信息就有什么信息了。   
+    获得构造函数的方法 
+    Constructor getConstructor(Class[] params)//根据指定参数获得public构造器
+
+    Constructor[] getConstructors()//获得public的所有构造器
+
+    Constructor getDeclaredConstructor(Class[] params)//根据指定参数获得public和非public的构造器
+
+    Constructor[] getDeclaredConstructors()//获得public的所有构造器 
+    获得类方法的方法 
+    Method getMethod(String name, Class[] params),根据方法名，参数类型获得方法
+
+    Method[] getMethods()//获得所有的public方法
+
+    Method getDeclaredMethod(String name, Class[] params)//根据方法名和参数类型，获得public和非public的方法
+
+    Method[] getDeclaredMethods()//获得所以的public和非public方法 
+    获得类中字段（成员变量）的方法 
+    Field getField(String name)//根据变量名得到相应的public变量
+
+    Field[] getFields()//获得类中所以public的方法
+
+    Field getDeclaredField(String name)//根据方法名获得public和非public变量
+
+    Field[] getDeclaredFields()//获得类中所有的public和非public方法 
+    常用的就这些，知道这些，其他的都好办…… 
+
+
+Field[] pickerFields = NumberPicker.class.getDeclaredFields();
+//Field field = NumberPicker.class.getDeclaredField("mSelectionDivider");
+for(Field pf:pickerFields) {
+    if(pf.getName().equals("mSelectionDivider")) {
+        pf.setAccessible(true):
+        try {
+            pf.set(this, new ColorDrawable(Color.TRANSPARENT));
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        } catch (Resources.NotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+http://www.cnblogs.com/onlywujun/p/3519037.html

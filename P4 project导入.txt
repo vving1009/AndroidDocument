@@ -1,0 +1,7 @@
+1. gradle-wrapper.properties url中改成gradle-2.2-all.zip
+2. Unsupported method: AndroidProject.getPluginGeneration().
+    解决方案:
+       Android Studio 检查Instant Run是否可用时会出现这个问题，禁用Instant Run可以解决这个问题。 
+       File -> Settings -> Build, Execution, Deployment -> Instant Run.
+3. copy Clock_C\DEV\sec\sdl下面的文件到sdk build-tools下面
+   aapt.ini不变

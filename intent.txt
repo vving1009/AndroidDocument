@@ -1,0 +1,21 @@
+有时候需要从一个APP中启动另外一个APP，比如Twitter/微信等。
+
+如果你不知道那个APP的Activity，但是知道包名(package name)，那么可以使用如下的方法：
+
+Intent LaunchIntent = getPackageManager().getLaunchIntentForPackage("com.package.address");  
+startActivity(LaunchIntent);  
+
+如果APP之间有合作关系，可以获得合作APP的清单文件(manifest)，那么可以从该文件中获知package/activity, 
+可使用如下的方法来启动该APP特定活动界面：
+
+Intent intent = new Intent(Intent.ACTION_MAIN);  
+intent.setComponent(new ComponentName("com.package.address","com.package.address.MainActivity"));  
+startActivity(intent);  
+
+如果要在启动APP时传递参数，可以在意图(Intent)中设置:
+
+intent.putExtra("firstKeyName","FirstKeyValue");  
+intent.putExtra("secondKeyName","SecondKeyValue");  
+
+参考链接：
+http://developer.Android.com/guide/components/intents-filters.html
