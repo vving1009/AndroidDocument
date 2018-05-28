@@ -235,7 +235,33 @@ concatMap 与 FlatMap 的唯一区别就是 concatMap 保证了顺序.
         D/TAG: I am value 3   
         D/TAG: I am value 3
 
+- compose
+        compose()是唯一一个能从流中获取原生Observable 的方法，因此，影响整个流的操作符（像subscribeOn()和observeOn()）需要使用compose()，相对的，如果你在flatMap()中使用subscribeOn()/observeOn()，它只影响你创建的flatMap()中的Observable,而不是整个流。
+        当你创建一个Observable流并且内联了一堆操作符以后，compose()会立即执行，flatMap()则是在onNext()被调用以后才会执行，换句话说，flatMap()转换的是每个项目，而compose()转换的是整个流。
+        flatMap()一定是低效率的，因为他每次调用onNext()之后都需要创建一个新的Observable，compose()是操作在整个流上的。
 
+换句话说就是提供给他一个Observable它会返回给你另一个Observable，这和内联一系列操作符有着同等功效。
+实际操作下，写个方法，创建一个Transformer调度器：
+<T> Transformer<T, T> applySchedulers() {  
+    return new Transformer<T, T>() {
+        @Override
+        public Observable<T> call(Observable<T> observable) {
+            return observable.subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+        }
+    };
+}
+
+用lambda表达式看上去会好看些：
+<T> Transformer<T, T> applySchedulers() {  
+    return observable -> observable.subscribeOn(Schedulers.io())
+        .observeOn(AndroidSchedulers.mainThread());
+}
+现在调用这个方法会是怎么样的呢：
+Observable.from(someSource)  
+    .map(data -> manipulate(data))
+    .compose(applySchedulers())
+    .subscribe(data -> doSomething(data));
 
 
 - Zip
@@ -732,7 +758,18 @@ public void onSubscribe(Subscription s) {
 01-20 17:50:32.459 25334-25334/com.lvr.rxjavalearning D/MainActivity: onNext: 999999
 唯一的区别就在最后一行。这就是LATEST与DROP的区别。
 
+//////////////////////////////////////////////////////////////////////////////////////////
+关于异常
 
+https://blog.csdn.net/io_field/article/details/52439967
+
+catch操作符拦截原Observable的onError通知，将它替换为其它的数据项或数据序列，让产生的Observable能够正常终止或者根本不终止。
+
+在RxJava中，catch实现为三个不同的操作符：
+
+    onErrorReturn:让Observable遇到错误时发射一个特殊的项并且正常终止。
+    onErrorResumeNext:让Observable在遇到错误时开始发射第二个Observable的数据序列。
+    onExceptionResumeNext:让Observable在遇到错误时继续发射后面的数据项。
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////
@@ -893,3 +930,82 @@ ApiService as = ApiManager.getApiService();
                 long end = System.currentTimeMillis();
                 Log.e("IMAGE UPLOAD COMPLETED", (end - start) + "");
                 es.shutdown();
+                
+//////////////////////////////////////////////////////////////////////
+记录：
+- 重试：
+.retryWhen(new Function<Flowable<Throwable>, Publisher<?>>() {
+    @Override
+    public Publisher<?> apply(Flowable<Throwable> throwableFlowable) throws Exception {
+        return throwableFlowable.flatMap(new Function<Throwable, Publisher<Long>>() {
+            @Override
+            public Publisher<Long> apply(Throwable throwable) throws Exception {
+                return Flowable.timer(1, TimeUnit.SECONDS);
+            }
+        });
+    }
+});
+
+或
+import java.util.concurrent.TimeUnit;
+
+import rx.Observable;
+import rx.functions.Func1;
+import rx.functions.Func2;
+
+/**
+ * Created by yuanfei on 2018/2/26.
+ */
+
+public class RetryWhenNet implements Func1<Observable<? extends Throwable>, Observable<?>> {
+
+//重试延迟时间
+private int retryDelayTime = 3000;
+//重试次数
+private int retryDelayNum = 3;
+
+public RetryWhenNet(int retryDelayTime,int retryDelayNum){
+    this.retryDelayTime = retryDelayTime;
+    this.retryDelayNum = retryDelayNum;
+}
+
+@Override
+public Observable<?> call(Observable<? extends Throwable> observable) {
+    return observable.zipWith(Observable.range(1, retryDelayNum), new Func2<Throwable, Integer, Integer>() {
+        @Override
+        public Integer call(Throwable throwable, Integer integer) {
+
+            //在这里判断错误的类型
+
+            return 1;
+        }
+    }).flatMap(new Func1<Integer, Observable<?>>() {
+        @Override
+        public Observable<?> call(Integer integer) {
+            return Observable.just(null).delay(retryDelayTime, TimeUnit.MILLISECONDS);
+        }
+    });
+}
+}
+
+或
+
+/** * 自定义的，重试N次的拦截器 * 通过：addInterceptor 设置 */ 
+public static class Retry implements Interceptor { 
+public int maxRetry;//最大重试次数 
+private int retryNum = 0;//假如设置为3次重试的话，则最大可能请求4次（默认1次+3次重试） 
+public Retry(int maxRetry) { this.maxRetry = maxRetry; } 
+@Override public Response intercept(@NonNull Chain chain) throws IOException { 
+Request request = chain.request(); 
+Response response = chain.proceed(request); 
+Log.i("Retry","num:"+retryNum); 
+while (!response.isSuccessful() && retryNum < maxRetry) { 
+retryNum++; Log.i("Retry","num:"+retryNum); 
+response = chain.proceed(request); } 
+return response; } 
+}
+
+
+
+- 下游按顺序消耗事件
+concatMap

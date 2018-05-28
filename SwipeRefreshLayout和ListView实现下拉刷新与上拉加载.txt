@@ -1,0 +1,210 @@
+下拉刷新与上拉更多(用SwipeRefreshLayout和ListView实现)
+https://blog.csdn.net/pengkv/article/details/44850821
+
+SwipeRefreshLayout是Google在support v4 19.1版本的library更新的一个下拉刷新组件，实现刷新效果更方便。
+
+
+1:在布局中添加SwipeRefreshLayout和Listview组件
+
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout
+    style="@style/BaseStyle.White"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--下拉刷新-->
+    <android.support.v4.widget.SwipeRefreshLayout
+        android:id="@+id/srl_refresh"
+        style="@style/BaseStyle">
+
+        <!--上拉更多-->
+        <ListView
+            android:id="@+id/lv_person_goods"
+            style="@style/BaseStyle"
+            android:gravity="center"
+            android:horizontalSpacing="@dimen/margin_standard"
+            android:numColumns="2"
+            android:scrollbarStyle="outsideOverlay"
+            android:verticalSpacing="@dimen/margin_standard"/>
+    </android.support.v4.widget.SwipeRefreshLayout>
+
+    <!--数据为空时显示的View-->
+    <TextView
+        android:id="@+id/tv_no_data"
+        style="@style/BaseStyle.FullWrap"
+        android:layout_marginTop="@dimen/textview_width_small"
+        android:gravity="center_horizontal"
+        android:text="暂无数据"
+        android:textColor="@color/text_title_standard"
+        android:textSize="@dimen/font_size_small"
+        android:visibility="gone"/>
+
+</RelativeLayout>
+
+2:在主页面使用
+
+/**
+ * Created by pengkv on 2014/12/5.
+ * 我的宝贝列表页面,用于选择添加到拍卖场
+ */
+public class MySaleGoodsListViewActivity extends VolleyActivity implements IInit, IResponseHandler, IPagination, SwipeRefreshLayout.OnRefreshListener {
+
+    private int auctionID;
+    private GoodsInfoViewModel mViewModel;
+    private TextView mEmptyTV;//空白视图
+    private ListView mListView;//专场列表
+    private PersonGoodsListAdapter mAdapter;//适配器
+    private SwipeRefreshLayout mSwipeRefreshLayout;//下拉刷新布局
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_me_auction_goods_list);
+
+        init();
+    }
+
+    @Override
+    public void init() {
+        ActionBarUtil.setup(this, "我店铺的宝贝");
+
+        auctionID = getIntent().getIntExtra(EnumIntentKey.AUCTION_ID.toString(), 0);
+
+        mListView = (ListView) findViewById(R.id.lv_person_goods);
+        mEmptyTV = (TextView) findViewById(R.id.tv_no_data);
+
+        mSwipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.srl_refresh);//下拉刷新组件
+        mSwipeRefreshLayout.setOnRefreshListener(this);//设置刷新监听器
+        mSwipeRefreshLayout.setColorSchemeResources(R.color.background_blue_standard, R.color.white, R.color.background_blue_standard, R.color.white);//设置下拉刷新组件的颜色
+
+        mViewModel = new GoodsInfoViewModel();
+        fetchData(FIRST);//得到喜欢列表数据
+    }
+
+    @Override
+    public void fetchData(int tag) {
+        GetGoodsListForSellParam param = new GetGoodsListForSellParam(Data.getUserID(), 1, mViewModel.getPageIndex(), Data.PAGE_SIZE_MEDIUM);
+        SquareApi.getGoodsListForSell(this, param, tag);
+    }
+
+    /**
+     * 更新适配器
+     */
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+        mViewModel.reset();
+        fetchData(FIRST);//得到喜欢列表数据
+    }
+
+    @Override
+    public void updateUI(Object response, final int tag) {
+        if (response == null) return;
+
+        if (tag == FIRST) {
+            //得到喜欢列表数据
+            mViewModel.inflate(response);
+
+            //通过判断喜欢列表适配器mAdapter是否为空来做分页处理
+            if (mAdapter == null) {
+                //当适配器为空
+                mSwipeRefreshLayout.setRefreshing(false);//下拉刷新组件停止刷新
+
+                mAdapter = new PersonGoodsListAdapter(this, mViewModel.getList());
+                mListView.setAdapter(mAdapter);//ListView绑定喜欢适配器
+
+                /**
+                 *  上拉更多
+                 */
+                mListView.setOnScrollListener(new AbsListView.OnScrollListener() {
+                    @Override
+                    public void onScrollStateChanged(AbsListView view, int scrollState) {
+                        switch (scrollState) {
+                            case SCROLL_STATE_IDLE:
+
+                                if (mListView.getLastVisiblePosition() == mViewModel.getList().size() - 1) {
+                                    if (!mViewModel.isComplete()) {
+                                        fetchNewData(FIRST);
+                                    }
+                                }
+                                break;
+                        }
+                    }
+
+                    @Override
+                    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                    }
+                });
+
+                mListView.setEmptyView(mEmptyTV);//将此图片绑定到喜欢列表ListView
+
+            } else {
+                mAdapter.notifyDataSetChanged();//适配器更新数据
+            }
+
+            mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    Intent i = new Intent();
+                    if (getIntent().getBooleanExtra(EnumIntentKey.IS_SELECT_LINK.toString(), false)) { // 选择发送链接
+                        i.putExtra(EnumIntentKey.GOODS_ID.toString(), mViewModel.getList().get(position).getGoodsID());
+                        i.putExtra(EnumIntentKey.GOODS_NAME.toString(), mViewModel.getList().get(position).getGoodsName());
+                        setResult(RESULT_OK, i);
+                    } else {  // 添加到专场
+                        i.setClass(MySaleGoodsListViewActivity.this, AddAuctionGoodsActivity.class);
+                        i.putExtra(EnumIntentKey.AUCTION_GOODS_ID.toString(), mViewModel.getList().get(position).getGoodsID());
+                        i.putExtra(EnumIntentKey.IS_DO.toString(), true);
+                        i.putExtra(EnumIntentKey.AUCTION_ID.toString(), auctionID);
+                        startActivity(i);
+                    }
+                    finish();
+                }
+            });
+        }
+    }
+
+    @Override
+    public void fetchNewData(int tag) {
+        mViewModel.increasePageIndex();
+        fetchData(FIRST);//得到喜欢的拍品列表数据
+    }
+
+    @Override
+    public void onRefresh() {
+        mViewModel.reset();//重置页索引和完成状态
+        mAdapter = null;//清空适配器
+        fetchData(FIRST);//得到喜欢的拍品列表数据
+    }
+}
+
+解析:
+
+(下拉刷新)主页面需要实现SwipeRefreshLayout.OnRefreshListener接口,然后在
+
+ @Override
+    public void onRefresh() {
+    }
+    
+方法中实现更新
+
+
+(上拉更多)上拉更多需要监听setOnScrollListener()方法    
+
+  mListView.setOnScrollListener(new AbsListView.OnScrollListener() {
+                    @Override
+                    public void onScrollStateChanged(AbsListView view, int scrollState) {
+                        switch (scrollState) {
+                            case SCROLL_STATE_IDLE:
+
+                                if (mListView.getLastVisiblePosition() == mViewModel.getList().size() - 1) {
+                                    if (!mViewModel.isComplete()) {
+                                        fetchNewData(FIRST);
+                                    }
+                                }
+                                break;
+                        }
+                    }
+
+                    @Override
+                    public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
+                    }
+                });

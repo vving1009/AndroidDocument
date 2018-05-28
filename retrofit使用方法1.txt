@@ -1,3 +1,6 @@
+https://www.jianshu.com/p/ea2055db3dd3
+https://www.jianshu.com/p/6b0cbcda7e9c
+
 利用retrofit进行网络访问和解析的步骤，标准的按照如下5步来你就绝对不会错！：
 
 1.定义一个接口（封装URL地址和数据请求）

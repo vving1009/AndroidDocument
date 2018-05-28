@@ -1,3 +1,50 @@
+git config --global user.name 
+git config --global user.email 
+
+1. 查看远程分支
+
+$ git branch -a
+我在mxnet根目录下运行以上命令：
+
+~/mxnet$ git branch -a
+* master
+  remotes/origin/HEAD -> origin/master
+  remotes/origin/master
+  remotes/origin/nnvm
+  remotes/origin/piiswrong-patch-1
+  remotes/origin/v0.9rc1
+
+可以看到，我们现在在master分支下
+
+2. 查看本地分支
+
+~/mxnet$ git branch
+* master
+
+3. 切换分支
+
+git checkout -b dev//基于本地创建分支
+git checkout -b dev origin/dev //基于远程分支创建本地分支
+相当于 
+创建分支： git branch dev
+切换分支： git checkout dev 
+是基于当前HEAD的
+
+删除本地分支
+git branch -D dev
+
+删除远程分支
+git push origin:branch-name
+
+＃已经切换到v0.9rc1分支了
+$ git branch
+  master
+* v0.9rc1
+
+＃切换回master分支
+$ git checkout master
+Switched to branch 'master'
+Your branch is up-to-date with 'origin/master'.
 
 1. 回滚变更
 - 还没add，暂存区→工作区
@@ -112,3 +159,10 @@ conflict solved
 - 用merge确实只需要解决一遍冲突，比较简单粗暴
 - 用rebase有时候会需要多次fix冲突（原因在于本地分支已经提交了非常多的commit，而且很久都没有和上游合并过）
 我个人推荐大家开发的时候，尽量及时rebase上游分支（我习惯是每周merge一次），有冲突提前就fix掉，即使我们自己的分支开发了很久（哪怕是几个月），也不会积累太多的conflict，最后合并进主分支的时候特别轻松， 非常反对从master check出新分支，自己闷头开发几个月，结果最后merge进主分支的时候，一大堆冲突，自己还嗷嗷叫的行为 
+
+fast-forward方式就是当条件允许的时候，git直接把HEAD指针指向合并分支的头，完成合并。属于“快进方式”，不过这种情况如果删除分支，则会丢失分支信息。
+因为在这个过程中没有创建commit
+squash 是用来把一些不必要commit进行压缩，比如说，你的feature在开发的时候写的commit很乱，那么我们合并的时候不希望把这些历史commit带过来，
+于是使用--squash进行合并，此时文件已经同合并后一样了，但不移动HEAD，不提交。需要进行一次额外的commit来“总结”一下，然后完成最终的合并。
+--no-ff指的是强行关闭fast-forward方式。git merge --no-ff -m "merge with no-ff" dev
+因为本次合并要创建一个新的commit，所以加上-m参数，把commit描述写进去。
