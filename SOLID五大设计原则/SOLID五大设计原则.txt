@@ -1,0 +1,13 @@
+ 面向对象设计的SOLID原则
+
+S.O.L.I.D是面向对象设计和编程(OOD&OOP)中几个重要编码原则(Programming Priciple)的首字母缩写。
+SRP 	The Single Responsibility Principle	单一责任原则
+OCP 	The Open Closed Principle	开放封闭原则
+LSP 	The Liskov Substitution Principle 	里氏替换原则
+DIP 	The Dependency Inversion Principle 	依赖倒置原则
+ISP 	The Interface Segregation Principle 	接口分离原则
+
+Steve Smith在5月份的微软TechED 2009上有个SOLIDify Your ASP.NET MVC的讲座, derick.bailey的SOLID Development Principles – In Motivational Pictures很好的解释了SOLID原则。
+
+迪米特法则（最少知道原则）（Demeter Principle）
+合成复用原则（Composite Reuse Principle）
