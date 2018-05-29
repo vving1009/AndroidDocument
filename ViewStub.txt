@@ -1,0 +1,46 @@
+ViewStub 用法详解
+https://www.jianshu.com/p/5f64bacbd759
+
+ViewStub 是一个轻量级的View，没有尺寸，不绘制任何东西，因此绘制或者移除时更省时。(ViewStub不可见，大小为0)
+优点
+实现View的延迟加载，避免资源的浪费，减少渲染时间，在需要的时候才加载View
+缺点
+ViewStub所要替代的layout文件中不能有<merge>标签
+可以通过下面方法简介支持merge标签
+    <?xml version="1.0" encoding="utf-8"?>   
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"   
+                  android:orientation="vertical"   
+                  android:layout_width="match_parent"   
+                  android:layout_height="match_parent">   
+            <include layout="@layout/merge_layout"/>   
+    </LinearLayout>   
+ViewStub在加载完后会被移除，或者说是被加载进来的layout替换掉了
+
+用法
+<ViewStub
+    android:id="@+id/stub_import"
+    android:inflatedId="@+id/panel_import"
+    android:layout="@layout/progress_overlay"
+    android:layout_gravity="bottom"
+    android:layout_height="wrap_content"
+    android:layout_width="fill_parent" />
+    
+用ViewStub加载layout文件时，可以调用 setVisibility(View.VISIBLE) 或者 inflate()
+((ViewStub) findViewById(R.id.stub_import)).setVisibility(View.VISIBLE); 
+// or 
+View importPanel = ((ViewStub) findViewById(R.id.stub_import)).inflate();
+
+setVisibility只是在ViewStub第一次延迟初始化时,并且visibility是非 GONE 时,调用了 inflate 方法.
+
+注意
+    一旦ViewStub visible/inflated，则ViewStub将从视图框架中移除，其id stub_import 也会失效
+    ViewStub被绘制完成的layout文件取代，并且该layout文件的root view的id是android:inflatedId指定的id panel_import，root view的布局和ViewStub视图的布局保持一致
+
+
+
+ViewStub.OnInflateListener：当ViewStub 成功inflate 一个layout 资源后执行。
+setInflatedId(int)  ：给inflate 的View 设置一个inflateId 。
+setLayoutResource(int)：给ViewStub 添加layout 资源，当ViewStub变成visible时去加载。
+
+遇到的问题: 报错 ViewStub must have a non-null ViewGroup viewParent 原因: 
+ * 官方文档:viewstub不能反复inflate,只能inflate一次 
