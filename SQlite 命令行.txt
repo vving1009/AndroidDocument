@@ -138,7 +138,7 @@ sqlite>create studen_table(Stu_no interger PRIMARY KEY, Name text NOT NULL, Id i
 NULL：标识一个NULL值
 INTERGER：整数类型
 REAL：浮点数
-TEXT：字符串
+TEXT：字符串, value需加上'' ('value')
 BLOB：二进制数
 
 3.2 sqlite3存储数据的约束条件
