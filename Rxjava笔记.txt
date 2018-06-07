@@ -200,6 +200,7 @@ D/TAG: I am value 2
 D/TAG: I am value 2
 
 - concatMap
+下游按顺序消耗事件
 concatMap 与 FlatMap 的唯一区别就是 concatMap 保证了顺序.
         Observable.create(new ObservableOnSubscribe<Integer>() {
             @Override
@@ -234,6 +235,48 @@ concatMap 与 FlatMap 的唯一区别就是 concatMap 保证了顺序.
         D/TAG: I am value 3   
         D/TAG: I am value 3   
         D/TAG: I am value 3
+        
+- FlatMapIterable
+flatMapIterable()可以将数据包装成Iterable,在Iterable中我们可以随意对数据进行加工。
+Observable.just(1,2,3,4) .flatMapIterable(new Func1<Integer, Iterable<Integer>>() { 
+  @Override public Iterable<Integer> call(Integer integer) { 
+    List<Integer> list = new ArrayList(); 
+    list.add(integer); 
+    list.add(5); return list; 
+  } 
+})
+
+- SwitchMap
+每当源Observable发射一个新的数据项（ Observable） 时，它将取消订阅并停止监视之前那个数据项产生的Observable，并开始监视当前发射的这一个。
+
+- Scan
+RxJava的scan()函数可以看做是一个累积函数。scan()函数对原始Observable发射的每一项数据都应用一个函数，计算出函数的结果值，并将该值填充回可观测序列，等待和下一次发射的数据一起使用。
+Observable.just(1, 2, 3, 4, 5).scan(new Func2<Integer, Integer, Integer>() {
+    @Override
+    public Integer call(Integer integer, Integer integer2) {
+        return integer + integer2;
+    }
+})
+result = 1
+result = 3
+result = 6
+result = 10
+result = 15
+rxjava onCompleted
+还有一个scan()函数的变体scan(R initialValue, Func2<R, ? super T, R> accumulator)，它可以设置一个初始值作为第一个发射的元素值，
+Observable.just(1, 2, 3, 4, 5).scan(10, new Func2<Integer, Integer, Integer>() {
+    @Override
+    public Integer call(Integer integer, Integer integer2) {
+        return integer + integer2;
+    }
+})
+result = 10
+result = 11
+result = 13
+result = 16
+result = 20
+result = 25
+rxjava onCompleted
 
 - compose
         compose()是唯一一个能从流中获取原生Observable 的方法，因此，影响整个流的操作符（像subscribeOn()和observeOn()）需要使用compose()，相对的，如果你在flatMap()中使用subscribeOn()/observeOn()，它只影响你创建的flatMap()中的Observable,而不是整个流。
@@ -333,7 +376,125 @@ Observable.just(1, 20, 65, -5, 7, 19)
             }
         });
         
+- defaultIfEmpty
+
+Observable<List<String>> observable = getData();
+observable.filter(new Predicate<List<String>>() {
+              @Override
+              public boolean test(@NonNull List<String> strings) throws Exception {
+                  return strings != null && strings.size() > 0;
+              }
+          })
+          .defaultIfEmpty(new ArrayList<>())
+
+以下情况  defaultIfEmpty，switchIfEmpty 不会执行
+Observable.just(1, 2, 3, 4, 5)
+.filter(new Predicate<Integer>() {
+        @Override
+        public boolean test(Integer integer) throws Exception {
+            return integer % 2 == 0;
+        }
+    })
+    .switchIfEmpty(new Observable<Integer>() {
+        @Override
+        protected void subscribeActual(Observer<? super Integer> observer) {
+            observer.onNext(-1);
+            observer.onComplete();
+        }
+    })
+
+作者：安德雷士
+链接：https://www.jianshu.com/p/1f50f7b401db
+來源：简书
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+
+- SwitchIfEmpty
+
+.filter(new Predicate<List<String>>() {
+    @Override
+    public boolean test(@NonNull List<String> strings) throws Exception {
+        return strings != null && strings.size() > 0;
+    }
+})
+.defaultIfEmpty(new ArrayList<>())
+
+- GroupBy
+
+observable.groupBy(new Function<List<String>, Boolean>() {
+    @Override
+    public Boolean apply(@NonNull List<String> strings) throws Exception {
+        return strings != null && strings.size() > 0;
+    }
+})
+.subscribeOn(Schedulers.io())
+.observeOn(AndroidSchedulers.mainThread())
+.subscribe(new Consumer<GroupedObservable<Boolean, List<String>>>() {
+    @Override
+    public void accept(@NonNull GroupedObservable<Boolean, List<String>> groupedObservable) throws Exception {
+        if (groupedObservable.getKey()) {
+            groupedObservable.subscribe(new Consumer<List<String>>() {
+                @Override
+                public void accept(@NonNull List<String> strings) throws Exception {
+                }
+            });
+        } else {
+            groupedObservable.subscribe(new Consumer<List<String>>() {
+                @Override
+                public void accept(@NonNull List<String> strings) throws Exception {
+                }
+            });
+        }
+    }
+}, new Consumer<Throwable>() {
+    @Override
+    public void accept(@NonNull Throwable throwable) throws Exception {
+        // 错误处理
+    }
+});
+
+例子2：
+Student lisi = new Student("李四", 24);
+Student wangwu = new Student("王五", 25);
+Student zhangsan = new Student("张三", 23);
+Student jianjian = new Student("jianjian", 24);
+Student wenwen = new Student("wenwen", 25);
+Observable<GroupedObservable<Integer, Student>> GroupedObservable = Observable.just(lisi, wangwu, zhangsan, jianjian, wenwen).groupBy(new Func1<Student, Integer>() {
+    @Override
+    public Integer call(Student student) {
+        return student.getAge();  //key为相同年龄的放在一组
+    }
+});
+Observable.concat(GroupedObservable).subscribe(new Action1<Student>() {
+    @Override
+    public void call(Student student) {
+        System.out.println("student = " + student.getName() + ", age = " + student.getAge());
+    }
+});
+student = 李四, age = 24
+student = jianjian, age = 24
+student = 王五, age = 25
+student = wenwen, age = 25
+student = 张三, age = 23
+
+作者：cgzysan
+链接：https://www.jianshu.com/p/eccc241928cf
+來源：简书
+著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+        
 9、buffer
+
+Observable.just(1,2,3,4,5,6).buffer(2)
+RxJava中的 buffer() 函数将源Observable变换一个新的Observable，这个新的Observable每次发射一组列表值而不是一个一个发射。
+buffer(2)指定了缓冲容量的大小为2，打印结果：
+i = 1
+i = 2
+-------------------
+i = 3
+i = 4
+-------------------
+i = 5
+i = 6
+-------------------
 
  buffer 操作符接受两个参数，buffef(count,skip)，作用是将 Observable 中的数据按 skip (步长) 分成最大不超过
  count 的 buffer ，然后生成一个 Observable 。也许你还不太理解，我们可以通过我们的示例图和示例代码来进一步深化它。
@@ -356,6 +517,8 @@ Observable.just(1, 20, 65, -5, 7, 19)
                 });
                 
 如图，我们把1,2,3,4,5依次发射出来，经过buffer 操作符，其中参数 count 为3， skip 为2，而我们的输出 依次是 123，345，5。显而易见，我们 buffer 的第一个参数是count，代表最大取值，在事件足够的时候，一般都是取count个值，然后每次跳过skip个事件。其实看 Log 日志，我相信大家都明白了。
+
+
 
 10、timer
 
@@ -575,30 +738,73 @@ Observable.just(1, 2, 3)
 24、window
 
 按照实际划分窗口，将数据发送给不同的Observable
+和buffer()很像，但是它发射的是Observable而不是数据列表，发射的这些Observables都是源Observable数据的一个子集
+Observable.just(1, 2, 3, 4, 5).window(3).subscribe(new Observer<Observable<Integer>>() {
+    @Override
+    public void onCompleted() {
+        System.out.println("window onCompleted");
+    }
+
+    @Override
+    public void onError(Throwable e) {
+    }
+
+    @Override
+    public void onNext(Observable<Integer> integerObservable) {
+        integerObservable.subscribe(new Observer<Integer>() {
+            @Override
+            public void onCompleted() {
+                System.out.println("onCompleted");
+            }
+
+            @Override
+            public void onError(Throwable e) {
+            }
+
+            @Override
+            public void onNext(Integer integer) {
+                System.out.println("i = " + integer);
+            }
+        });
+    }
+});
+这里的window(3)设置了子集的大小为3，打印结果：
+i = 1
+i = 2
+i = 3
+onCompleted
+i = 4
+i = 5
+onCompleted
+window onCompleted
 
 mRxOperatorsText.append("window\n");
-       Log.e(TAG, "window\n");
-       Observable.interval(1, TimeUnit.SECONDS) // 间隔一秒发一次
-               .take(15) // 最多接收15个
-               .window(3, TimeUnit.SECONDS)
-               .subscribeOn(Schedulers.io())
-               .observeOn(AndroidSchedulers.mainThread())
-               .subscribe(new Consumer<Observable<Long>>() {
-                   @Override
-                   public void accept(@NonNull Observable<Long> longObservable) throws Exception {
-                       mRxOperatorsText.append("Sub Divide begin...\n");
-                       Log.e(TAG, "Sub Divide begin...\n");
-                       longObservable.subscribeOn(Schedulers.io())
-                               .observeOn(AndroidSchedulers.mainThread())
-                               .subscribe(new Consumer<Long>() {
-                                   @Override
-                                   public void accept(@NonNull Long aLong) throws Exception {
-                                       mRxOperatorsText.append("Next:" + aLong + "\n");
-                                       Log.e(TAG, "Next:" + aLong + "\n");
-                                   }
-                               });
-                   }
-               });
+Log.e(TAG, "window\n");
+Observable.interval(1, TimeUnit.SECONDS) // 间隔一秒发一次
+       .take(15) // 最多接收15个
+       .window(3, TimeUnit.SECONDS)
+       .subscribeOn(Schedulers.io())
+       .observeOn(AndroidSchedulers.mainThread())
+       .subscribe(new Consumer<Observable<Long>>() {
+           @Override
+           public void accept(@NonNull Observable<Long> longObservable) throws Exception {
+               mRxOperatorsText.append("Sub Divide begin...\n");
+               Log.e(TAG, "Sub Divide begin...\n");
+               longObservable.subscribeOn(Schedulers.io())
+                       .observeOn(AndroidSchedulers.mainThread())
+                       .subscribe(new Consumer<Long>() {
+                           @Override
+                           public void accept(@NonNull Long aLong) throws Exception {
+                               mRxOperatorsText.append("Next:" + aLong + "\n");
+                               Log.e(TAG, "Next:" + aLong + "\n");
+                           }
+                       });
+           }
+       });
+               
+24、cast
+子类转父类
+Observable.just(new Son()).cast(Father.class)               
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1005,7 +1211,129 @@ response = chain.proceed(request); }
 return response; } 
 }
 
+========================================================================================
+使用场景小结
+https://blog.csdn.net/theone10211024/article/details/50435325
 
+- 使用debounce做textSearch
+用简单的话讲就是当N个结点发生的时间太靠近（即发生的时间差小于设定的值T），debounce就会自动过滤掉前N-1个结点。
+比如在做百度地址联想的时候，可以使用debounce减少频繁的网络请求。避免每输入（删除）一个字就做一次联想
+RxTextView.textChangeEvents(inputEditText)  
+      .debounce(400, TimeUnit.MILLISECONDS)   
+      
+- 使用combineLatest合并最近N个结点
+例如：注册的时候所有输入信息（邮箱、密码、电话号码等）合法才点亮注册按钮。
 
-- 下游按顺序消耗事件
-concatMap
+Observable<CharSequence> Observable1 = RxTextView.textChanges(_email).skip(1);  
+Observable<CharSequence> Observable2 = RxTextView.textChanges(_password).skip(1);  
+Observable<CharSequence> Observable3 = RxTextView.textChanges(_number).skip(1);  
+  
+Observable.combineLatest(Observable1,  
+              Observable2,  
+              Observable3,  
+              new Func3<CharSequence, CharSequence, CharSequence, Boolean>() {  
+                  @Override  
+                  public Boolean call(CharSequence newEmail,  
+                                      CharSequence newPassword,  
+                                      CharSequence newNumber) {  
+  
+                      boolean emailValid = !isEmpty(newEmail) &&  
+                                           EMAIL_ADDRESS.matcher(newEmail).matches();  
+                      if (!emailValid) {  
+                          _email.setError("Invalid Email!");  
+                      }  
+  
+                      boolean passValid = !isEmpty(newPassword) && newPassword.length() > 8;  
+                      if (!passValid) {  
+                          _password.setError("Invalid Password!");  
+                      }  
+  
+                      boolean numValid = !isEmpty(newNumber);  
+                      if (numValid) {  
+                          int num = Integer.parseInt(newNumber.toString());  
+                          numValid = num > 0 && num <= 100;  
+                      }  
+                      if (!numValid) {  
+                          _number.setError("Invalid Number!");  
+                      }  
+                      return emailValid && passValid && numValid;  
+                  }  
+              })
+
+- 使用merge合并两个数据源。
+例如一组数据来自网络，一组数据来自文件，需要合并两组数据一起展示。
+Observable.merge(getDataFromFile(), getDataFromNet())  
+
+- 使用concat和first做缓存
+  依次检查memory、disk和network中是否存在数据，任何一步一旦发现数据后面的操作都不执行。
+  
+  Observable<String> memory = Observable.create(new Observable.OnSubscribe<String>() {  
+    @Override  
+    public void call(Subscriber<? super String> subscriber) {  
+        if (memoryCache != null) {  
+            subscriber.onNext(memoryCache);  
+        } else {  
+            subscriber.onCompleted();  
+        }  
+    }  
+    });  
+    Observable<String> disk = Observable.create(new Observable.OnSubscribe<String>() {  
+        @Override  
+        public void call(Subscriber<? super String> subscriber) {  
+            String cachePref = rxPreferences.getString("cache").get();  
+            if (!TextUtils.isEmpty(cachePref)) {  
+                subscriber.onNext(cachePref);  
+            } else {  
+                subscriber.onCompleted();  
+            }  
+        }  
+    });  
+      
+    Observable<String> network = Observable.just("network");  
+      
+    //依次检查memory、disk、network  
+    Observable.concat(memory, disk, network)  
+    .first()  
+    .subscribeOn(Schedulers.newThread())  
+    .subscribe(s -> {  
+        memoryCache = "memory";  
+        System.out.println("--------------subscribe: " + s);  
+    });  
+
+- 使用timer做定时操作。当有“x秒后执行y操作”类似的需求的时候，想到使用timer
+例如：2秒后输出日志“hello world”，然后结束。
+Observable.timer(2, TimeUnit.SECONDS)  
+
+- 使用interval做周期性操作。当有“每隔xx秒后执行yy操作”类似的需求的时候，想到使用interval
+例如：每隔2秒输出日志“helloworld”。
+Observable.interval(2, TimeUnit.SECONDS)  
+
+- 使用throttleFirst防止按钮重复点击
+ps：debounce也能达到同样的效果
+RxView.clicks(button).throttleFirst(1, TimeUnit.SECONDS)  
+
+- 使用schedulePeriodically做轮询请求
+Observable.create(new Observable.OnSubscribe<String>() {  
+    @Override  
+    public void call(final Subscriber<? super String> observer) {  
+        Schedulers.newThread().createWorker()  
+              .schedulePeriodically(new Action0() {  
+                  @Override  
+                  public void call() {  
+                      observer.onNext(doNetworkCallAndGetStringResult());  
+                  }  
+              }, INITIAL_DELAY, POLLING_INTERVAL, TimeUnit.MILLISECONDS);  
+    }  
+})
+
+- 响应式的界面
+比如勾选了某个checkbox，自动更新对应的preference
+
+SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);  
+RxSharedPreferences rxPreferences = RxSharedPreferences.create(preferences);  
+  
+Preference<Boolean> checked = rxPreferences.getBoolean("checked", true);  
+  
+CheckBox checkBox = (CheckBox) findViewById(R.id.cb_test);  
+RxCompoundButton.checkedChanges(checkBox)  
+        .subscribe(checked.asAction());  

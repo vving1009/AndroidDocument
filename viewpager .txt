@@ -21,3 +21,7 @@ androidswitcher + R.id.viewpager + 1
 androidswitcher + R.id.viewpager + 2
 
 但该方法对  FragmentStatePagerAdapter  没有用
+
+////////////////////////////////////////////////////////////////////////////////
+
+https://blog.csdn.net/u012702547/article/details/52334161
