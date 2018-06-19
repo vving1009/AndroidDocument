@@ -1,0 +1,263 @@
+https://blog.csdn.net/zhaizu/article/details/51038113 
+ TextView使用SpannableString设置复合文本
+
+TextView通常用来显示普通文本，但是有时候需要对其中某些文本进行样式、事件方面的设置。Android系统通过SpannableString类来对指定文本进行相关处理，具体有以下功能：
+
+1、BackgroundColorSpan 背景色 
+2、ClickableSpan 文本可点击，有点击事件
+3、ForegroundColorSpan 文本颜色（前景色）
+4、MaskFilterSpan 修饰效果，如模糊(BlurMaskFilter)、浮雕(EmbossMaskFilter)
+5、MetricAffectingSpan 父类，一般不用
+6、RasterizerSpan 光栅效果
+7、StrikethroughSpan 删除线（中划线）
+8、SuggestionSpan 相当于占位符
+9、UnderlineSpan 下划线
+10、AbsoluteSizeSpan 绝对大小（文本字体）
+11、DynamicDrawableSpan 设置图片，基于文本基线或底部对齐。
+12、ImageSpan 图片
+13、RelativeSizeSpan 相对大小（文本字体）
+14、ReplacementSpan 父类，一般不用
+15、ScaleXSpan 基于x轴缩放
+16、StyleSpan 字体样式：粗体、斜体等
+17、SubscriptSpan 下标（数学公式会用到）
+18、SuperscriptSpan 上标（数学公式会用到）
+19、TextAppearanceSpan 文本外貌（包括字体、大小、样式和颜色）
+20、TypefaceSpan 文本字体
+21、URLSpan 文本超链接
+
+Spannable.SPAN_EXCLUSIVE_EXCLUSIVE //前后都不包括
+Spannable.SPAN_INCLUSIVE_EXCLUSIVE  //前包括后不包括
+Spannable.SPAN_EXCLUSIVE_INCLUSIVE  //前不包括后包括
+Spannable.SPAN_INCLUSIVE_INCLUSIVE  //前后都包括
+一般使用没有区别，调用builder.insert()方法时，Spannable标识就起作用了。
+    String str = "123456789";  
+    SpannableStringBuilder builder = new SpannableStringBuilder(str);  
+    builder.setSpan(new ForegroundColorSpan(Color.RED), 1, 2, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);  
+    builder.insert(1, "a");//插入文本位置要紧挨span样式 如果不是，那么设置的样式不适用a  后置包括同理。  
+    tv.setText(builder);  
+
+这么多文字，为了让你有看下去的勇气，下面来张效果图：
+TextView+SpannableString设置复合文本
+
+1、BackgroundColorSpan 背景色
+SpannableString spanText = new SpannableString("萝卜白菜的博客 -- http://orgcent.com");
+spanText.setSpan(new BackgroundColorSpan(Color.GREEN), 0, spanText.length(),
+Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+mTVText.append("\n");
+mTVText.append(spanText);
+
+2、ClickableSpan 文本可点击，有点击事件
+查看：Android使用TextView实现无下划线超链接
+* textView一定要setMovementMethod(LinkMovementMethod.getInstance())
+* textView一定要重新setText（）并且参数要为处理过的SpannableString对象，也就是说setText（）一定要在setSpan（）方法调用之后；只有在此之后，ss才是被处理过的，此时显示在textView上才是正常的[ss在赋给textView之前不能再有任何操作，否则失效；包括textView()时使用三目运算符也不行]；onClick()方法才能被调用；
+
+//自定义ClickableSpan，通过不同的type去判断文字显示的颜色以及下划线显示状况。
+public abstract class ClickableColorSpan extends ClickableSpan {  
+    private int type;  
+
+    public ClickableColorSpan(int type) {  
+        this.type = type;  
+    }  
+
+    @Override  
+    public void updateDrawState(TextPaint ds) {  
+        // 空格情况  
+        if (type == Constants.NOTHING) {  
+            // ds.setColor(ds.linkColor);  
+            ds.setColor(getActivity().getResources().getColor(R.color.linkcolor));  
+            ds.setUnderlineText(false);//是否显示下划线  
+        }  
+        // 解释或空格选择
+        if (type == Constants.DESCRIPTION) {  
+            ds.setColor(getActivity().getResources().getColor(R.color.orange));  
+            ds.setUnderlineText(false);  
+        }  
+        // 正常情况 
+        if (type == Constants.NORMAL) {  
+            // ds.setColor(ds.linkColor);  
+            ds.setColor(getActivity().getResources().getColor(R.color.linkcolor));  
+            ds.setUnderlineText(true);  
+        }  
+        // 非空格选择
+        if (type == Constants.SELECTED) {  
+            // ds.setColor(ds.linkColor);  
+            ds.setColor(getActivity().getResources().getColor(R.color.orange));  
+            ds.setUnderlineText(true);  
+        }  
+    }  
+}  
+private SpannableString getClickableSpan() {  
+    int start = 2;//设置点击范围  
+    int end = 4;  
+    SpannableString spanableInfo = new SpannableString("hello word");  
+    spanableInfo.setSpan(  
+            new ClickableColorSpan(0) {  
+                @Override  
+                public void onClick(View v) {  
+                //点击事件  
+                }  
+            }, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);  
+    return spanableInfo;  
+}  
+txtView.setText(getClickableSpan());  
+txtView.setMovementMethod(LinkMovementMethod.getInstance());  
+    
+
+3、ForegroundColorSpan 文本颜色（前景色）
+spanText = new SpannableString("萝卜白菜的博客 -- http://orgcent.com");
+spanText.setSpan(new ForegroundColorSpan(Color.BLUE), 6, spanText.length(),
+Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+mTVText.append("\n");
+mTVText.append(spanText);
+
+4、MaskFilterSpan 修饰效果，如模糊(BlurMaskFilter)、浮雕(EmbossMaskFilter)
+spanText = new SpannableString("MaskFilterSpan -- http://orgcent.com");
+int length = spanText.length();
+//模糊(BlurMaskFilter)
+MaskFilterSpan maskFilterSpan = new MaskFilterSpan(new BlurMaskFilter(3, Blur.OUTER));
+spanText.setSpan(maskFilterSpan, 0, length - 10, Spannable.
+SPAN_INCLUSIVE_EXCLUSIVE);
+//浮雕(EmbossMaskFilter)
+maskFilterSpan = new MaskFilterSpan(new EmbossMaskFilter(new float[]{1,1,3}, 1.5f, 8, 3));
+spanText.setSpan(maskFilterSpan, length - 10, length, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+mTVText.append("\n");
+mTVText.append(spanText);
+
+PS:从上图看，浮雕效果不明显。把字体设置大点后可以看得清晰些。需要其他效果可以继承MaskFilter来自定义。
+
+6、RasterizerSpan 光栅效果
+spanText = new SpannableString("StrikethroughSpan");
+spanText.setSpan(new StrikethroughSpan(), 0, 7, Spannable.
+SPAN_INCLUSIVE_EXCLUSIVE);
+mTVText.append("\n");
+mTVText.append(spanText);
+
+PS:暂不清楚，效果不明显。
+
+7、StrikethroughSpan 删除线（中划线）
+spanText = new SpannableString("StrikethroughSpan");
+spanText.setSpan(new StrikethroughSpan(), 0, 7, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+mTVText.append("\n");
+mTVText.append(spanText);
+
+8、SuggestionSpan
+相当于占位符，一般用在EditText输入框中。当双击此文本时，会弹出提示框选择一些建议（推荐的）文字，选中的文本将替换此占位符。在输入法上用的较多。
+PS：API 14新增，暂无示例。
+
+9、UnderlineSpan 下划线
+spanText = new SpannableString("UnderlineSpan");
+spanText.setSpan(new UnderlineSpan(), 0, spanText.length(),
+Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+mTVText.append("\n");
+mTVText.append(spanText);
+
+10、AbsoluteSizeSpan 绝对大小（文本字体）
+spanText = new SpannableString("AbsoluteSizeSpan");
+spanText.setSpan(new AbsoluteSizeSpan(20, true), 0, spanText.length(),
+Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+mTVText.append("\n");
+mTVText.append(spanText);
+
+PS:把字体大小设置大点，效果硬朗。
+
+11、DynamicDrawableSpan 设置图片，基于文本基线或底部对齐。
+DynamicDrawableSpan drawableSpan =
+ new DynamicDrawableSpan(DynamicDrawableSpan.ALIGN_BASELINE) {
+    @Override
+    public Drawable getDrawable() {
+        Drawable d = getResources().getDrawable(R.drawable.ic_launcher);
+        d.setBounds(0, 0, 50, 50);
+        return d;
+    }
+};
+DynamicDrawableSpan drawableSpan2 = new DynamicDrawableSpan(
+DynamicDrawableSpan.ALIGN_BOTTOM) {
+    @Override
+    public Drawable getDrawable() {
+          Drawable d = getResources().getDrawable(R.drawable.ic_launcher);
+          d.setBounds(0, 0, 50, 50);
+                return d;
+            }
+        };
+spanText.setSpan(drawableSpan, 3, 4, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+spanText.setSpan(drawableSpan2, 7, 8, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+mTVText.append("\n");
+mTVText.append(spanText);
+
+PS:左边图片基于基线对齐，右边图片基于底部对齐
+
+12、ImageSpan 图片
+spanText = new SpannableString("ImageSpan");
+Drawable d = getResources().getDrawable(R.drawable.ic_launcher);
+</strong>d.setBounds(0, 0, 50, 50);
+spanText.setSpan(new ImageSpan(d), 3, 4, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+mTVText.append("\n");
+mTVText.append(spanText);
+
+PS:和DynamicDrawableSpan差别不大
+
+13、RelativeSizeSpan 相对大小（文本字体）
+spanText = new SpannableString("RelativeSizeSpan");
+//参数proportion:比例大小
+spanText.setSpan(new RelativeSizeSpan(2.5f), 3, 4,
+Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+mTVText.append("\n");
+mTVText.append(spanText);
+
+PS:相对大小的比例是基于当前文本字体大小
+
+15、ScaleXSpan 基于x轴缩放
+spanText = new SpannableString("ScaleXSpan -- 萝卜白菜的博客");
+//参数proportion:比例大小
+spanText.setSpan(new ScaleXSpan(3.8f), 3, 7, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+mTVText.append("\n");
+mTVText.append(spanText);
+
+16、StyleSpan 字体样式：粗体、斜体等
+spanText = new SpannableString("StyleSpan -- 萝卜白菜的博客");
+//Typeface.BOLD_ITALIC:粗体+斜体
+spanText.setSpan(new StyleSpan(Typeface.BOLD_ITALIC), 3, 7,
+Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+mTVText.append("\n");
+mTVText.append(spanText);
+
+17、SubscriptSpan 下标（数学公式会用到
+spanText = new SpannableString("SubscriptSpan -- 萝卜白菜的博客");
+spanText.setSpan(new SubscriptSpan(), 6, 7, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+mTVText.append("\n");
+mTVText.append(spanText);
+
+18、SuperscriptSpan 上标（数学公式会用到）
+spanText = new SpannableString("SuperscriptSpan -- 萝卜白菜的博客");
+spanText.setSpan(new SuperscriptSpan(), 6, 7, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+mTVText.append("\n");
+mTVText.append(spanText);
+
+19、TextAppearanceSpan 文本外貌（包括字体、大小、样式和颜色）
+spanText = new SpannableString("TextAppearanceSpan -- 萝卜白菜的博客");
+//若需自定义TextAppearance，可以在系统样式上进行修改
+spanText.setSpan(new TextAppearanceSpan(this, android.R.style.TextAppearance_Medium),
+ 6, 7, Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+mTVText.append("\n");
+mTVText.append(spanText);
+
+PS:系统还提供了相关值TextAppearance_Small, TextAppearance_Large等。如有需要可在以上样式基础上修改。
+
+20、TypefaceSpan 文本字体
+spanText = new SpannableString("TypefaceSpan -- 萝卜白菜的博客");
+//若需使用自定义字体，可能要重写类TypefaceSpan
+spanText.setSpan(new TypefaceSpan("monospace"), 3, 10,
+Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+mTVText.append("\n");
+mTVText.append(spanText);
+
+PS:关于自定义字体的设置，后面将介绍如何使用
+
+21、URLSpan 文本超链接
+spanText = new SpannableString("URLSpan -- 萝卜白菜的博客");
+spanText.setSpan(new URLSpan("http://orgcent.com"), 10, spanText.length(),
+Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+mTVText.append("\n");
+mTVText.append(spanText);
+//让URLSpan可以点击
+mTVText.setMovementMethod(new LinkMovementMethod());

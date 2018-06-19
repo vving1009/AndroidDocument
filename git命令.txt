@@ -138,6 +138,8 @@ git commit –amend –author=<user-email>
 - git stash drop stash@{id}  //删除，如没有id就是删除最新的
 - git stash branch branch_name stash@{id} 基于进度创建分支
 - git  stash clear   //清除所有的
+git push origin stash@{0}:refs/heads/stash0
+
 
 8.  简单对比git pull和git pull --rebase的使用
 使用下面的关系区别这两个操作：
