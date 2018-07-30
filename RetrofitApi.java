@@ -54,4 +54,10 @@ public interface ApiManager {
     Call<T> uploadFiles(
             @Path("url") String url,
             @PartMap() Map<String, RequestBody> maps);
+            
+    @POST("login.jhtml")
+    @Headers({ "Content-Type: application/json;charset=UTF-8"})
+    Observable<bean> addUser(@Body RequestBody body);
 }
+
+RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"),"你要传递的json字符串");

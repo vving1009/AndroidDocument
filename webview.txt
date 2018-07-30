@@ -1,9 +1,31 @@
+WebViewÖĞµÄSettings
+
+httpsÒ³Ãæ¼ÓÔØ²»³öÀ´¾ÍÓÃËü£º
+setting.setDomStorageEnabled(true);//ÉèÖÃDOM Storage»º´æ
+
+¶øDomStorage°üÀ¨Session StorageºÍLocal StorageÁ½ÖÖ£¬Äã»¹¿ÉÒÔÕâÑùÉèÖÃ¡£
+webview.getSettings().setDatabaseEnabled(true);
+webview.getSettings().setDatabasePath("/data/data");
+webSettings.setDomStorageEnabled(true);
+
+setJavaScriptEnabled(true) ;//Ö§³Öjs½Å±¾ 
+setPluginsEnabled(true) ;//Ö§³Ö²å¼ş 
+setUserWideViewPort(false) ;//½«Í¼Æ¬µ÷Õûµ½ÊÊºÏwebviewµÄ´óĞ¡ 
+setSupportZoom(true) ;//Ö§³ÖËõ·Å 
+setLayoutAlgorithm(LayoutAlgrithm.SINGLE_COLUMN) ;//Ö§³ÖÄÚÈİ´ÓĞÂ²¼¾Ö 
+supportMultipleWindows() ;//¶à´°¿Ú 
+setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK) ;//¹Ø±ÕwebviewÖĞ»º´æ 
+setAllowFileAccess(true) ;//ÉèÖÃ¿ÉÒÔ·ÃÎÊÎÄ¼ş 
+setNeedInitialFocus(true) ;//µ±webviewµ÷ÓÃrequestFocusÊ±ÎªwebviewÉèÖÃ½Úµã 
+setjavaScriptCanOpenWindowsAutomatically(true) ;//Ö§³ÖÍ¨¹ıJS´ò¿ªĞÂ´°¿Ú 
+setLoadsImagesAutomatically(true) ;//Ö§³Ö×Ô¶¯¼ÓÔØÍ¼Æ¬ 
+setBuiltInZoomControls(true);//Ö§³ÖËõ·Å 
+webView.setInitialScale(35);//ÉèÖÃËõ·Å±ÈÀı 
+webView.setScrollBarStyle(View.SCROLLBARS_OUTSIDE_OVERLAY);//ÉèÖÃ¹ö¶¯ÌõÒş²Ø webView.getSettings().setGeolocationEnabled(true);//ÆôÓÃµØÀí¶¨Î» webView.getSettings().setRenderPriority(RenderPriority.HIGH);//ÉèÖÃäÖÈ¾ÓÅÏÈ¼¶
+
+////////////////////////////////////////////////////////////////////////////////////
+
 Android-----WebViewÊ¹ÓÃ 
-
-
-
-
-  
 
 ´ó²¿·ÖÄÚÈİÎªÍøÉÏÕûÀíÆäËü¸ßÈËµÄÌû×Ó£¬ÏÖÖ»×÷ÕûÀí£¬ÓÃÓÚ²é¿´£º
 
@@ -23,10 +45,6 @@ WebKitÊÇMac OS X v10.3¼°ÒÔÉÏ°æ±¾Ëù°üº¬µÄÈí¼ş¿ò¼Ü£¨¶Ôv10.2.7¼°ÒÔÉÏ°æ±¾Ò²¿ÉÍ¨¹ıÈí¼
         webview.getSettings().setJavaScriptEnabled(true);  
     3.Èç¹ûÒ³ÃæÖĞÁ´½Ó£¬Èç¹ûÏ£Íûµã»÷Á´½Ó¼ÌĞøÔÚµ±Ç°browserÖĞÏìÓ¦£¬¶ø²»ÊÇĞÂ¿ªAndroidµÄÏµÍ³browserÖĞÏìÓ¦¸ÃÁ´½Ó£¬±ØĞë¸²¸Ç webviewµÄWebViewClient¶ÔÏó¡£
 
-
- 
-
-
 mWebView.setWebViewClient(new WebViewClient(){       
                     public boolean shouldOverrideUrlLoading(WebView view, String url) {       
                         view.loadUrl(url);       
@@ -34,16 +52,7 @@ mWebView.setWebViewClient(new WebViewClient(){
                     }       
         });   
 
- 
-
- 
-
  4.Èç¹û²»×öÈÎºÎ´¦Àí£¬ä¯ÀÀÍøÒ³£¬µã»÷ÏµÍ³¡°Back¡±¼ü£¬Õû¸öBrowser»áµ÷ÓÃfinish()¶ø½áÊø×ÔÉí£¬Èç¹ûÏ£Íûä¯ÀÀµÄÍø Ò³»ØÍË¶ø²»ÊÇÍÆ³öä¯ÀÀÆ÷£¬ĞèÒªÔÚµ±Ç°ActivityÖĞ´¦Àí²¢Ïû·Ñµô¸ÃBackÊÂ¼ş¡£
-
-
- 
-
-
 public boolean onKeyDown(int keyCode, KeyEvent event) {       
         if ((keyCode == KeyEvent.KEYCODE_BACK) && mWebView.canGoBack()) {       
             mWebView.goBack();       
@@ -52,18 +61,10 @@ public boolean onKeyDown(int keyCode, KeyEvent event) {
         return super.onKeyDown(keyCode, event);       
     }     
 
- 
-
- 
 
 ÏÂÒ»²½ÈÃÎÒÃÇÀ´ÁË½âÒ»ÏÂandroidÖĞwebviewÊÇÈçºÎÖ§³Öjavascripte×Ô¶¨Òå¶ÔÏóµÄ£¬ÔÚw3c±ê×¼ÖĞjsÓĞ window£¬history£¬documentµÈ±ê×¼¶ÔÏó£¬Í¬ÑùÎÒÃÇ¿ÉÒÔÔÚ¿ª·¢ä¯ÀÀÆ÷Ê±×Ô¼º¶¨ÒåÎÒÃÇµÄ¶ÔÏóµ÷ÓÃÊÖ»úÏµÍ³¹¦ÄÜÀ´´¦Àí£¬ÕâÑùÊ¹ÓÃjs¾Í¿ÉÒÔ ÎªËùÓûÎªÁË¡£
 
   ¿´Ò»¸öÊµÀı£º
-
-
- 
-
-
 
 view plaincopy to clipboardprint?
 01.public class WebViewDemo extends Activity {        
@@ -89,15 +90,7 @@ view plaincopy to clipboardprint?
 21.    }       
 22.}   
 
- 
-
- 
-
 ÎÒÃÇ¿´addJavascriptInterface(Object obj,String interfaceName)Õâ¸ö·½·¨£¬¸Ã·½·¨½«Ò»¸öjava¶ÔÏó°ó¶¨µ½Ò»¸öjavascript¶ÔÏóÖĞ£¬javascript¶ÔÏóÃû¾ÍÊÇ interfaceName£¨demo£©£¬×÷ÓÃÓòÊÇGlobal¡£ÕâÑù³õÊ¼»¯webviewºó£¬ÔÚwebview¼ÓÔØµÄÒ³ÃæÖĞ¾Í¿ÉÒÔÖ±½ÓÍ¨¹ı javascript:window.demo·ÃÎÊµ½°ó¶¨µÄjava¶ÔÏóÁË¡£À´¿´¿´ÔÚhtmlÖĞÊÇÔõÑùµ÷ÓÃµÄ¡£
-
-
- 
-
 
 <html>       
         <mce:script language="javascript"><!--     
@@ -114,10 +107,6 @@ view plaincopy to clipboardprint?
             </a>       
         </body>       
 </html>      
-
- 
-
- 
 
 ÕâÑùÔÚjavascriptÖĞ¾Í¿ÉÒÔµ÷ÓÃjava¶ÔÏóµÄclickOnAndroid()·½·¨ÁË£¬Í¬ÑùÎÒÃÇ¿ÉÒÔÔÚ´Ë¶ÔÏóÖĞ¶¨ÒåºÜ¶à·½·¨£¨±È Èç·¢¶ÌĞÅ£¬µ÷ÓÃÁªÏµÈËÁĞ±íµÈÊÖ»úÏµÍ³¹¦ÄÜ¡££©,ÕâÀïwave()·½·¨ÊÇjavaÖĞµ÷ÓÃjavascriptµÄÀı×Ó¡£
 
