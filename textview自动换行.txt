@@ -1,0 +1,216 @@
+android textview自动换行、排列错乱问题及解决
+https://blog.csdn.net/zhuangyalei/article/details/52151642
+
+今天忽然发现android项目中的文字排版参差不齐的情况非常严重，不得不想办法解决一下。经过研究之后，终于找到了textview自动换行导致混乱的原这个问题是由于：半角字符与全角字符混乱所致！一般情况下，我们输入的数字、字母以及英文标点都是半角，所以占位无法确定。它们与汉字的占位大大的不同，由于这个原因，导致很多文字的排版都是参差不齐的。对此我找到了两种办法可以解决这个问题： 
+
+1. 将textview中的字符全角化。即将所有的数字、字母及标点全部转为全角字符，使它们与汉字同占两个字节，这样就可以避免由于占位导致的排版混乱问题了。 半角转为全角的代码如下，只需调用即可。 
+
+
+Java代码  收藏代码
+
+    /** 
+         * 半角转换为全角 
+         *  
+         * @param input 
+         * @return 
+         */  
+        public static String ToDBC(String input) {  
+            char[] c = input.toCharArray();  
+            for (int i = 0; i < c.length; i++) {  
+                if (c[i] == 12288) {  
+                    c[i] = (char) 32;  
+                    continue;  
+                }  
+                if (c[i] > 65280 && c[i] < 65375)  
+                    c[i] = (char) (c[i] - 65248);  
+            }  
+            return new String(c);  
+        }  
+
+
+
+2. 去除特殊字符或将所有中文标号替换为英文标号。利用正则表达式将所有特殊字符过滤，或利用replaceAll（）将中文标号替换为英文标号。
+
+则转化之后，则可解决排版混乱问题。 
+
+Java代码  收藏代码
+
+    /** 
+         * 去除特殊字符或将所有中文标号替换为英文标号 
+         *  
+         * @param str 
+         * @return 
+         */  
+        public static String stringFilter(String str) {  
+            str = str.replaceAll("【", "[").replaceAll("】", "]")  
+                    .replaceAll("！", "!").replaceAll("：", ":");// 替换中文标号  
+            String regEx = "[『』]"; // 清除掉特殊字符  
+            Pattern p = Pattern.compile(regEx);  
+            Matcher m = p.matcher(str);  
+            return m.replaceAll("").trim();  
+        }  
+        
+        
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+https://blog.csdn.net/u011176685/article/details/48295185
+
+一、问题描述：
+
+Android的TextView在显示文字的时候，如果有段中文有英文，有中文，有中文标点符号，你会发现，当要换行的时候遇到中文标点，
+
+这一行就会空出很多空格出来。原因是：
+
+1） TextView在显示中文的时候 标点符号不能显示在一行的行首和行尾，如果一个标点符号刚好在一行的行尾，该标点符号就会连同前一个字符跳到下一行显示；
+
+2）一个英文单词不能被显示在两行中（ TextView在显示英文时，标点符号是可以放在行尾的，但英文单词也不能分开 ）；
+
+3）全角和半角的问题，汉字无论全角还是半角都是占2个字节，英文和符号在半角是占一个字节，全角是占两个字节。
+
+二、解决方法
+
+参考资料中：http://niufc.iteye.com/blog/1729792 
+
+可能由于时间问题，都没有很好解决我的问题。将textview中的字符全角化没有效果，去除特殊字符或将所有中文标号替换为英文标号。这个有点效果，但是产品经理说文案不符合标准。改源代码担心出问题，影响其他的应用。自定义TextView时，canvas.setViewport()这个方法的api被删了。然后各种百度查资料，很多都是转过来转过去。然并卵。后面找了好久才找到一个靠谱的。完美的解决了我的问题。
+
+
+自定义TextView（直接把代码拷进去就能用）
+
+    package com.lhx.widget;
+    import android.content.Context;
+    import android.graphics.Canvas;
+    import android.graphics.Paint;
+    import android.text.Layout;
+    import android.text.StaticLayout;
+    import android.text.TextPaint;
+    import android.util.AttributeSet;
+    import android.widget.TextView;
+     
+    /**
+     * @author lhx
+     * @Date 9/8/15
+     */
+    public class MyTextView extends TextView {
+     
+        private int mLineY;
+        private int mViewWidth;
+     
+        public MyTextView(Context context, AttributeSet attrs) {
+            super(context, attrs);
+        }
+     
+        @Override
+        protected void onLayout(boolean changed, int left, int top, int right,
+                                int bottom) {
+            super.onLayout(changed, left, top, right, bottom);
+        }
+     
+        @Override
+        protected void onDraw(Canvas Canvas) {
+            TextPaint paint = getPaint();
+            paint.setColor(getCurrentTextColor());
+            paint.drawableState = getDrawableState();
+            mViewWidth = getMeasuredWidth();
+            String text = getText().toString();
+            mLineY = 0;
+            mLineY += getTextSize();
+            Layout layout = getLayout();
+     
+            // layout.getLayout()在4.4.3出现NullPointerException
+            if (layout == null) {
+                return;
+            }
+     
+            Paint.FontMetrics fm = paint.getFontMetrics();
+     
+            int textHeight = (int) (Math.ceil(fm.descent - fm.ascent));
+            textHeight = (int) (textHeight * layout.getSpacingMultiplier() + layout
+                    .getSpacingAdd());
+            //解决了最后一行文字间距过大的问题
+            for (int i = 0; i < layout.getLineCount(); i++) {
+                int lineStart = layout.getLineStart(i);
+                int lineEnd = layout.getLineEnd(i);
+                float width = StaticLayout.getDesiredWidth(text, lineStart,
+                        lineEnd, getPaint());
+                String line = text.substring(lineStart, lineEnd);
+     
+                if(i < layout.getLineCount() - 1) {
+                    if (needScale(line)) {
+                        drawScaledText(Canvas, lineStart, line, width);
+                    } else {
+                        Canvas.drawText(line, 0, mLineY, paint);
+                    }
+                } else {
+                    Canvas.drawText(line, 0, mLineY, paint);
+                }
+                mLineY += textHeight;
+            }
+        }
+     
+        private void drawScaledText(Canvas Canvas, int lineStart, String line,
+                                    float lineWidth) {
+            float x = 0;
+            if (isFirstLineOfParagraph(lineStart, line)) {
+                String blanks = "  ";
+                Canvas.drawText(blanks, x, mLineY, getPaint());
+                float bw = StaticLayout.getDesiredWidth(blanks, getPaint());
+                x += bw;
+     
+                line = line.substring(3);
+            }
+     
+            int gapCount = line.length() - 1;
+            int i = 0;
+            if (line.length() > 2 && line.charAt(0) == 12288
+                    && line.charAt(1) == 12288) {
+                String substring = line.substring(0, 2);
+                float cw = StaticLayout.getDesiredWidth(substring, getPaint());
+                Canvas.drawText(substring, x, mLineY, getPaint());
+                x += cw;
+                i += 2;
+            }
+     
+            float d = (mViewWidth - lineWidth) / gapCount;
+            for (; i < line.length(); i++) {
+                String c = String.valueOf(line.charAt(i));
+                float cw = StaticLayout.getDesiredWidth(c, getPaint());
+                Canvas.drawText(c, x, mLineY, getPaint());
+                x += cw + d;
+            }
+        }
+     
+        private boolean isFirstLineOfParagraph(int lineStart, String line) {
+            return line.length() > 3 && line.charAt(0) == ' '
+                    && line.charAt(1) == ' ';
+        }
+     
+        private boolean needScale(String line) {
+            if (line == null || line.length() == 0) {
+                return false;
+            } else {
+                return line.charAt(line.length() - 1) != '\n';
+            }
+        }
+     
+    }
+
+
+xml文件代码
+
+     <!--工作时间提醒-->
+        <LinearLayout
+                android:layout_width="match_parent"
+                android:id="@+id/ll_chat"
+                android:background="@color/topbar_chat"
+                android:layout_height="wrap_content">
+            <com.lhx.widget.MyTextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/tv_reminder"
+                    android:layout_marginTop="5dp"
+                    android:layout_marginBottom="5dp"
+                    android:layout_marginRight="8dp"
+                    android:layout_marginLeft="8dp"
+                    android:text = "服务商不管以任何形式要求线下交易，都存在诈骗的风险，请提高警惕。This is test!欢迎相互关注。有不对的地方望指出和包容。谢谢！ "
+                    android:textColor="@color/text_orange_1"/>
+        </LinearLayout>

@@ -558,6 +558,10 @@ mRxOperatorsText.append("interval start : " + TimeUtil.getNowStrTime() + "\n");
 
 然而，心细的小伙伴可能会发现，由于我们这个是间隔执行，所以当我们的Activity都销毁的时候，实际上这个操作还依然在进行，所以，我们得花点小心思让我们在不需要它的时候干掉它。查看源码发现，我们subscribe(Cousumer<? super T> onNext)返回的是Disposable，我们可以在这上面做文章。 
 
+
+- doOnEach
+可以给Observable加上这样的样一个回调：Observable每发射一个数据的时候就会触发这个回调，不仅包括onNext还包括onError和onCompleted。
+
 - doOnNext
 
 让订阅者在接收到数据之前干点有意思的事情。假如我们在获取到数据之前想先保存一下它，无疑我们可以这样实现。 
@@ -802,9 +806,34 @@ Observable.interval(1, TimeUnit.SECONDS) // 间隔一秒发一次
            }
        });
                
-24、cast
+25、cast
 子类转父类
-Observable.just(new Son()).cast(Father.class)               
+Observable.just(new Son()).cast(Father.class)             
+
+26. takeUtil
+很显然，observable.takUtil(condition)，当condition == true时终止，且包含临界条件的item
+使用场景
+不停地获取数据，直到[满足/不满足]某个条件时终止
+买电影票付完款，会有一个出票的状态：
+status: 1: 出票中，2：出票失败，3：出票成功
+现在需要：在出票中时，5s轮询一次出票状态，直到成功或失败。
+Observable.interval(0, 5, TimeUnit.SECONDS)
+            .flatMap(aLong -> orderService.getStatusInfo(orderId))      // 获取订单状态
+            .takeUntil(statusInfo -> statusInfo.isSuccess() || statusInfo.isFailed())
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(this::updateStatusView, Throwable::printStackTrace);
+
+27. takeWhile
+observable.takeWhile(condition)，当condition == false的时候终止，不包含临界条件的item
+autoSubscription = Observable.interval(0, 5, TimeUnit.SECONDS)
+            .flatMap(aLong -> orderService.getStatusInfo(orderId))      // 获取订单状态
+            .takeWhile(statusInfo -> statusInfo.isGenerating())
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(this::updateStatusView, Throwable::printStackTrace);
+问题出现了：由于takeWhile不包含condition == false时的item，所以这种实现只能展示出票中的状态。
+所以在该场景这种实现是错误的！
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 

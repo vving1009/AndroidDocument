@@ -1,0 +1,18 @@
+apply plugin: 'com.android.library'
+apply plugin: 'maven'
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            repository(url: 'http://192.168.1.51:8081/nexus/content/repositories/jiaye_android') {
+                authentication(userName: 'admin', password: 'admin123')
+            }
+            pom.project {
+                groupId 'com.satcatche.library'
+                artifactId 'network'
+                version '1.0'
+                packaging 'aar'
+            }
+        }
+    }
+}

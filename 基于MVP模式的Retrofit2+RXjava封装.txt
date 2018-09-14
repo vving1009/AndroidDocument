@@ -1,0 +1,504 @@
+【Android架构】基于MVP模式的Retrofit2+RXjava封装
+https://mp.weixin.qq.com/s/zUbmnQSTI7TniOGSmlML6w
+
+最近有个新项目要做，搭建框架的时候，顺便梳理了下MVP模式，特此记录，欢迎大家指正。
+
+项目地址：https://github.com/18702953620/MVPDemo
+
+一 、首先是依赖
+
+    compile 'com.google.code.gson:gson:2.8.0'
+    compile 'com.squareup.okhttp3:okhttp:3.4.1'
+    compile 'com.yanzhenjie:permission:1.0.5'
+    compile 'com.squareup.retrofit2:retrofit:2.3.0'
+    compile 'io.reactivex.rxjava2:rxandroid:2.0.1'
+    compile 'io.reactivex.rxjava2:rxjava:2.1.5'
+    //ConverterFactory的String依赖包
+    compile 'com.squareup.retrofit2:converter-scalars:2.3.0'
+    //ConverterFactory的Gson依赖包
+    compile 'com.squareup.retrofit2:converter-gson:2.3.0'
+    //CallAdapterFactory的Rx依赖包
+    compile 'com.squareup.retrofit2:adapter-rxjava2:2.3.0'
+二、ApiServer，定义了一些接口
+
+public interface ApiServer {
+    @POST("shopping_login.htm")
+    Observable<String> LoginByRx(@Field("username") String username, @Field("password") String password);
+
+}
+三、ApiRetrofit，初始化Retrofit、OkHttpClient，加入了拦截器
+
+public class ApiRetrofit {
+
+    public final String BASE_SERVER_URL = "https://wawa-api.vchangyi.com/";
+
+    private static ApiRetrofit apiRetrofit;
+    private Retrofit retrofit;
+    private OkHttpClient client;
+    private ApiServer apiServer;
+
+    private String TAG = "ApiRetrofit";
+
+    /**
+     * 请求访问quest
+     * response拦截器
+     */
+    private Interceptor interceptor = new Interceptor() {
+        @Override
+        public Response intercept(Chain chain) throws IOException {
+            Request request = chain.request();
+            long startTime = System.currentTimeMillis();
+            Response response = chain.proceed(chain.request());
+            long endTime = System.currentTimeMillis();
+            long duration = endTime - startTime;
+            MediaType mediaType = response.body().contentType();
+            String content = response.body().string();
+            Log.e(TAG, "----------Request Start----------------");
+            Log.e(TAG, "| " + request.toString() + request.headers().toString());
+            Log.e(TAG, "| Response:" + content);
+            Log.e(TAG, "----------Request End:" + duration + "毫秒----------");
+            return response.newBuilder()
+                    .body(ResponseBody.create(mediaType, content))
+                    .build();
+        }
+    };
+
+
+    public ApiRetrofit() {
+        client = new OkHttpClient.Builder()
+                //添加log拦截器
+                .addInterceptor(interceptor)
+                .connectTimeout(10, TimeUnit.SECONDS)
+                .readTimeout(10, TimeUnit.SECONDS)
+                .build();
+
+        retrofit = new Retrofit.Builder()
+                .baseUrl(BASE_SERVER_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .addConverterFactory(ScalarsConverterFactory.create())
+                //支持RxJava2
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+                .client(client)
+                .build();
+
+        apiServer = retrofit.create(ApiServer.class);
+    }
+
+    public static ApiRetrofit getInstance() {
+        if (apiRetrofit == null) {
+            synchronized (Object.class) {
+                if (apiRetrofit == null) {
+                    apiRetrofit = new ApiRetrofit();
+                }
+            }
+        }
+        return apiRetrofit;
+    }
+
+    public ApiServer getApiService() {
+        return apiServer;
+    }
+
+}
+四、基类
+
+1.BaseView，其中定义了常用的接口
+
+public interface BaseView {
+    /**
+     * 显示dialog
+     */
+    void showLoading();
+
+    /**
+     * 隐藏 dialog
+     */
+
+    void hideLoading();
+
+    /**
+     * 显示错误信息
+     *
+     * @param msg
+     */
+    void showError(String msg);
+
+    /**
+     * 错误码
+     */
+    void onErrorCode(BaseModel model);
+}
+2.BaseModel
+
+public class BaseModel<T> implements Serializable {
+    private int errcode;
+    private String errmsg;
+    private T result;
+
+    public int getErrcode() {
+        return errcode;
+    }
+
+    public void setErrcode(int errcode) {
+        this.errcode = errcode;
+    }
+
+    public String getErrmsg() {
+        return errmsg;
+    }
+
+    public void setErrmsg(String errmsg) {
+        this.errmsg = errmsg;
+    }
+
+    public T getResult() {
+        return result;
+    }
+
+    public void setResult(T result) {
+        this.result = result;
+    }
+}
+3.BasePresenter
+
+public class BasePresenter<V extends BaseView> {
+
+    private CompositeDisposable compositeDisposable;
+
+
+    public V baseView;
+
+    protected ApiServer apiServer = ApiRetrofit.getInstance().getApiService();
+
+    public BasePresenter(V baseView) {
+
+        this.baseView = baseView;
+    }
+
+    /**
+     * 解除绑定
+     */
+    public void detachView() {
+        baseView = null;
+        removeDisposable();
+    }
+
+    /**
+     * 返回 view
+     *
+     * @return
+     */
+    public V getBaseView() {
+        return baseView;
+    }
+
+
+    public void addDisposable(Observable<?> observable, BaseObserver observer) {
+        if (compositeDisposable == null) {
+            compositeDisposable = new CompositeDisposable();
+        }
+        compositeDisposable.add(observable.subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeWith(observer));
+
+
+    }
+
+    public void removeDisposable() {
+        if (compositeDisposable != null) {
+            compositeDisposable.dispose();
+        }
+    }
+
+}
+4.BaseObserver，主要处理了常见的错误
+
+public abstract class BaseObserver<T> extends DisposableObserver<T> {
+    protected BaseView view;
+    /**
+     * 解析数据失败
+     */
+    public static final int PARSE_ERROR = 1001;
+    /**
+     * 网络问题
+     */
+    public static final int BAD_NETWORK = 1002;
+    /**
+     * 连接错误
+     */
+    public static final int CONNECT_ERROR = 1003;
+    /**
+     * 连接超时
+     */
+    public static final int CONNECT_TIMEOUT = 1004;
+
+
+    public BaseObserver(BaseView view) {
+        this.view = view;
+    }
+
+    @Override
+    protected void onStart() {
+        if (view != null) {
+            view.showLoading();
+        }
+    }
+
+    @Override
+    public void onNext(T o) {
+        try {
+            BaseModel model = (BaseModel) o;
+            if (model.getErrcode() == 0) {
+                onSuccess(o);
+            } else {
+                if (view != null) {
+                    view.onErrorCode(model);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            onError(e.toString());
+        }
+
+
+    }
+
+    @Override
+    public void onError(Throwable e) {
+        if (view != null) {
+            view.hideLoading();
+        }
+        if (e instanceof HttpException) {
+            //   HTTP错误
+            onException(BAD_NETWORK);
+        } else if (e instanceof ConnectException
+                || e instanceof UnknownHostException) {
+            //   连接错误
+            onException(CONNECT_ERROR);
+        } else if (e instanceof InterruptedIOException) {
+            //  连接超时
+            onException(CONNECT_TIMEOUT);
+        } else if (e instanceof JsonParseException
+                || e instanceof JSONException
+                || e instanceof ParseException) {
+            //  解析错误
+            onException(PARSE_ERROR);
+        } else {
+            if (e != null) {
+                onError(e.toString());
+            } else {
+                onError("未知错误");
+            }
+        }
+
+    }
+
+    private void onException(int unknownError) {
+        switch (unknownError) {
+            case CONNECT_ERROR:
+                onError("连接错误");
+                break;
+
+            case CONNECT_TIMEOUT:
+                onError("连接超时");
+                break;
+
+            case BAD_NETWORK:
+                onError("网络问题");
+                break;
+
+            case PARSE_ERROR:
+                onError("解析数据失败");
+                break;
+
+            default:
+                break;
+        }
+    }
+
+
+    @Override
+    public void onComplete() {
+        if (view != null) {
+            view.hideLoading();
+        }
+
+    }
+    public abstract void onSuccess(T o);
+
+    public abstract void onError(String msg);
+}
+5.BaseActivity，实现BaseView，处理了Presenter的生命周期。
+
+public abstract class BaseActivity<P extends BasePresenter> extends AppCompatActivity implements BaseView {
+    public Context context;
+    private ProgressDialog dialog;
+    public Toast toast;
+    protected P presenter;
+
+    protected abstract P createPresenter();
+
+    protected abstract int getLayoutId();
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        context = this;
+        setContentView(getLayoutId());
+        presenter = createPresenter();
+        initView();
+        initData();
+    }
+
+    public void initData() {
+    }
+
+    public void initView() {
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (presenter != null) {
+            presenter.detachView();
+        }
+    }
+
+   /**
+     * @param s
+     */
+    public void showtoast(String s) {
+        if (toast == null) {
+            toast = Toast.makeText(getApplicationContext(), s, Toast.LENGTH_LONG);
+        }
+        toast.show();
+    }
+
+    private void closeLoadingDialog() {
+        if (dialog != null && dialog.isShowing()) {
+            dialog.dismiss();
+        }
+    }
+
+
+    private void showLoadingDialog() {
+
+        if (dialog == null) {
+            dialog = new ProgressDialog(context);
+        }
+        dialog.setCancelable(false);
+        dialog.show();
+    }
+
+    @Override
+    public void showLoading() {
+        showLoadingDialog();
+    }
+
+
+    @Override
+    public void hideLoading() {
+        closeLoadingDialog();
+    }
+
+
+    @Override
+    public void showError(String msg) {
+        showtoast(msg);
+    }
+
+    @Override
+    public void onErrorCode(BaseModel model) {
+    }
+
+    @Override
+    public void showLoadingFileDialog() {
+        showFileDialog();
+    }
+
+    @Override
+    public void hideLoadingFileDialog() {
+        hideFileDialog();
+    }
+
+    @Override
+    public void onProgress(long totalSize, long downSize) {
+        if (dialog != null) {
+            dialog.setProgress((int) (downSize * 100 / totalSize));
+        }
+    }
+}
+五、如上，框架已经搭建好了，让我们来看看在实际项目中怎么用。
+
+我们来模拟登陆
+1.定义LoginView 继承于BaseView
+
+public interface LoginView extends BaseView {
+    void onLoginSucc();
+}
+2.定义LoginPresenter 继承于BasePresenter
+
+public class LoginPresenter extends BasePresenter<LoginView> {
+    public LoginPresenter(LoginView baseView) {
+        super(baseView);
+    }
+
+    public void login(String name, String pwd) {
+
+        addDisposable(apiServer.LoginByRx(name, pwd), new BaseObserver(baseView) {
+            @Override
+            public void onSuccess(Object o) {
+                baseView.onLoginSucc();
+
+            }
+
+            @Override
+            public void onError(String msg) {
+                baseView.showError(msg);
+
+            }
+        });
+    }
+}
+3.LoginActivity 中使用
+
+public class LoginActivity extends BaseActivity<LoginPresenter> implements LoginView {
+
+    private AutoCompleteTextView mEmailView;
+    private EditText mPasswordView;
+
+    @Override
+    protected LoginPresenter createPresenter() {
+        return new LoginPresenter(this);
+    }
+
+    @Override
+    protected int getLayoutId() {
+        return R.layout.activity_login;
+    }
+
+    @Override
+    public void initView() {
+        mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
+        mPasswordView = (EditText) findViewById(R.id.password);
+        Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
+        mEmailSignInButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                //示例代码，示例接口
+                presenter.login(mEmailView.getText().toString(), mPasswordView.getText().toString());
+
+            }
+        });
+    }
+
+    @Override
+    public void onLoginSucc() {
+        //Login Succ
+
+        showtoast("登录成功");
+
+    }
+}
+以上就是MVP的实现，MVP的框架很多，适合自己就好。
+你的认可，是我坚持更新博客的动力，如果觉得有用，就请点个赞，谢谢

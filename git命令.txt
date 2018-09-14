@@ -179,3 +179,196 @@ squash 是用来把一些不必要commit进行压缩，比如说，你的feature在开发的时候写的comm
 于是使用--squash进行合并，此时文件已经同合并后一样了，但不移动HEAD，不提交。需要进行一次额外的commit来“总结”一下，然后完成最终的合并。
 --no-ff指的是强行关闭fast-forward方式。git merge --no-ff -m "merge with no-ff" dev
 因为本次合并要创建一个新的commit，所以加上-m参数，把commit描述写进去。
+
+/////////////////////////////////////////////////////////////////////
+https://www.jianshu.com/p/01b2c512467d
+https://www.jianshu.com/p/c12de1aae7a5
+
+Git基本配置
+
+Git配置使用git config分三种，存放在不同位置
+文件 	作用
+/etc/gitconfig 	系统中对所有的用户都适用的配置。git config --system ...
+~/.gitconfig 	用户目录下的配置文件只适用该用户。git config --global ...
+当前项目下的.git/config 	配置只对当前项目有效。git config ...
+
+首先要配置用户名和邮箱。每次git提交都会使用这里配置的默认信息
+
+git config --global user.name "yourname"
+git config --global user.email ...@example.com
+
+配置默认文本编辑器，例如emacs
+
+git config --global core.editor emacs
+
+配置解决差异冲突时使用哪种分析工具，例如vimdiff
+
+git config --global merge.tool vimdiff
+
+检查已有配置
+
+git config --list
+
+高亮显示一些配置
+
+git config --global color.status auto    #查看状态时高亮
+git config --global color.branch auto     #分支名高亮
+git config --global color.ui auto     #自动高亮
+
+配置别名来简化一些命令，例如checkout 简化为co，status简化为st
+
+git config --global alias.co checkout
+git config --global alias.st status
+
+之后使用命令git checkout 时就可以简化为 git co
+Git基本命令
+
+环境配置好了后就可以使用了，常用的git命令就几个不用担心
+创建git仓库--git inite
+
+在项目根目录下执行git inite命令（在跟目录下右键Git Bash），会在根目录下创建隐藏.Git目录，包含相关配置和信息
+查看本地仓库的状态--git status
+
+使用git status或之前简化的git st，状态有三种已修改，已暂存，已修改。已修改是在工作目录也就是项目里修改还有提交保存；已暂存是指用git add命令提交到要保存的清单（暂存区域）；已提交是暂存区的文件通过git commit提交到本地git仓库；
+由于我们新建的仓库，所有文件都没保存提交，都是已修改状态
+提交修改到暂存区域--git add
+
+通过上面提示可以知道用git add提交，它完整命令参数复杂，只说最常见的两种。一种是添加某个文件，例如app文件
+
+git add app
+
+提交目录下所有文件
+
+git add .
+
+在看看现在状态
+
+已变成暂存状态，并且提示可以使用git rm --cached命令将文件从追踪列表移除
+提交到本地仓库--git commit
+
+使用git commit将追踪列表中文件提交
+
+git commit -m "提交说明"         #形式1：通过-m提交简短信息
+git commit              #形式2：会跳转编辑器，在提交信息有一定格式或文字较多时用
+
+现在工作区是干净的
+查看项目历史记录--git log
+
+git log
+
+下载远程项目--git clone
+
+当想下载网络上别人的仓库时，可使用git clone "地址"，例如下载我github上一个EmptyHand项目
+
+git clone https://github.com/biloba123/EmptyHand.git
+
+会在当前目录下新建一个EmptyHand文件存放
+不同分支--git branch
+
+在上面的操作都显示master，因为默认创建一个master的主分支，不同分支互不影响，当我们开发新功能时一般会新建一个分支在上面操作，因为新加功能可能会有问题最后砍掉这个功能，只有测试通过没有问题再把它合并到master分支上。
+例如现在开发热点功能，新建一个hotspot分支
+
+git branch hotspot
+
+看到现在一共两个分支，当前处于master
+切换分支--git checkout
+
+checkout命令用于签出一个分支或者一个路径。常用于分支切换和恢复文件。列入切换到hotspot分支
+
+git checkout hotspot
+
+现在已经在hotspot分支，我们开发啊开发（几天过去了...），功能差不多实现了将代码保存提交
+
+然而，hotspot出现严重bug，只放弃它
+
+git checkout master    #切换回master
+git branch -D hotspot     #删除hotspot分支
+
+checkout的另一个常用功能是将文件恢复到修改之前状态。比如今天去在ConnectHotspotFragment.java文件里加了好多好多代码，然而写完发现完全不能用...，而且由于太乱之前代码也不能用了。。。
+别担心通过下面命令可以恢复
+
+git checkout -- ConnectHotspotFragment.java
+
+合并分支--git merge
+
+如果hotspot开发完成没bug，要将它合并到master分支上。首先提交hotspot代码，切换到主分支，再执行git merge hotspot命令，如果没冲突就能直接合并
+解决冲突
+
+合并并不能经常一帆风顺，比如我现在主要负责这个项目，然后有另一个人协助我，我就把hotspot丢给他做，我也继续在主分支上做，但如果我们同时改了MainActivity，那在合并时
+
+看到代码里
+
+两个分支同时改了这里，所以git不知道该用谁的，这时就要手动合并
+
+然后再git add和commit提交代码即可
+为版本打个标签--git tag
+
+当完成所有功能并通过测试时，通常会为这个版本打个标签
+
+git tag -a v1.0 -m "相关信息"
+
+也可以通过" git tag -d 标签名 "来删除tag，通过" git show 标签名"查看版本具体信息
+帮助文档--git help
+
+当你不知道某个命令怎么用时，可以通过 git help 来获取其完整说明。例如查看tag命令说明
+
+git help tag
+
+SSH key配置
+
+为了在使用github过程中重复输入用户名，密码，通常需要配置生成ssh key，并把它添加到github上，使得远程命令时github能识别我们的机器，并直接给与授权。
+首先在本机生成一个ssh key
+
+ssh-keygen -t rsa -b 4096 -C "XXXX@example.com"     #邮箱用github注册时的邮箱
+
+会问ssh key存放在哪里，默认路径为"/Users/用户名/.ssh"目录，直接回车
+然后会有两个提示要求输入密码，直接回车，就没有密码，这样就生成了id_rsa和id_rsa.pub文件，存放了ssh key，通过它就可以直接访问github不需要任何密码。
+复制id_rsa.pub的内容，到你的github账号，点开setting，选择"SSH Keys",点"New SSH key",将生成的key绑定上去
+
+通过下面命令测试是否添加成功
+
+ssh -T git@github.com
+
+输出以上信息说明操作成功
+项目托管--git remote
+
+比如本地有个创建好的AutoBR的项目，想把它托管到github上。那第一步需要在github上创建一个仓库
+
+获取它的地址：git@github.com:biloba123/AutoBR.git，注意地址有两种，一种https形式，另一种ssh格式，我们用ssh这样就不用输密码
+
+然后将本地项目和该仓库关联起来
+
+git remote add origin git@github.com:biloba123/AutoBR.git
+
+这样就向本地仓库添加了一个名为origin，地址是git@github.com:biloba123/AutoBR.git的远程仓库，通过" git remote -v "来查看该项目的远程仓库（一个本地仓库可以和多个远程仓库相关联）
+将项目推送到远程仓库--git push
+
+关联后，就可以和远程仓库进行数据同步，同步前想把代码提交git commit,推送用到的命令是
+
+git push  远程仓库名  本地分支:远程分支
+
+例如将本地master同步到origin的master分支上
+
+git push origin master:master
+
+#当本地分支和远程一样时也可只写一个
+git push origin master
+
+删除远程分支，例如删除origin的net分支用下面命令
+
+git push origin :net
+
+更新最新代码--git pull
+
+直接git push把代码推送到github上并不是很好的做法，比如你和别人协作时你的代码并不是最新的，直接同步会覆盖覆盖最新代码，上面推送时就有问题
+
+因为远程仓库已经有一些文件，本地项目并没和远程合并，提交被拒绝。首先应该用git pull从github将最新的代码更新到本地，并确保合并成功，如果有冲突，先解决再git push
+
+但是又出现了 fatal: refusing to merge unrelated histories ，这是git 2.9后做了一些更改，在第一次git pull会出问题，用下面命令
+
+git pull origin master --allow-unrelated-histories
+
+输入合并信息，在git push就可以了
+git ignore忽略文件
+
+有些文件例如apk文件，本机相关配置文件，不需要提交到远程仓库，那就把它们添加到.gitignore文件中

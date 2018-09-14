@@ -48,3 +48,18 @@ adb tcpip 5555
 //查看ip地址
 adb shell ifconfig wlan0
 adb connect ip地址
+
+///////////////////////////////////////////////////////////////////////////////////////////
+
+1）找到应用的包名
+
+执行命令：
+$ adb shell pm list package
+
+2）找到应用备份包的位置，比如要找com.game.play.gogogo
+执行命令：
+$ adb shell pm path com.game.play.gogogo
+
+3）提取安装包
+执行命令：
+$ adb pull /data/app/com.game.play.gogogo-1/base.apk
