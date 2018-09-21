@@ -85,3 +85,31 @@ private int defalutSize;
         //最后记得将TypedArray对象回收
         a.recycle();
    }
+
+/////////////////////////////////////////////////////////////////////////////////////////
+https://blog.csdn.net/u012760183/article/details/51440242
+自定义View的分类
+
+    继承View重写onDraw方式
+    这种方式主要用来实现一些不规则的自定义View
+    需要自己处理wrap_content的情况 因为默认的View对wrap_content没做特殊处理，只把这种情况当做match_parent处理 而且padding也需要自己处理 margin不用 因为margin是父容器确定的
+    继承ViewGroup派生特殊的Layout
+    这种方式稍微复杂一些，它需要处理onMeasure和onLayout这两个函数 完成测量和布局的工作 并且需要自行处理wrap_content情况
+    继承特定的View(比如TextView等)
+    此种方式比较常见，一般用于扩展一种已经存在的View的功能 此方法比较容易实现 不需要自己处理 wrap_content和padding
+    继承特定的ViewGroup(比如LinearLayout)
+    此种方式比较常见，相比第二种方法简单许多，因为它已经有默认的onMeasure和onLayout的实现 并且已经处理了wrap_content和padding
+    通常这种方式和方法二的实现是互通的 ，这个方法可以实现的方法二也可以实现，方法二能实现的这个也能实现，只不过方法二比较麻烦，但是贴近底层，贴近底层效率就会高一点，方法四比较简单
+
+自定义View要注意的问题
+
+    让View支持wrap_content
+    直接继承View或ViewGroup的控件 都不支持wrap_content 方法 需要在onMeasure方法中设置
+    如果有必要 支持padding
+    直接继承View的控件，如果不在onDraw方法中处理padding 那么padding属性是无法起作用的 直接继承ViewGroup的控件，需要处理padding和子元素的margin对其的影响，否则这两个属性也无效
+    尽量不要在view中使用handler 因为view提供了post方法
+    View内部本身就提供了post系列方法 可以代替handler 但如果明确需要Handler 可以使用
+    view中有线程或者动画 要及时停止
+    这是为了防止内存泄漏，可以在onDetachedFromWindow方法中结束，这个方法回调的时机是 当View的Activity退出或者当前View被移除的时候 会调用 这时候是结束动画或者线程的好时机 另外还有一个对应的方法 onAttachedToWindow 这个方法调用的时机是在包含View的Activity启动时 回调 回调在onDraw方法 之前
+    有嵌套滑动效果时 注意处理滑动冲突
+    滑动冲突参考我的文章 

@@ -1,46 +1,140 @@
-ViewStub ÓÃ·¨Ïê½â
+ViewStub ç”¨æ³•è¯¦è§£
 https://www.jianshu.com/p/5f64bacbd759
 
-ViewStub ÊÇÒ»¸öÇáÁ¿¼¶µÄView£¬Ã»ÓĞ³ß´ç£¬²»»æÖÆÈÎºÎ¶«Î÷£¬Òò´Ë»æÖÆ»òÕßÒÆ³ıÊ±¸üÊ¡Ê±¡£(ViewStub²»¿É¼û£¬´óĞ¡Îª0)
-ÓÅµã
-ÊµÏÖViewµÄÑÓ³Ù¼ÓÔØ£¬±ÜÃâ×ÊÔ´µÄÀË·Ñ£¬¼õÉÙäÖÈ¾Ê±¼ä£¬ÔÚĞèÒªµÄÊ±ºò²Å¼ÓÔØView
-È±µã
-ViewStubËùÒªÌæ´úµÄlayoutÎÄ¼şÖĞ²»ÄÜÓĞ<merge>±êÇ©
-¿ÉÒÔÍ¨¹ıÏÂÃæ·½·¨¼ò½éÖ§³Ömerge±êÇ©
-    <?xml version="1.0" encoding="utf-8"?>   
-    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"   
-                  android:orientation="vertical"   
-                  android:layout_width="match_parent"   
-                  android:layout_height="match_parent">   
-            <include layout="@layout/merge_layout"/>   
-    </LinearLayout>   
-ViewStubÔÚ¼ÓÔØÍêºó»á±»ÒÆ³ı£¬»òÕßËµÊÇ±»¼ÓÔØ½øÀ´µÄlayoutÌæ»»µôÁË
+ä»‹ç»
 
-ÓÃ·¨
+ViewStub æ˜¯ä¸€ä¸ªè½»é‡çº§çš„Viewï¼Œæ²¡æœ‰å°ºå¯¸ï¼Œä¸ç»˜åˆ¶ä»»ä½•ä¸œè¥¿ï¼Œå› æ­¤ç»˜åˆ¶æˆ–è€…ç§»é™¤æ—¶æ›´çœæ—¶ã€‚(ViewStubä¸å¯è§ï¼Œå¤§å°ä¸º0)
+ä¼˜ç‚¹
+
+å®ç°Viewçš„å»¶è¿ŸåŠ è½½ï¼Œé¿å…èµ„æºçš„æµªè´¹ï¼Œå‡å°‘æ¸²æŸ“æ—¶é—´ï¼Œåœ¨éœ€è¦çš„æ—¶å€™æ‰åŠ è½½View
+ç¼ºç‚¹
+
+    ViewStubæ‰€è¦æ›¿ä»£çš„layoutæ–‡ä»¶ä¸­ä¸èƒ½æœ‰<merge>æ ‡ç­¾
+    ViewStubåœ¨åŠ è½½å®Œåä¼šè¢«ç§»é™¤ï¼Œæˆ–è€…è¯´æ˜¯è¢«åŠ è½½è¿›æ¥çš„layoutæ›¿æ¢æ‰äº†
+
+ç”¨æ³•
+
 <ViewStub
     android:id="@+id/stub_import"
     android:inflatedId="@+id/panel_import"
     android:layout="@layout/progress_overlay"
-    android:layout_gravity="bottom"
+    android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:layout_width="fill_parent" />
-    
-ÓÃViewStub¼ÓÔØlayoutÎÄ¼şÊ±£¬¿ÉÒÔµ÷ÓÃ setVisibility(View.VISIBLE) »òÕß inflate()
-((ViewStub) findViewById(R.id.stub_import)).setVisibility(View.VISIBLE); 
-// or 
+    android:layout_gravity="bottom" />
+
+ç”¨ViewStubåŠ è½½layoutæ–‡ä»¶æ—¶ï¼Œå¯ä»¥è°ƒç”¨ setVisibility(View.VISIBLE) æˆ–è€… inflate()
+
+((ViewStub) findViewById(R.id.stub_import)).setVisibility(View.VISIBLE);
+// or
 View importPanel = ((ViewStub) findViewById(R.id.stub_import)).inflate();
 
-setVisibilityÖ»ÊÇÔÚViewStubµÚÒ»´ÎÑÓ³Ù³õÊ¼»¯Ê±,²¢ÇÒvisibilityÊÇ·Ç GONE Ê±,µ÷ÓÃÁË inflate ·½·¨.
+æ³¨æ„
 
-×¢Òâ
-    Ò»µ©ViewStub visible/inflated£¬ÔòViewStub½«´ÓÊÓÍ¼¿ò¼ÜÖĞÒÆ³ı£¬Æäid stub_import Ò²»áÊ§Ğ§
-    ViewStub±»»æÖÆÍê³ÉµÄlayoutÎÄ¼şÈ¡´ú£¬²¢ÇÒ¸ÃlayoutÎÄ¼şµÄroot viewµÄidÊÇandroid:inflatedIdÖ¸¶¨µÄid panel_import£¬root viewµÄ²¼¾ÖºÍViewStubÊÓÍ¼µÄ²¼¾Ö±£³ÖÒ»ÖÂ
+    ä¸€æ—¦ViewStub visible/inflatedï¼Œåˆ™ViewStubå°†ä»è§†å›¾æ¡†æ¶ä¸­ç§»é™¤ï¼Œå…¶id stub_import ä¹Ÿä¼šå¤±æ•ˆ
+    ViewStubè¢«ç»˜åˆ¶å®Œæˆçš„layoutæ–‡ä»¶å–ä»£ï¼Œå¹¶ä¸”è¯¥layoutæ–‡ä»¶çš„root viewçš„idæ˜¯android:inflatedIdæŒ‡å®šçš„id panel_importï¼Œroot viewçš„å¸ƒå±€å’ŒViewStubè§†å›¾çš„å¸ƒå±€ä¿æŒä¸€è‡´
 
+å®ä¾‹
 
+<!-- layout_viewstub.xml è¦å»¶è¿ŸåŠ è½½çš„view -->
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:id="@+id/layout_viewstub_old"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
 
-ViewStub.OnInflateListener£ºµ±ViewStub ³É¹¦inflate Ò»¸ölayout ×ÊÔ´ºóÖ´ĞĞ¡£
-setInflatedId(int)  £º¸øinflate µÄView ÉèÖÃÒ»¸öinflateId ¡£
-setLayoutResource(int)£º¸øViewStub Ìí¼Ólayout ×ÊÔ´£¬µ±ViewStub±ä³ÉvisibleÊ±È¥¼ÓÔØ¡£
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:background="@android:color/darker_gray"
+        android:padding="5dp"
+        android:text="This is the layout instead of ViewStub view."/>
 
-Óöµ½µÄÎÊÌâ: ±¨´í ViewStub must have a non-null ViewGroup viewParent Ô­Òò: 
- * ¹Ù·½ÎÄµµ:viewstub²»ÄÜ·´¸´inflate,Ö»ÄÜinflateÒ»´Î 
+</LinearLayout>
+
+<!-- act_test_viewstub.xml -->
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/act_test_viewstub_tv_show"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:background="@android:color/darker_gray"
+        android:padding="5dp"
+        android:text="Show ViewStub"/>
+
+    <ViewStub
+        android:id="@+id/act_test_viewstub_viewstub"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inflatedId="@+id/act_layout_viewstub_new"
+        android:layout="@layout/layout_viewstub"/>
+
+    <!--<include-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--layout="@layout/layout_viewstub"/>-->
+
+</LinearLayout>
+
+public class ViewStubTestActivity extends FragmentActivity {
+    private static final String TAG = "test_viewstub";
+    protected ViewStub mViewStub;
+
+    @Override
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.act_test_viewstub);
+        mViewStub = (ViewStub) findViewById(R.id.act_test_viewstub_viewstub);
+
+        Log.e(TAG, "viewstub: " + findViewById(R.id.act_test_viewstub_viewstub));
+        Log.e(TAG, "layout: " + findViewById(R.id.act_layout_viewstub_new));
+
+        findViewById(R.id.act_test_viewstub_tv_show).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                View layoutView;
+//                mViewStub.setVisibility(View.VISIBLE);
+                layoutView = mViewStub.inflate();
+
+                Log.e(TAG, "mViewStub: " + mViewStub);
+                // ViewStubåœ¨visible/inflatedåä¼šè¢«ç§»é™¤ï¼Œæ‰€ä»¥æ­¤å¤„ä¸ºnull
+                Log.e(TAG, "viewstub: " + findViewById(R.id.act_test_viewstub_viewstub));
+//                layoutView = findViewById(R.id.act_layout_viewstub_new);
+                Log.e(TAG, "layoutView equals finviewbyid(layout): " +
+                        layoutView.equals(findViewById(R.id.act_layout_viewstub_new)));
+                Log.e(TAG, "layout: " + layoutView);
+
+                if (layoutView != null) {
+                    // layoutViewçš„root view id æ˜¯mViewStub inflatedIdæŒ‡å®šçš„ID
+                    if (layoutView.getId() == R.id.act_layout_viewstub_new) {
+                        Log.e(TAG, "layout root id is act_layout_viewstub_new");
+                    } else if (layoutView.getId() == R.id.layout_viewstub_old) {
+                        Log.e(TAG, "layout root id is layout_viewstub_old");
+                    } else {
+                        Log.e(TAG, "layout root id is anyone : " + layoutView.getId());
+                    }
+
+                    // layoutViewçš„root viewå¸ƒå±€ å’ŒmViewStubçš„å¸ƒå±€ä¿æŒä¸€è‡´
+                    int width = layoutView.getLayoutParams().width;
+                    if (width == ViewGroup.LayoutParams.MATCH_PARENT) {
+                        Log.e(TAG, "layout width is MATCH_PARENT");
+                    } else if (width == ViewGroup.LayoutParams.WRAP_CONTENT) {
+                        Log.e(TAG, "layout width is WRAP_CONTENT");
+                    } else {
+                        Log.e(TAG, "layout width is anyone : " + width);
+                    }
+                }
+            }
+        });
+
+    }
+}
