@@ -1,0 +1,388 @@
+c++中#pragma用法详解
+https://blog.csdn.net/piaoxuezhong/article/details/58586014
+
+百科里的解说如下：
+
+在所有的预处理指令中，#Pragma 指令可能是最复杂的了，它的作用是设定编译器的状态或者是指示编译器完成一些特定的动作。#pragma指令对每个编译器给出了一个方法，在保持与C和C++语言完全兼容的情况下，给出主机或操作系统专有的特征。依据定义，编译指示是机器或操作系统专有的，且对于每个编译器都是不同的。其格式一般为: #pragma Para。其中Para 为参数，下面来看一些常用的参数：
+
+alloc_text
+	
+
+comment
+	
+
+init_seg*
+	
+
+optimize
+
+auto_inline
+	
+
+component
+	
+
+inline_depth
+	
+
+pack
+
+bss_seg
+	
+
+data_seg
+	
+
+inline_recursion
+	
+
+pointers_to_members*
+
+check_stack
+	
+
+function
+	
+
+intrinsic
+	
+
+setlocale
+
+code_seg
+	
+
+hdrstop
+	
+
+message
+	
+
+vtordisp*
+
+const_seg
+	
+
+include_alias
+	
+
+once
+	
+
+warning
+注：*仅用于C++编译程序。
+
+这里只描述常用的参数：
+
+1 alloc_text
+
+#pragma alloc_text( "textsection", function1, ... )
+
+命名特别定义的函数驻留的代码段。该编译指示必须出现在函数说明符和函数定义之间。
+
+alloc_text编译指示不处理C++成员函数或重载函数。它仅能应用在以C连接方式说明的函数。如果你试图将这个编译指示应用于一个具有C++连接方式的函数时，将出现一个编译程序错误。由于不支持使用__based的函数地址，需要使用alloc_text编译指示来指定段位置。由textsection指定的名字应该由双引号括起来。
+
+alloc_text编译指示必须出现在任何需要指定的函数说明之后，以及这些函数的定义之前。在alloc_text编译指示中引用的函数必须和该编译指示处于同一个模块中。如果不这样做，使以后一个未定义的函数被编译到一个不同的代码段时，错误会也可能不会被捕获。即使程序一般会正常运行，但是函数不会分派到应该在的段。
+
+alloc_text的其它限制如下：它不能用在一个函数内部，它必须用于函数说明以后，函数定义以前。
+
+2 code_seg
+
+#pragma code_seg( ["section-name"[,"section-class"] ] )
+
+指定分配函数的代码段。code_seg编译指示为函数指定默认的段。你也能够像段名一样指定一个可选的类名。使用没有段名字符串的#pragma code_seg将恢复分配到编译开始时候的状态。
+
+3 const_seg
+
+#pragma const_seg( ["section-name"[, "section-class"] ] )
+
+指定用于常量数据的默认段。data_seg编译指示除了可以工作于所有数据以外具有一样的效果。你能够使用该编译指示将你的常量数据保存在一个只读的段中。
+
+#pragma const_seg( "MY_DATA" )
+
+导致在#pragma语句后面的常量数据分配在一个叫做MY_DATA的段中。
+
+用const_seg编译指示分配的数据不包含任何关于其位置的信息。
+
+第二个参数section-class是用于兼容2.0版本以前的Visual C++的，现在将忽略它。
+
+4 comment
+
+#pragma comment( comment-type [, commentstring] )
+
+将描述记录安排到目标文件或可执行文件中去。comment-type是下面说明的五个预定义标识符中的一个，用来指定描述记录的类型。可选的commentstring是一个字符串文字值用于为一些描述类型提供附加的信息。因为commentstring是一个字符串文字值，所以它遵从字符串文字值的所有规则，例如换码字符、嵌入的引号（"）和联接。 
+
+下面的编译指示导致连接程序在连接时搜索EMAPI.LIB库。连接程序首先在当前工作目录然后在LIB环境变量指定的路径中搜索。
+
+#pragma comment( lib, "emapi" )
+
+下面的编译指示导致编译程序将其名字和版本号放置到目标文件中去。
+
+The following pragma causes the compiler to place the name and version number of the compiler in the object file:
+
+#pragma comment( compiler )
+
+注意，对于具有commentstring参数的描述记录，你可以使用其它用作字符串文字量的宏来提供宏扩展为字符串文字量。你也能够联结任何字符串文字量和宏的组合来扩展成为一个字符串文字量。例如，下面的语句是可以接受的：
+
+#pragma comment( user, "Compiled on " __DATE__ " at " __TIME__ )
+
+5 data_seg
+
+#pragma data_seg( ["section-name"[, "section-class"] ] )
+
+指定数据的默认段。例如：#pragma data_seg( "MY_DATA" )导致在#pragma语句后分配的数据保存在一个叫做MY_DATA的段中。
+
+用data_seg编译指示分配的数据不包含任何关于其位置的信息，第二个参数section-class是用于兼容2.0版本以前的Visual C++的，现在将忽略它。
+
+6 init_seg
+
+C++特有，#pragma init_seg({ compiler | lib | user | "section-name" [, "func-name"]} )
+
+指定影响启动代码执行的关键字或代码段。因为全局静态对象的初始化可以包含执行代码，所以你必须指定一个关键字来定义什么时候构造对象。在使用需要初始化的动态连接库（DLL）或程序库时使用init_seg编译指示是尤其重要的。
+
+7 message
+
+#pragma message( messagestring )
+
+不中断编译，发送一个字符串文字量到标准输出。message编译指示的典型运用是在编译时显示信息。下面的代码段用message编译指示在编译过程中显示一条信息：
+
+#if _M_IX86 == 500
+
+#pragma message( "Pentium processor build" )
+
+#endif
+
+messagestring参数可以是一个能够扩展成字符串文字量的宏，并且你能够用字符串文字量和宏的任何组合来构造。例如，下面的语句显示被编译文件的文件名和文件最后一次修改的日期和时间。
+
+#pragma message( "Compiling " __FILE__ )
+
+#pragma message( "Last modified on " __TIMESTAMP__ )
+
+8 once
+
+#pragma once
+
+指定在创建过程中该编译指示所在的文件仅仅被编译程序包含（打开）一次。该编译指示的一种常见用法如下：
+
+//header.h
+
+#pragma once
+
+9 optimize
+
+仅在专业版和企业版中存在
+
+#pragma optimize( "[optimization-list]", {on | off} )
+
+代码优化仅有Visual C++专业版和企业版支持。详见Visual C++ Edition。指定在函数层次执行的优化。optimize编译选项必须在函数外出现，并且在该编译指示出现以后的第一个函数定义开始起作用。on和off参数打开或关闭在optimization-list指定的选项。
+
+optimization-list能够是0或更多个在表2.2中给出的参数：
+
+表 2.2   optimize编译指示的参数
+
+参数
+	
+
+优化类型
+
+a
+	
+
+假定没有别名。
+
+g
+	
+
+允许全局优化。
+
+p
+	
+
+增强浮点一致性。
+
+s 或 t
+	
+
+指定更短或者更快的机器代码序列。
+
+w
+	
+
+假定在函数调用中没有别名。
+
+y
+	
+
+在程序堆栈中生成框架指针。
+
+这些和在/O编译程序选项中使用的是相同的字母。例如：
+
+#pragma optimize( "atp", on )
+
+用空字符串（""）的optimize编译指示是一种特别形式。它要么关闭所有的优化选项，要么恢复它们到原始（或默认）的设定。
+
+#pragma optimize( "", off )
+
+#pragma optimize( "", on )
+
+10 pack
+
+#pragma pack( [ n] )
+
+指定结构和联合成员的紧缩对齐。尽管用/Zp选项设定整个翻译单元的结构和联合成员的紧缩对齐，可以用pack编译指示在数据说明层次设定紧缩对齐。从出现该编译指示后的第一个结构或者联合说明开始生效。这个编译指示不影响定义。
+
+当你使用#pragma pack(n)，其中n是1，2，4，8或者16，第一个以后的每个结构成员保存在较小的成员类型或者n字节边界上。如果你使用没有参数的#pragma pack，结构成员将被紧缩到由/Zp指定的值。默认的/Zp紧缩的大小是/Zp8。
+
+编译程序还支持下面的增强语法：
+
+#pragma pack( [ [ { push | pop}, ] [ identifier, ] ] [ n ] )
+
+该语法允许你将使用不同紧缩编译指示的组件合并到同一个翻译单元内。
+
+每次出现有push参数的pack编译指示将保存当前的紧缩对齐值到一个内部的编译程序堆栈。编译指示的参数列表从左向右读取。如果你使用了push，当前紧缩值被保存。如果你提供了一个n值，这个值将成为新的紧缩值。如果你指定了一个你选定的标示符，这个标示符将和新的紧缩值关联。
+
+每次出现有pop参数的pack编译指示从内部编译程序堆栈顶部取出一个值并将那个值作为新的紧缩对齐。如果你用了pop，而内部编译程序堆栈是空的，对齐值将从命令行得到，同时给出一个警告。如果你用了pop并指定了n的值，那个值将成为新的紧缩值。如果你用了pop并指定了一个标示符，将移去所有保存在堆栈中的的值直到匹配的找到匹配的标示符，和该标示符关联的紧缩值也被从堆栈中移出来成为新的紧缩值。如果没有找到匹配的标示符，将从命令行获取紧缩值并产生一个1级警告。默认的紧缩对齐是8。
+
+pack编译指示的新的增强功能允许你编写头文件保证在使用头文件之前和其后的紧缩值是一样的：
+
+/* File name: include1.h
+
+*/
+
+#pragma pack( push, enter_include1 )
+
+/* Your include-file code ... */
+
+#pragma pack( pop, enter_include1 )
+
+/* End of include1.h */
+
+在前面的例子中，进入头文件时将当前紧缩值和标示符enter_include1关联并推入，被记住。在头文件尾部的pack编译选项移去所有在头文件中可能遇到的紧缩值并移去和enter_include1关联的紧缩值。这样头文件保证了在使用头文件之前和其后的紧缩值是一样的。
+
+新功能也允许你在你的代码内用pack编译指示为不同的代码，例如头文件设定不同的紧缩对齐。
+
+#pragma pack( push, before_include1 )
+
+#include "include1.h"
+
+#pragma pack( pop, before_include1 )
+
+在上一个例子中，你的代码受到保护，防止了在include.h中的任何紧缩值的改变。
+
+11warning
+
+#pragma warning( warning-specifier : warning-number-list [,warning-specifier : warning-number-list...] )
+
+#pragma warning( push[ , n ] )
+
+#pragma warning( pop )
+
+允许有选择地修改编译程序警告信息的行为。
+
+warning-specifier能够是下列值之一：
+
+warning-specifier
+	
+
+含义
+
+once
+	
+
+只显示指定信息一次。
+
+default
+	
+
+对指定信息应用默认的编译程序选项。
+
+1,2,3,4
+	
+
+对指定信息引用给定的警告等级。
+
+disable
+	
+
+不显示指定信息。
+
+error
+	
+
+对指定信息作为错误显示。
+
+warning-number_list能够包含任何警告编号。如下，在一个编译指示中可以指定多个选项：
+
+#pragma warning( disable : 4507 34; once : 4385; error : 164 )
+
+这等价于：
+
+#pragma warning( disable : 4507 34 ) // Disable warning messages
+
+                                             // 4507 and 34.
+
+#pragma warning( once : 4385 )        // Issue warning 4385
+
+                                             // only once.
+
+#pragma warning( error : 164 )        // Report warning 164
+
+                                             // as an error.
+
+对于那些关于代码生成的，大于4699的警告标号，warning编译指示仅在函数定义外时有效。如果指定的警告编号大于4699并且用于函数内时被忽略。下面例子说明了用warning编译指示禁止、然后恢复有关代码生成警告信息的正确位置：
+
+int a;
+
+#pragma warning( disable : 4705 )
+
+void func()
+
+{
+
+    a;
+
+}
+
+#pragma warning( default : 4705 )
+
+warning编译指示也支持下面语法：
+
+#pragma warning( push [ ,n ] )
+
+#pragma warning( pop )
+
+这里n表示警告等级（1到4）。
+
+warning(push)编译指示保存所有警告的当前警告状态。warning(push,n)保存所有警告的当前状态并将全局警告等级设置为n。
+
+warning(pop)弹出最后一次推入堆栈中的警告状态。任何在push和pop之间改变的警告状态将被取消。考虑下面的例子：
+
+#pragma warning( push )
+
+#pragma warning( disable : 4705 )
+
+#pragma warning( disable : 4706 )
+
+#pragma warning( disable : 4707 )
+
+// Some code
+
+#pragma warning( pop )
+
+在这些代码的结束，pop恢复了所有警告的状态（包括4705，4706和4707）到代码开始时候的样子。
+
+当你编写头文件时，你能用push和pop来保证任何用户修改的警告状态不会影响正常编译你的头文件。在头文件开始的地方使用push，在结束地方使用pop。例如，假定你有一个不能顺利在4级警告下编译的头文件，下面的代码改变警告等级到3，然后在头文件的结束时恢复到原来的警告等级。
+
+#pragma warning( push, 3 )
+
+// Declarations/ definitions
+
+#pragma warning( pop )
+
+参考：
+
+http://baike.baidu.com/item/%23pragma?fr=aladdin
+
+http://www.cnblogs.com/cchyao/archive/2010/09/25/1834308.html
+
+http://www.cppblog.com/xczhang/archive/2007/12/24/39477.html
