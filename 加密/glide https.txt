@@ -1,0 +1,29 @@
+Glide 访问Https的图片
+https://www.jianshu.com/p/9e944688fab9
+1.step
+
+在build.gradle 引入下面的aar
+
+    /提供的Module/
+    compile 'com.github.bumptech.glide:okhttp3-integration:1.4.0@aar'
+
+2.step
+
+
+  OkHttpClient okhttpClient = new OkHttpClient.Builder()
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .retryOnConnectionFailure(true) //设置出现错误进行重新连接。
+                .connectTimeout(15, TimeUnit.SECONDS)
+                .readTimeout(60 * 1000, TimeUnit.MILLISECONDS)
+                .sslSocketFactory(HttpsUtils.getSslSocketFactory(null,null,null))
+                .hostnameVerifier(new HostnameVerifier() {
+                    @Override
+                    public boolean verify(String hostname, SSLSession session) {
+                        return true;
+                    }
+                })
+                 .build();
+        //让Glide能用HTTPS
+        Glide.get(this).register(GlideUrl.class, InputStream.class, new OkHttpUrlLoader.Factory(okhttpClient));
+
+设置已经验证证书的的OkhttpClient 到Glide 既可。
