@@ -1,0 +1,34 @@
+https://blog.csdn.net/yuzhiqiang_1993/article/details/78366985
+Android Studio3.0正式版已经出来了，相比2.x的版本，编译速度提高了不少。
+当我们使用AS3.0新建项目时会发现，默认的依赖由之前的compile更改为implementation了。
+
+可以看到在Android studio3.0中，compile依赖关系已被弃用，被implementation和api替代，provided被compile only替代，apk被runtime only替代，剩下的看名字就知道了。
+
+我们先来看看implementation和api的区别：
+
+api：跟2.x版本的 compile完全相同
+
+implementation：只能在内部使用此模块，比如我在一个libiary中使用implementation依赖了gson库，然后我的主项目依赖了libiary，那么，我的主项目就无法访问gson库中的方法。这样的好处是编译速度会加快，推荐使用implementation的方式去依赖，如果你需要提供给外部访问，那么就使用api依赖即可
+
+还不熟悉2.x版本依赖的可以看看下面的说明，括号里对应的是3.0版本的依赖方式。
+compile（api）
+
+这种是我们最常用的方式，使用该方式依赖的库将会参与编译和打包。
+当我们依赖一些第三方的库时，可能会遇到com.android.support冲突的问题，就是因为开发者使用的compile依赖的com.android.support包，而他所依赖的包与我们本地所依赖的com.android.support包版本不一样，所以就会报All com.android.support libraries must use the exact same version specification (mixing versions can lead to runtime crashes这个错误。
+
+provided（compileOnly）
+
+只在编译时有效，不会参与打包
+可以在自己的moudle中使用该方式依赖一些比如com.android.support，gson这些使用者常用的库，避免冲突。
+apk（runtimeOnly）
+
+只在生成apk的时候参与打包，编译时不会参与，很少用。
+testCompile（testImplementation）
+
+testCompile 只在单元测试代码的编译以及最终打包测试apk时有效。
+debugCompile（debugImplementation）
+
+debugCompile 只在debug模式的编译和最终的debug apk打包时有效
+releaseCompile（releaseImplementation）
+
+Release compile 仅仅针对Release 模式的编译和最终的Release apk打包。

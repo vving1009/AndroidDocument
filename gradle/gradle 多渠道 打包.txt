@@ -1,16 +1,5 @@
 Gradle多渠道打包(动态设定App名称，应用图标，替换常量，更改包名，变更渠道)
- 
-144  
-作者 Wing_Li  
- 
- 2016.08.16 10:51* 字数 1277 
-   
-
-
-如果本文帮助到你，本人不胜荣幸，如果浪费了你的时间，本人深感抱歉。
-希望用最简单的大白话来帮助那些像我一样的人。如果有什么错误，请一定指出，以免误导大家、也误导我。
-本文来自：http://www.jianshu.com/users/320f9e8f7fc9/latest_articles
-感谢您的关注。
+http://www.jianshu.com/users/320f9e8f7fc9/latest_articles
 
 最近有个需求一次要打包9个类型的App，而且常量和String.xml都有变量。虽然之前也是一直存在变量，但是每次也仅仅只打包一个。这让我每次改变量，打包9个。要是以后每次都打包9次，我得疯了。
 根据之前的了解，gradle 应该是可以解决这个问题的。所以就仔细研究了一番。
@@ -263,28 +252,12 @@ productFlavors {
 这样我们可以在不同环境使用不同的 key 值。
 
 
-
-
-
 通过以上方式，我们基本可以 通过 gradle 动态设定应用标题，应用图标，替换常量，设置不同包名，更改渠道等等。
 
 
 最后，做完所有的配置之后，执行正常的打包操作。
 
-如图所示：
-
-
-
-图片来源网络
-
-
-
-图片来源网络
-
-
-
 打包完成之后，然后就可以在我们指定的目录下，看到我们所生成的apk包。
-
 
 使用 local.properties 存放私密配置
 
@@ -325,3 +298,81 @@ android {
 
 最后放上一个项目地址：
 https://github.com/Wing-Li/boon
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+https://blog.csdn.net/qq_30878303/article/details/79536921
+
+//创建productFlavors  
+    productFlavors {  
+        ceshi{//配置测试版包名和应用名  
+            applicationId "ceshi.yb.com.wanandroid"  
+            manifestPlaceholders = [APP_NAME: "@string/app_name_ceshi"]  
+        }  
+        shengchan{//配置生产版包名和应用名  
+            applicationId "shengchan.yb.com.wanandroid"  
+            manifestPlaceholders = [APP_NAME: "@string/app_name_shengchan"]  
+        }  
+  
+    } 
+    
+报以下错误：
+Error:All flavors must now belong to a named flavor dimension. Learn more at https://d.android.com/r/tools/flavorDimensions-missing-error-message.html
+
+在defaultConfig 中加上：
+    defaultConfig {
+            ...
+            flavorDimensions "versionCode"
+        }
+
+然后manifest中改下lable:
+    <application
+            android:name=".base.BaseApp"
+            android:allowBackup="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="${APP_NAME}"//引用gradle中定义的变量
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+应用场景：
+
+1. 不同产品，不同包名
+        productFlavors{
+            productA{
+                applicationId "com.crazyman.product.a"
+                versionName "version-a-1.0"
+            }
+     
+            productB{
+                applicationId "com.crazyman.product.b"
+                versionName "version-b-1.0"
+            }
+        }
+        
+2. 不同产品，不同渠道号
+因为国内应用市场太多，很多时候投放推广的时候需要追踪应用市场的数据，所以为每个应用市场打一个不同的包是有需要的，应用市场的包，通常叫做渠道包，区别一般只有一个ID（渠道号）不一样，这个ID是保存在AndroidManifest文件中，所以在编译时需要动态修改AndroidManifest中的数据，这个用manifestPlaceholders就可以搞定了：
+        productFlavors{
+            productA{
+                manifestPlaceholders = [UMC:"product-a"]
+            }
+     
+            productB{
+                manifestPlaceholders = [UMC:"product-b"]
+            }
+        }
+        
+ 然后在AndroidManifest中使用：
+<meta-data android:name="UMENG_CHANNEL" android:value="${UMC}"/>
+
+3. 不同产品，不同库
+有时候APP的运行环境不同，使用的库也要不一样，一般的做法是把所有的库都添加进来，然后跟据运行环境判断一下，再调用相应的库。另外一种做法是为不同的产品编译不同的库，产品A只编译自己需要库，不需要编译对自己无用的库。
+
+    dependencies {
+        # ....
+        productACompile 'io.reactivex.rxjava2:rxjava:2.0.1'
+    }
+    
+4. 不同产品，不同代码
+库可以不一样，代码当然也可以不一样了，gradle中有一个source set的概念，对于不同的产品，可以设置不同的source set。通常，创建工程后，AndroidStudio默认帮我们创建了应用于所有产品的代码集main，它的对应的目录是src/main，我们也可以创建每个产品特有的代码集src/productA，src/productB这样，名字和产品名字是对应的。在编译的时候，默认会将这些代码集加入编译，这样就实现了不同产品，不同代码。这种用法也是非常广的，比如两个产品实现同样的接口，但是底层实现不一样。 
+
+5. 不同产品，不同资源
+这个用法其实和上面是一样的，代码集中可以定义资源，这样就做到了不同的产品，使用不同的资源，同样可以定义不同的AndroidManifest文件，比如申请不同的权限之类的。
