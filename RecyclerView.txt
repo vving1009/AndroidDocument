@@ -1,0 +1,64 @@
+1. viewholder使用2种布局：
+
+public class HeaderAndFooterWrapper<T> extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+    @Override
+    public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        if (mHeaderViews.get(viewType) != null) {
+            ViewHolder holder = ViewHolder.createViewHolder(parent.getContext(), mHeaderViews.get(viewType));
+            return holder;
+        } else if (mFootViews.get(viewType) != null) {
+            ViewHolder holder = ViewHolder.createViewHolder(parent.getContext(), mFootViews.get(viewType));
+            return holder;
+        }
+        return mInnerAdapter.onCreateViewHolder(parent, viewType);
+    }
+
+    @Override
+    public int getItemViewType(int position) {
+        if (isHeaderViewPos(position)) {
+            return mHeaderViews.keyAt(position);
+        } else if (isFooterViewPos(position)) {
+            return mFootViews.keyAt(position - getHeadersCount() - getRealItemCount());
+        }
+        return mInnerAdapter.getItemViewType(position - getHeadersCount());
+    }
+
+    private int getRealItemCount() {
+        return mInnerAdapter.getItemCount();
+    }
+
+    @Override
+    public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+        if (isHeaderViewPos(position)) {
+            return;
+        }
+        if (isFooterViewPos(position)) {
+            return;
+        }
+        mInnerAdapter.onBindViewHolder(holder, position - getHeadersCount());
+    }
+
+    @Override
+    public int getItemCount() {
+        return getHeadersCount() + getFootersCount() + getRealItemCount();
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+2. 局部刷新
+
+listview是最笨的，只能调用 notifydatasetchange来全局刷新，如果单个item变化，却要我整个页面刷新，太糟蹋性能了。
+于是recyclerview横空出世，推出了贴心的notidyItemchange跟notifyitemrangeChange，瞬间让我喜爱上了，从此对recyclerview爱不释手。
+不过，notidyItemchange还不是极限，比如我的单个item里面，有图片（从网络获取），有toggleButton控件，当toggleButton状态变化的时候，调用notidyItemchange，那图片资源也会跟着刷新，有没有办法只刷新togglebutton控件呢？
+答案就在这里：
+
+RecyclerView.ViewHolder viewHolder = mRecyclerView.findViewHolderForAdapterPosition(i);
+            if (viewHolder != null && viewHolder instanceof ItemHolder) {
+                ItemHolder itemHolder = (ItemHolder) itemHolder 
+                    itemHolder.mButton.togglestate();
+                }
+            }
+
+我们根据item的位置，获取到这个item对应的viewholder，根据viewholder，只刷新我们对应的控件，是不是很优雅，极致的item刷新优化。
+

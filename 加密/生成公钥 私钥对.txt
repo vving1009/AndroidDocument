@@ -1,0 +1,77 @@
+    /*
+       * 产生RSA公私钥对
+       */
+        public static KeyPair genRSAKeyPair() {
+            KeyPairGenerator rsaKeyGen = null;
+            KeyPair rsaKeyPair = null;
+            try {
+                System.out.println("Generating a pair of RSA key ... ");
+                rsaKeyGen = KeyPairGenerator.getInstance("RSA");
+                SecureRandom random = new SecureRandom();
+                random.nextBytes(new byte[1]);
+                rsaKeyGen.initialize(1024, new SecureRandom());
+                rsaKeyPair = rsaKeyGen.genKeyPair();
+                PublicKey rsaPublic = rsaKeyPair.getPublic();
+                PrivateKey rsaPrivate = rsaKeyPair.getPrivate();
+                System.out.println("1024-bit RSA key GENERATED.");
+            } catch (Exception e) {
+                System.out.println("Exception in keypair generation. Reason: " + e);
+            }
+     
+            return rsaKeyPair;
+        }
+
+上面的是生成RSA的公钥私钥对。
+
+也许你看过了很多的RSA相关文章，访问也有很多，但是，多不一定就对你有用，很可能自己都看晕了，所以我们今天就对大的简便，以便你能及时上手，对你有所帮助。
+
+接下来我们直接通过上面获取到的公私秘钥对获取公钥私钥（这里直接获取的是没处理过的公私钥）。
+
+    //获取公钥
+    PublicKey aPublic=rsaKeyPair .getPublic();
+    //获取私钥
+    PrivateKey aPrivate= rsaKeyPair.getPrivate();
+
+现在我们对他进行base64编码。
+
+    String encode = new BASE64Encoder().encode(aPublic.getEncoded());
+    String encode1 = new BASE64Encoder().encode(aPrivate.getEncoded());
+
+这里我们得到的就是经过BASE64处理过后的公私钥类似于这些。
+
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCegs0V/aMqqaRydQZ3N1dGK3J0UpXw6evMC6etwaariBQmf5bhmJ6HsqpcWOixpA3GH91FnzhQl7NbCyopZA3eShPBBRO+HoVJ/xPDQD0NcTMPy6ehMwFmgcnPG/CaRHR7wPvtf0MghHw4UCfyRUoc4mDZ+61gFt/52o7uNwbvWQIDAQAB
+
+如果你发现你得到的字符编码有、\r\n的转移符，你的需求又不需要，你可以直接替换就ok，不会有影响
+
+encode.replaceAll("\r\n","")
+
+这样就完成了，生成base64编码的公私密钥。
+
+接下来，我们进行测试。使用私钥进行解密已经加密过后的明文。
+
+这里我们使用java的一个密码类，Cipher。此类为加密和解密提供密码功能。具体使用就不再细说。
+
+    		//待加密文件
+    		byte[] s="测试解密".getBytes();
+    		Cipher cipher=Cipher.getInstance("RSA");
+    		//加密
+    		cipher.init(Cipher.ENCRYPT_MODE, aPublic);
+    		byte[] enBytes = cipher.doFinal(s);
+    		System.out.println("加密后的密文：" +enBytes.toString());
+    		//解密
+    		String s1 = RSAUtil.encodeString(enBytes, encode1);
+    		System.out.println("解密后的密文：" +s1);
+
+这里我把解密封装成一个工具类，传入的参数是加密过后的密文，还有私钥（这里的私钥是经过BASE64处理过后的）。
+
+具体代码如下：
+
+    	//加解密类
+            Cipher cipher = Cipher.getInstance("RSA");//Cipher.getInstance("RSA/ECB/PKCS1Padding");
+            PrivateKey privateKey1 = getPrivateKey1(privateKey);
+            cipher.init(Cipher.DECRYPT_MODE, privateKey1);
+            byte[] deBytes = cipher.doFinal(plainText);
+            String s = new String(deBytes);
+            return s;
+
+这里就结束了。相信对你一定有所帮助，有什么不理解的，可在评论里提出，我会及时作出回复。谢谢！

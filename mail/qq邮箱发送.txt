@@ -1,0 +1,133 @@
+public class FeedBackActivity extends BaseActivity {
+    @BindView(R.id.bt_send_mail)
+    Button btSendMail;
+    private MyMailTask myMailTask;
+ 
+    @Override
+    protected int getContentViewId() {
+        return R.layout.activity_feed_back;
+    }
+ 
+    @Override
+    protected void initData(Bundle savedInstanceState) {
+ 
+    }
+ 
+ 
+    @OnClick(R.id.bt_send_mail)
+    public void onViewClicked() {
+        myMailTask=new MyMailTask();
+        myMailTask.execute();
+    }
+ 
+ 
+    private void send() {
+        try {
+            Properties props = new Properties();
+            // 开启debug调试
+            props.setProperty("mail.debug", "true");
+            // 发送服务器需要身份验证
+            props.setProperty("mail.smtp.auth", "true");
+            // 设置邮件服务器主机名
+//            props.setProperty("mail.host", "smtp.163.com");
+            // 设置邮件服务器主机名
+            props.setProperty("mail.host", "smtp.qq.com");
+            // 发送邮件协议名称
+            props.setProperty("mail.transport.protocol", "smtp");
+            MailSSLSocketFactory msf = new MailSSLSocketFactory();
+            msf.setTrustAllHosts(true);
+            props.put("mail.smtp.ssl.enable", "true");
+            props.put("mail.smtp.ssl.socketFactory", msf);
+ 
+            // 设置环境信息
+            Session session = Session.getInstance(props);
+ 
+            // 创建邮件对象
+            Message msg = new MimeMessage(session);
+ 
+            msg.setSubject("AndroidMail测试");
+            // 设置邮件内容
+            msg.setText("这是一封由大当家发送的邮件！");
+            // 设置发件人
+            msg.setFrom(new InternetAddress("752231513@qq.com"));
+            Transport transport = session.getTransport();
+            // 连接邮件服务器
+            transport.connect("752231513@qq.com", "授权码(非密码)");
+            // 发送邮件
+            transport.sendMessage(msg, new Address[]{new InternetAddress("收件人邮箱")});
+            // 关闭连接
+            transport.close();
+        } catch (MessagingException e) {
+            e.printStackTrace();
+        } catch (GeneralSecurityException e) {
+            e.printStackTrace();
+        }
+    }
+ 
+ 
+ 
+    private class MyMailTask extends AsyncTask<Void, Void, Void> {
+ 
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            btSendMail.setText("正在发送中...");
+        }
+ 
+        @Override
+        protected Void doInBackground(Void... voids) {
+            send();
+            return null;
+        }
+ 
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            btSendMail.setText("发送成功");
+        }
+ 
+        @Override
+        protected void onCancelled() {
+            super.onCancelled();
+        }
+    }
+}
+
+发送邮件的核心代码：
+
+    private void send() {
+            try {
+                Properties props = new Properties();
+                // 开启debug调试
+                props.setProperty("mail.debug", "true");
+                // 发送服务器需要身份验证
+                props.setProperty("mail.smtp.auth", "true");
+                 //设置邮件服务器主机名
+                props.setProperty("mail.host", "smtp.163.com");
+                // 设置邮件服务器主机名
+    //            props.setProperty("mail.host", "smtp.qq.com");
+                // 发送邮件协议名称
+                props.setProperty("mail.transport.protocol", "smtp");
+     
+                // 设置环境信息
+                Session session = Session.getInstance(props);
+     
+                // 创建邮件对象
+                Message msg = new MimeMessage(session);
+     
+                msg.setSubject("AndroidMail测试");
+                // 设置邮件内容
+                msg.setText("这是一封由大当家发送的邮件！");
+                // 设置发件人
+                msg.setFrom(new InternetAddress("---发件人邮箱---"));
+                Transport transport = session.getTransport();
+                // 连接邮件服务器
+                transport.connect("---发件人邮箱账号---", "---发件人邮箱密码---");
+                // 发送邮件
+                transport.sendMessage(msg, new Address[]{new InternetAddress("收件人邮箱")});
+                // 关闭连接
+                transport.close();
+            } catch (MessagingException e) {
+                e.printStackTrace();
+            }
+        }

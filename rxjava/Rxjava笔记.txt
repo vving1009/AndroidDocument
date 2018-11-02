@@ -36,7 +36,7 @@ Observable.create(new ObservableOnSubscribe<Integer>() {
     public final Disposable subscribe(Consumer<? super T> onNext, Consumer<? super Throwable> onError, Action onComplete) {}
     public final Disposable subscribe(Consumer<? super T> onNext, Consumer<? super Throwable> onError, Action onComplete, Consumer<? super Disposable> onSubscribe) {}
     public final void subscribe(Observer<? super T> observer) {}
-    .subscribe(DisposableObserver);
+    public final Disposable subscribe(DisposableObserver observer);
     
     .subscribeOn(Schedulers.io())  //Ö¸¶¨ObservableËùÔÚµÄÏß³Ì£¬»òÕß½Ğ×öÊÂ¼ş²úÉúµÄÏß³Ì¡£Ö»ÓĞµÚÒ»´ÎµÄÓĞĞ§¡£
     .observeOn(AndroidSchedulers.mainThread())  //Ö¸¶¨ ObserverËùÔËĞĞÔÚµÄÏß³Ì£¬»òÕß½Ğ×öÊÂ¼şÏû·ÑµÄÏß³Ì¡£Ã¿µ÷ÓÃÒ»´Î,Ïß³Ì±ã»áÇĞ»»Ò»´Î 
@@ -112,10 +112,6 @@ Observable<Integer> observable = Observable.range(1,20);  //µ÷ÓÃ20´ÎnNext()·½·¨£
 
 - timer( )·½Ê½
 Observable<Integer> observable = Observable.timer(2, TimeUnit.SECONDS);  //±íÊ¾ÑÓ³Ù2Ãëºó£¬µ÷ÓÃonNext()·½·¨
-
-- repeat( )·½Ê½,ObservableµÄÊÂ¼ş¿ÉÒÔÖØ¸´µ÷ÓÃ
-Observable<Integer> observable = Observable.just(123).repeat();
-
 
 ĞèÒª×¢ÒâµÄ¼¸µãÊÇ£º
 1£©ÔÚ·¢ÉäÊÂ¼şÖĞ£¬ÎÒÃÇÔÚ·¢ÉäÁËÊıÖµ3Ö®ºó£¬Ö±½Óµ÷ÓÃÁËe.onComlete()£¬ËäÈ»ÎŞ·¨½ÓÊÕÊÂ¼ş£¬µ«·¢ËÍÊÂ¼ş»¹ÊÇ¼ÌĞøµÄ¡£
@@ -810,7 +806,7 @@ Observable.interval(1, TimeUnit.SECONDS) // ¼ä¸ôÒ»Ãë·¢Ò»´Î
 ×ÓÀà×ª¸¸Àà
 Observable.just(new Son()).cast(Father.class)             
 
-26. takeUtil
+26. takeUntil
 ºÜÏÔÈ»£¬observable.takUtil(condition)£¬µ±condition == trueÊ±ÖÕÖ¹£¬ÇÒ°üº¬ÁÙ½çÌõ¼şµÄitem
 Ê¹ÓÃ³¡¾°
 ²»Í£µØ»ñÈ¡Êı¾İ£¬Ö±µ½[Âú×ã/²»Âú×ã]Ä³¸öÌõ¼şÊ±ÖÕÖ¹
@@ -835,6 +831,45 @@ autoSubscription = Observable.interval(0, 5, TimeUnit.SECONDS)
 ÎÊÌâ³öÏÖÁË£ºÓÉÓÚtakeWhile²»°üº¬condition == falseÊ±µÄitem£¬ËùÒÔÕâÖÖÊµÏÖÖ»ÄÜÕ¹Ê¾³öÆ±ÖĞµÄ×´Ì¬¡£
 ËùÒÔÔÚ¸Ã³¡¾°ÕâÖÖÊµÏÖÊÇ´íÎóµÄ£¡
 
+28. repeat( )·½Ê½,ObservableµÄÊÂ¼ş¿ÉÒÔÖØ¸´µ÷ÓÃ,µ±½ÓÊÕµ½.onCompleted()ÊÂ¼şºó´¥·¢ÖØ¶©ÔÄ¡£
+Observable<Integer> observable = Observable.just(123).repeat();
+29. repeatUntil
+// Ã¿¸ô1ÃëÂÖÑ¯Ò»´Î
+.delay(1, TimeUnit.SECONDS)
+.repeatUntil(new BooleanSupplier() {
+    @Override
+    public boolean getAsBoolean() throws Exception {
+        return mIsPollingEnd;
+    }
+})
+30. repeatWhen
+.repeatWhen(new Func1<Observable<? extends Void>, Observable<?>>() { 
+    @Override 
+    public Observable<?> call(Observable<? extends Void> completed) { 
+        return completed.delay(5, TimeUnit.SECONDS); 
+    } 
+})
+
+31. retry()½ÓÊÕµ½.onError()ÊÂ¼şºó´¥·¢ÖØ¶©ÔÄ¡£
+32. retryUntil
+.retryUntil(new BooleanSupplier() {
+                    @Override
+                    public boolean getAsBoolean() throws Exception {
+                        return false;
+                    }
+                })
+33. retryWhen
+.retryWhen(new Function<Flowable<Throwable>, Publisher<?>>() {
+    @Override
+    public Publisher<?> apply(Flowable<Throwable> throwableFlowable) throws Exception {
+        return throwableFlowable.flatMap(new Function<Throwable, Publisher<Long>>() {
+            @Override
+            public Publisher<Long> apply(Throwable throwable) throws Exception {
+                return Flowable.timer(1, TimeUnit.SECONDS);  //1ÃëºóÖØÊÔ
+            }
+        });
+    }
+});
 ///////////////////////////////////////////////////////////////////////////////////////////
 
 ¹ØÓÚDisposable
