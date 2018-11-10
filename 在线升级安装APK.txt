@@ -1,0 +1,108 @@
+在线升级安装APK
+
+    public static void install(Context context, File file) {
+        Intent intent = new Intent(Intent.ACTION_VIEW);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        //因为Android7.0引入了“私有目录被限制访问”，“StrictMode API 政策”。是指禁止向你的应用外公开 file:// URI
+            Uri contentUri = FileProvider.getUriForFile(context, BuildConfig.APPLICATION_ID + ".fileProvider", file);
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            intent.setDataAndType(contentUri, "application/vnd.android.package-archive");
+        } else {
+            intent.setDataAndType(Uri.fromFile(file), "application/vnd.android.package-archive");
+        }
+        context.startActivity(intent);
+    }
+    
+上面用到的代码中的Uri.fromFile 其实就是生成一个file://URL。一旦我们通过这种办法打开其它程序(这里打开系统包安装器)
+就认为file:// URI类型的 Intent 离开你的应用。这样程序就会发生异常,并出现 FileUriExposedException 异常。
+要在应用间共享文件，应发送一项 content:// URI，并授予 URI 临时访问权限。进行此授权的最简单方式是使用 FileProvider 类。
+
+大于7.0版本：
+AndroidManifest.xml： 
+<application
+   ...>
+    <provider
+        android:name="android.support.v4.content.FileProvider"
+        android:authorities="com.example.dl.install"
+        android:grantUriPermissions="true"
+        android:exported="false">
+        <!--元数据-->
+        <meta-data
+            android:name="android.support.FILE_PROVIDER_PATHS"
+            android:resource="@xml/file_paths" />
+    </provider>
+</application>
+
+ 注意:
+    exported:要求必须为false，为true则会报安全异常。
+    grantUriPermissions:true，表示授予 URI 临时访问权限。
+    authorities 组件标识，按照江湖规矩,都以包名开头,避免和其它应用发生冲突。
+    
+上面配置文件中 android:resource="@xml/file_paths" 指的是当前组件引用 res/xml/file_paths.xml 这个文件。
+我们需要在资源(res)目录下创建一个xml目录，然后创建一个名为“file_paths”(名字可以随便起，只要和在manifest注册的provider所引用的resource保持一致即可)的资源文件，内容如下：
+
+    <?xml version="1.0" encoding="utf-8"?>
+    <resources xmlns:android="http://schemas.android.com/apk/res/android">
+        <paths>
+            <external-path path="" name="download"/>
+            <root-path name="apk" path="" />
+            <external-files-path name="Download" path="Download/" />
+        </paths>
+    </resources>
+    
+<files-path/>该方式提供在应用的内部存储区的文件/子目录的文件。它对应Context.getFilesDir返回的路径：eg:”/data/data/com.***.***/files”。  
+<external-path/>该方式提供在外部存储区域根目录下的文件。它对应Environment.getExternalStorageDirectory返回的路径
+<cache-path/>该方式提供在应用的内部存储区的缓存子目录的文件。它对应Context.getCacheDir返回的路:eg:“/data/data/com.***.***/cache”；  
+external-files-path:  Context.getExternalFilesDir(null)
+external-cache-path： Context.getExternalCacheDir(String)
+
+上述代码中path=""，是有特殊意义的，它代码根目录，也就是说你可以向其它的应用共享根目录及其子目录下任何一个文件了。
+
+如果你将path设为path="pictures"，那么它代表着根目录下的pictures目录(eg:/storage/emulated/0/pictures)，如果你向其它应用分享pictures目录范围之外的文件是不行的。
+
+-----------------------权限问题-------------------------
+对于Android开发者来说适配Android 8.0(仅限应用版本更新方面)需要做哪些工作呢？
+1.在清单文件中增加请求安装权限
+
+<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>  
+
+2.在代码里面对权限进行处理
+
+boolean isGranted = getPackageManager().canRequestPackageInstalls();
+
+如果haveInstallPermission 为 true，则说明你的应用有安装未知来源应用的权限，你直接执行安装应用的操作即可。
+如果haveInstallPermission 为 false，则说明你的应用没有安装未知来源应用的权限，则无法安装应用。由于这个权限不是运行时权限，所以无法再代码中请求权限，还是需要用户跳转到设置界面中自己去打开权限。
+a. 弹出dialog，告知用户 "安装应用需要打开未知来源权限，请去设置中开启权限"
+b. 然后用户点击确定之后跳转到未知来源应用权限管理列表：
+
+Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
+startActivityForResult(intent, UNKNOWN_CODE);
+
+c. 在onActivityResult中去接收结果：
+
+if (resultCode == RESULT_OK && requestCode == InstallUtil.UNKNOWN_CODE) {
+      startInstallO();//再次执行安装流程，包含权限判等
+ }
+
+android8.0全部代码
+
+    /**
+     * android8.x
+     * @param path 文件路径
+     */
+    @RequiresApi(api = Build.VERSION_CODES.O)
+    private void startInstallO(Activity act, String path) {
+        boolean isGranted = mAct.getPackageManager().canRequestPackageInstalls();
+        if (isGranted) startInstallN(act, path);//安装应用的逻辑(写自己的就可以)
+        else new AlertDialog.Builder(act)
+                    .setCancelable(false)
+                    .setTitle("安装应用需要打开未知来源权限，请去设置中开启权限")
+                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface d, int w) {
+                            Intent intent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES);
+                            act.startActivityForResult(intent, UNKNOWN_CODE);
+                        }
+                    })
+                    .show();
+      }

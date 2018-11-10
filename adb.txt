@@ -30,3 +30,36 @@ adb uninstall SpareParts.apk
 
 正确方法是：
 adb uninstall com.android.spare_parts  
+
+模拟器remount失败：
+3. adb reboot 重启设备 
+(只要不刷机，以上步骤执行一次就行) 
+4. adb root 
+5. adb remount 
+现在可以对system分区进行读写了
+
+注意点： 
+1.新版本的adb工具 adb shell 进入命令行之后，Ctrl+c不能退出，可输入exit退出 
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+wifi调试：
+adb tcpip 5555
+//查看ip地址
+adb shell ifconfig wlan0
+adb connect ip地址
+
+///////////////////////////////////////////////////////////////////////////////////////////
+
+1）找到应用的包名
+
+执行命令：
+$ adb shell pm list package
+
+2）找到应用备份包的位置，比如要找com.game.play.gogogo
+执行命令：
+$ adb shell pm path com.game.play.gogogo
+
+3）提取安装包
+执行命令：
+$ adb pull /data/app/com.game.play.gogogo-1/base.apk

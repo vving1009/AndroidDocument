@@ -1,0 +1,55 @@
+8.0发送广播写法变了:
+
+        /**
+         * 其中ComponentName（参数1，参数2）
+         * 参数1指的是你的app的包名，参数2指的是你的自定义广播所在的路径
+         *
+         * 当时度娘时，看到好多人写参数1，表示是自定义广播的包名，其实是不对的，我的自定义广播的包名是“com.btzh.baidulocation.receiver”
+         * 我测试了好久，根本接收不到消息，后来用了方法2，点进去看到源码才明白需要的是app的包名
+         *
+         */
+        Intent intent = new Intent();
+        intent.setAction(MqReceiver.Mq_Message);
+        //写法一
+        ComponentName componentName = new ComponentName("com.btzh.baidulocation","com.btzh.baidulocation.receiver.MqReceiver");
+        //写法二
+        //ComponentName componentName = new ComponentName(this,"com.btzh.baidulocation.receiver.MqReceiver");
+        intent.setComponent(componentName);
+        sendBroadcast(intent);
+
+api中源码
+
+   /**
+     * Create a new component identifier.
+     * 
+     * @param pkg The name of the package that the component exists in.  Can
+     * not be null.
+     * @param cls The name of the class inside of <var>pkg</var> that
+     * implements the component.  Can not be null.
+     */
+    public ComponentName(@NonNull String pkg, @NonNull String cls) {
+        if (pkg == null) throw new NullPointerException("package name is null");
+        if (cls == null) throw new NullPointerException("class name is null");
+        mPackage = pkg;
+        mClass = cls;
+    }
+
+    /**
+     * Create a new component identifier from a Context and class name.
+     * 
+     * @param pkg A Context for the package implementing the component,
+     * from which the actual package name will be retrieved.
+     * @param cls The name of the class inside of <var>pkg</var> that
+     * implements the component.
+     */
+    public ComponentName(@NonNull Context pkg, @NonNull String cls) {
+        if (cls == null) throw new NullPointerException("class name is null");
+        mPackage = pkg.getPackageName();
+        mClass = cls;
+    }
+
+以上为两种方法的源码解释，看到第一种写法，根据翻译很容易误解为，参数1为自己自定义的广播接收器的包名，其实不然，我们可以通过 mPackage = pkg.getPackageName(); ctrl+enter点击去看到，
+
+    /** Return the name of this application's package. */
+    public abstract String getPackageName();
+注释写的很清楚，是你的app的包名，所以千万不用弄错。然后你的静态广播就能适配android8.0了

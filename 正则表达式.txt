@@ -1,3 +1,22 @@
+// 校验只能是数字,英文字母和中文
+    public static boolean isValidTagAndAlias(String s) {
+        Pattern p = Pattern.compile("^[\u4E00-\u9FA50-9a-zA-Z_!@#$&*+=.|]+$");
+        Matcher m = p.matcher(s);
+        return m.matches();
+    }
+// 校验ASCII
+string.matches("[\\x20-\\x7E]+");
+// 校验只能以 “+” 或者 数字开头；后面的内容只能包含 “-” 和 数字(电话号码)         
+string.matches("^[+0-9][-0-9]{1,}$");
+
+// 截取验证码
+Pattern pattern = Pattern.compile("(?<!\\d)\\d{4}(?!\\d)");
+Matcher matcher = pattern.matcher(body);
+if (matcher.find()) {
+    e.onNext(matcher.group());
+}
+//////////////////////////////////////////////////////////////////////////////////
+
 一、校验数字的表达式
 
  1 数字：^[0-9]*$

@@ -1,0 +1,516 @@
+
+Android插件化原理解析——Hook机制之动态代理
+http://weishu.me/2016/01/28/understand-plugin-framework-proxy-hook/
+
+使用代理机制进行API Hook进而达到方法增强是框架的常用手段，比如J2EE框架Spring通过动态代理优雅地实现了AOP编程，极大地提升了Web开发效率；同样，插件框架也广泛使用了代理机制来增强系统API从而达到插件化的目的。本文将带你了解基于动态代理的Hook机制。
+
+阅读本文之前，可以先clone一份 understand-plugin-framework，参考此项目的dynamic-proxy-hook模块。另外，插件框架原理解析系列文章见索引。
+代理是什么
+
+为什么需要代理呢？其实这个代理与日常生活中的“代理”，“中介”差不多；比如你想海淘买东西，总不可能亲自飞到国外去购物吧，这时候我们使用第三方海淘服务比如惠惠购物助手等；同样拿购物为例，有时候第三方购物会有折扣比如当初的米折网，这时候我们可以少花点钱；当然有时候这个“代理”比较坑，坑我们的钱，坑我们的货。
+
+从这个例子可以看出来，代理可以实现方法增强，比如常用的日志,缓存等；也可以实现方法拦截，通过代理方法修改原方法的参数和返回值，从而实现某种不可告人的目的～接下来我们用代码解释一下。
+静态代理
+
+静态代理，是最原始的代理方式；假设我们有一个购物的接口，如下：
+public interface Shopping {
+    Object[] doShopping(long money);
+}
+
+它有一个原始的实现，我们可以理解为亲自，直接去商店购物：
+public class ShoppingImpl implements Shopping {
+    @Override
+    public Object[] doShopping(long money) {
+        System.out.println("逛淘宝 ,逛商场,买买买!!");
+        System.out.println(String.format("花了%s块钱", money));
+        return new Object[] { "鞋子", "衣服", "零食" };
+    }
+}
+
+好了，现在我们自己没时间但是需要买东西，于是我们就找了个代理帮我们买：
+public class ProxyShopping implements Shopping {
+
+    Shopping base;
+
+    ProxyShopping(Shopping base) {
+        this.base = base;
+    }
+
+    @Override
+    public Object[] doShopping(long money) {
+
+        // 先黑点钱(修改输入参数)
+        long readCost = (long) (money * 0.5);
+
+        System.out.println(String.format("花了%s块钱", readCost));
+
+        // 帮忙买东西
+        Object[] things = base.doShopping(readCost);
+
+        // 偷梁换柱(修改返回值)
+        if (things != null && things.length > 1) {
+            things[0] = "被掉包的东西!!";
+        }
+
+        return things;
+    }
+
+很不幸，我们找的这个代理有点坑，坑了我们的钱还坑了我们的货；先忍忍。
+动态代理
+
+传统的静态代理模式需要为每一个需要代理的类写一个代理类，如果需要代理的类有几百个那不是要累死？为了更优雅地实现代理模式，JDK提供了动态代理方式，可以简单理解为JVM可以在运行时帮我们动态生成一系列的代理类，这样我们就不需要手写每一个静态的代理类了。依然以购物为例，用动态代理实现如下：
+public static void main(String[] args) {
+    Shopping women = new ShoppingImpl();
+    // 正常购物
+    System.out.println(Arrays.toString(women.doShopping(100)));
+    // 招代理
+    women = (Shopping) Proxy.newProxyInstance(Shopping.class.getClassLoader(),
+            women.getClass().getInterfaces(), new ShoppingHandler(women));
+
+    System.out.println(Arrays.toString(women.doShopping(100)));
+}
+
+动态代理主要处理InvocationHandler和Proxy类；完整代码可以见github
+代理Hook
+
+我们知道代理有比原始对象更强大的能力，比如飞到国外买东西，比如坑钱坑货；那么很自然，如果我们自己创建代理对象，然后把原始对象替换为我们的代理对象，那么就可以在这个代理对象为所欲为了；修改参数，替换返回值，我们称之为Hook。
+
+下面我们Hook掉startActivity这个方法，使得每次调用这个方法之前输出一条日志；（当然，这个输入日志有点点弱，只是为了展示原理；只要你想，你想可以替换参数，拦截这个startActivity过程，使得调用它导致启动某个别的Activity，指鹿为马！）
+
+首先我们得找到被Hook的对象，我称之为Hook点；什么样的对象比较好Hook呢？自然是容易找到的对象。什么样的对象容易找到？静态变量和单例；在一个进程之内，静态变量和单例变量是相对不容易发生变化的，因此非常容易定位，而普通的对象则要么无法标志，要么容易改变。我们根据这个原则找到所谓的Hook点。
+
+然后我们分析一下startActivity的调用链，找出合适的Hook点。我们知道对于Context.startActivity（Activity.startActivity的调用链与之不同），由于Context的实现实际上是ContextImpl;我们看ConetxtImpl类的startActivity方法：
+@Override
+public void startActivity(Intent intent, Bundle options) {
+    warnIfCallingFromSystemProcess();
+    if ((intent.getFlags()&Intent.FLAG_ACTIVITY_NEW_TASK) == 0) {
+        throw new AndroidRuntimeException(
+                "Calling startActivity() from outside of an Activity "
+                + " context requires the FLAG_ACTIVITY_NEW_TASK flag."
+                + " Is this really what you want?");
+    }
+    mMainThread.getInstrumentation().execStartActivity(
+        getOuterContext(), mMainThread.getApplicationThread(), null,
+        (Activity)null, intent, -1, options);
+}
+
+这里，实际上使用了ActivityThread类的mInstrumentation成员的execStartActivity方法；注意到，ActivityThread 实际上是主线程，而主线程一个进程只有一个，因此这里是一个良好的Hook点。
+
+接下来就是想要Hook掉我们的主线程对象，也就是把这个主线程对象里面的mInstrumentation给替换成我们修改过的代理对象；要替换主线程对象里面的字段，首先我们得拿到主线程对象的引用，如何获取呢？ActivityThread类里面有一个静态方法currentActivityThread可以帮助我们拿到这个对象类；但是ActivityThread是一个隐藏类，我们需要用反射去获取，代码如下：
+// 先获取到当前的ActivityThread对象
+Class<?> activityThreadClass = Class.forName("android.app.ActivityThread");
+Method currentActivityThreadMethod = activityThreadClass.getDeclaredMethod("currentActivityThread");
+currentActivityThreadMethod.setAccessible(true);
+Object currentActivityThread = currentActivityThreadMethod.invoke(null);
+
+拿到这个currentActivityThread之后，我们需要修改它的mInstrumentation这个字段为我们的代理对象，我们先实现这个代理对象，由于JDK动态代理只支持接口，而这个Instrumentation是一个类，没办法，我们只有手动写静态代理类，覆盖掉原始的方法即可。（cglib可以做到基于类的动态代理，这里先不介绍）
+public class EvilInstrumentation extends Instrumentation {
+
+    private static final String TAG = "EvilInstrumentation";
+
+    // ActivityThread中原始的对象, 保存起来
+    Instrumentation mBase;
+
+    public EvilInstrumentation(Instrumentation base) {
+        mBase = base;
+    }
+
+    public ActivityResult execStartActivity(
+            Context who, IBinder contextThread, IBinder token, Activity target,
+            Intent intent, int requestCode, Bundle options) {
+
+        // Hook之前, XXX到此一游!
+        Log.d(TAG, "\n执行了startActivity, 参数如下: \n" + "who = [" + who + "], " +
+                "\ncontextThread = [" + contextThread + "], \ntoken = [" + token + "], " +
+                "\ntarget = [" + target + "], \nintent = [" + intent +
+                "], \nrequestCode = [" + requestCode + "], \noptions = [" + options + "]");
+
+        // 开始调用原始的方法, 调不调用随你,但是不调用的话, 所有的startActivity都失效了.
+        // 由于这个方法是隐藏的,因此需要使用反射调用;首先找到这个方法
+        try {
+            Method execStartActivity = Instrumentation.class.getDeclaredMethod(
+                    "execStartActivity",
+                    Context.class, IBinder.class, IBinder.class, Activity.class, 
+                    Intent.class, int.class, Bundle.class);
+            execStartActivity.setAccessible(true);
+            return (ActivityResult) execStartActivity.invoke(mBase, who, 
+                    contextThread, token, target, intent, requestCode, options);
+        } catch (Exception e) {
+            // 某该死的rom修改了  需要手动适配
+            throw new RuntimeException("do not support!!! pls adapt it");
+        }
+    }
+}
+
+Ok，有了代理对象，我们要做的就是偷梁换柱！代码比较简单，采用反射直接修改：
+public static void attachContext() throws Exception{
+    // 先获取到当前的ActivityThread对象
+    Class<?> activityThreadClass = Class.forName("android.app.ActivityThread");
+    Method currentActivityThreadMethod = activityThreadClass.getDeclaredMethod("currentActivityThread");
+    currentActivityThreadMethod.setAccessible(true);
+    Object currentActivityThread = currentActivityThreadMethod.invoke(null);
+
+    // 拿到原始的 mInstrumentation字段
+    Field mInstrumentationField = activityThreadClass.getDeclaredField("mInstrumentation");
+    mInstrumentationField.setAccessible(true);
+    Instrumentation mInstrumentation = (Instrumentation) mInstrumentationField.get(currentActivityThread);
+
+    // 创建代理对象
+    Instrumentation evilInstrumentation = new EvilInstrumentation(mInstrumentation);
+
+    // 偷梁换柱
+    mInstrumentationField.set(currentActivityThread, evilInstrumentation);
+}
+
+好了，我们启动一个Activity测试一下，结果如下：
+
+可见，Hook确实成功了！这就是使用代理进行Hook的原理——偷梁换柱。整个Hook过程简要总结如下：
+
+    寻找Hook点，原则是静态变量或者单例对象，尽量Hook pulic的对象和方法，非public不保证每个版本都一样，需要适配。
+    选择合适的代理方式，如果是接口可以用动态代理；如果是类可以手动写代理也可以使用cglib。
+    偷梁换柱——用代理对象替换原始对象
+
+完整代码参照：understand-plugin-framework；里面留有一个作业：我们目前仅Hook了Context类的startActivity方法，但是Activity类却使用了自己的mInstrumentation；你可以尝试Hook掉Activity类的startActivity方法。
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+理解 Android Hook 技术以及简单实战
+https://www.jianshu.com/p/4f6d20076922
+
+1. 什么是 Hook
+
+Hook 英文翻译过来就是「钩子」的意思，那我们在什么时候使用这个「钩子」呢？在 Android 操作系统中系统维护着自己的一套事件分发机制。应用程序，包括应用触发事件和后台逻辑处理，也是根据事件流程一步步地向下执行。而「钩子」的意思，就是在事件传送到终点前截获并监控事件的传输，像个钩子钩上事件一样，并且能够在钩上事件时，处理一些自己特定的事件。
+Hook 原理图
+
+Hook 的这个本领，使它能够将自身的代码「融入」被勾住（Hook）的程序的进程中，成为目标进程的一个部分。API Hook 技术是一种用于改变 API 执行结果的技术，能够将系统的 API 函数执行重定向。在 Android 系统中使用了沙箱机制，普通用户程序的进程空间都是独立的，程序的运行互不干扰。这就使我们希望通过一个程序改变其他程序的某些行为的想法不能直接实现，但是 Hook 的出现给我们开拓了解决此类问题的道路。当然，根据 Hook 对象与 Hook 后处理的事件方式不同，Hook 还分为不同的种类，比如消息 Hook、API Hook 等。
+2. 常用的 Hook 框架
+
+    关于 Android 中的 Hook 机制，大致有两个方式：
+
+    要 root 权限，直接 Hook 系统，可以干掉所有的 App。
+    免 root 权限，但是只能 Hook 自身，对系统其它 App 无能为力。
+
+    几种 Hook 方案：
+
+    Xposed
+
+通过替换 /system/bin/app_process 程序控制 Zygote 进程，使得 app_process 在启动过程中会加载 XposedBridge.jar 这个 Jar 包，从而完成对 Zygote 进程及其创建的 Dalvik 虚拟机的劫持。
+Xposed 在开机的时候完成对所有的 Hook Function 的劫持，在原 Function 执行的前后加上自定义代码。
+
+    Cydia Substrate
+
+    Cydia Substrate 框架为苹果用户提供了越狱相关的服务框架，当然也推出了 Android 版 。Cydia Substrate 是一个代码修改平台，它可以修改任何进程的代码。不管是用 Java 还是 C/C++（native代码）编写的，而 Xposed 只支持 Hook app_process 中的 Java 函数。
+
+    Legend
+
+    Legend 是 Android 免 Root 环境下的一个 Apk Hook 框架，该框架代码设计简洁，通用性高，适合逆向工程时一些 Hook 场景。大部分的功能都放到了 Java 层，这样的兼容性就非常好。
+    原理是这样的，直接构造出新旧方法对应的虚拟机数据结构，然后替换信息写到内存中即可。
+
+3. 使用 Java 反射实现 API Hook
+
+通过对 Android 平台的虚拟机注入与 Java 反射的方式，来改变 Android 虚拟机调用函数的方式（ClassLoader），从而达到 Java 函数重定向的目的，这里我们将此类操作称为 Java API Hook。
+
+下面通过 Hook View 的 OnClickListener 来说明 Hook 的使用方法。
+
+首先进入 View 的 setOnClickListener 方法，我们看到 OnClickListener 对象被保存在了一个叫做 ListenerInfo 的内部类里，其中 mListenerInfo 是 View 的成员变量。ListeneInfo 里面保存了 View 的各种监听事件，比如 OnClickListener、OnLongClickListener、OnKeyListener 等等。
+
+    public void setOnClickListener(@Nullable OnClickListener l) {
+        if (!isClickable()) {
+            setClickable(true);
+        }
+        getListenerInfo().mOnClickListener = l;
+    }
+
+    ListenerInfo getListenerInfo() {
+        if (mListenerInfo != null) {
+            return mListenerInfo;
+        }
+        mListenerInfo = new ListenerInfo();
+        return mListenerInfo;
+    }
+
+我们的目标是 Hook OnClickListener，所以就要在给 View 设置监听事件后，替换 OnClickListener 对象，注入自定义的操作。
+
+    private void hookOnClickListener(View view) {
+        try {
+            // 得到 View 的 ListenerInfo 对象
+            Method getListenerInfo = View.class.getDeclaredMethod("getListenerInfo");
+            getListenerInfo.setAccessible(true);
+            Object listenerInfo = getListenerInfo.invoke(view);
+            // 得到 原始的 OnClickListener 对象
+            Class<?> listenerInfoClz = Class.forName("android.view.View$ListenerInfo");
+            Field mOnClickListener = listenerInfoClz.getDeclaredField("mOnClickListener");
+            mOnClickListener.setAccessible(true);
+            View.OnClickListener originOnClickListener = (View.OnClickListener) mOnClickListener.get(listenerInfo);
+            // 用自定义的 OnClickListener 替换原始的 OnClickListener
+            View.OnClickListener hookedOnClickListener = new HookedOnClickListener(originOnClickListener);
+            mOnClickListener.set(listenerInfo, hookedOnClickListener);
+        } catch (Exception e) {
+            log.warn("hook clickListener failed!", e);
+        }
+    }
+
+    class HookedOnClickListener implements View.OnClickListener {
+        private View.OnClickListener origin;
+
+        HookedOnClickListener(View.OnClickListener origin) {
+            this.origin = origin;
+        }
+
+        @Override
+        public void onClick(View v) {
+            Toast.makeText(MainActivity.this, "hook click", Toast.LENGTH_SHORT).show();
+            log.info("Before click, do what you want to to.");
+            if (origin != null) {
+                origin.onClick(v);
+            }
+            log.info("After click, do what you want to to.");
+        }
+    }
+
+到这里，我们成功 Hook 了 OnClickListener，在点击之前和点击之后可以执行某些操作，达到了我们的目的。下面是调用的部分，在给 Button 设置 OnClickListener 后，执行 Hook 操作。点击按钮后，日志的打印结果是：Before click → onClick → After click。
+
+        Button btnSend = (Button) findViewById(R.id.btn_send);
+        btnSend.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                log.info("onClick");
+            }
+        });
+        hookOnClickListener(btnSend);
+
+4. 使用 Hook 拦截应用内的通知
+
+当应用内接入了众多的 SDK，SDK 内部会使用系统服务 NotificationManager 发送通知，这就导致通知难以管理和控制。现在我们就用 Hook 技术拦截部分通知，限制应用内的通知发送操作。
+
+发送通知使用的是 NotificationManager 的 notify 方法，我们跟随 API 进去看看。它会使用 INotificationManager 类型的对象，并调用其 enqueueNotificationWithTag 方法完成通知的发送。
+
+    public void notify(String tag, int id, Notification notification)
+    {
+        INotificationManager service = getService();
+        …… // 省略部分代码
+        try {
+            service.enqueueNotificationWithTag(pkg, mContext.getOpPackageName(), tag, id,
+                    stripped, idOut, UserHandle.myUserId());
+            if (id != idOut[0]) {
+                Log.w(TAG, "notify: id corrupted: sent " + id + ", got back " + idOut[0]);
+            }
+        } catch (RemoteException e) {
+        }
+    }
+
+    private static INotificationManager sService;
+
+    /** @hide */
+    static public INotificationManager getService()
+    {
+        if (sService != null) {
+            return sService;
+        }
+        IBinder b = ServiceManager.getService("notification");
+        sService = INotificationManager.Stub.asInterface(b);
+        return sService;
+    }
+
+INotificationManager 是跨进程通信的 Binder 类，sService 是 NMS(NotificationManagerService) 在客户端的代理，发送通知要委托给 sService，由它传递给 NMS，具体的原理在这里不再细究，感兴趣的可以了解系统服务和应用的通信过程。
+
+我们发现 sService 是个静态成员变量，而且只会初始化一次。只要把 sService 替换成自定义的不就行了么，确实如此。下面用到大量的 Java 反射和动态代理，特别要注意代码的书写。
+
+    private void hookNotificationManager(Context context) {
+        try {
+            NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+            // 得到系统的 sService
+            Method getService = NotificationManager.class.getDeclaredMethod("getService");
+            getService.setAccessible(true);
+            final Object sService = getService.invoke(notificationManager);
+
+            Class iNotiMngClz = Class.forName("android.app.INotificationManager");
+            // 动态代理 INotificationManager
+            Object proxyNotiMng = Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{iNotiMngClz}, new InvocationHandler() {
+                
+                @Override
+                public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                    log.debug("invoke(). method:{}", method);
+                    if (args != null && args.length > 0) {
+                        for (Object arg : args) {
+                            log.debug("type:{}, arg:{}", arg != null ? arg.getClass() : null, arg);
+                        }
+                    }
+                    // 操作交由 sService 处理，不拦截通知
+                    // return method.invoke(sService, args);
+                    // 拦截通知，什么也不做
+                    return null;
+                    // 或者是根据通知的 Tag 和 ID 进行筛选
+                }
+            });
+            // 替换 sService
+            Field sServiceField = NotificationManager.class.getDeclaredField("sService");
+            sServiceField.setAccessible(true);
+            sServiceField.set(notificationManager, proxyNotiMng);
+        } catch (Exception e) {
+            log.warn("Hook NotificationManager failed!", e);
+        }
+    }
+
+Hook 的时机还是尽量要早，我们在 attachBaseContext 里面操作。
+
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(newBase);
+        hookNotificationManager(newBase);
+    }
+
+这样我们就完成了对通知的拦截，可见 Hook 技术真的是非常强大，好多插件化的原理都是建立在 Hook 之上的。
+
+总结一下：
+
+    Hook 的选择点：静态变量和单例，因为一旦创建对象，它们不容易变化，非常容易定位。
+    Hook 过程：
+
+    寻找 Hook 点，原则是静态变量或者单例对象，尽量 Hook public 的对象和方法。
+    选择合适的代理方式，如果是接口可以用动态代理。
+    偷梁换柱——用代理对象替换原始对象。
+
+    Android 的 API 版本比较多，方法和类可能不一样，所以要做好 API 的兼容工作。
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+动态代理实现方法以及对象HooK
+https://blog.csdn.net/u012345683/article/details/75089442
+
+上一篇文章里面已经把动态代理的作用以及实现方法分析了一下，很明显我们可以用HooK做很多事情，比如例子里面的代理做了拿了回扣和偷换行货这种肮脏龌龊的事情。
+
+在真正应用的时候我们可以做更多的事情，比如用户登录的时候动态代理他的验证方法，是不是就可以获取用户的账号密码呢？还有比如Activity的启动，我们使用动态代理的手段将contextImp对象进行动态代理，对startActivity()函数进行修改，比如修改Intent的flag或者Intent内部数据等等，导致跳转的页面发生变化，或者改变传递的信息等等。
+
+而实现HOOK的步骤一般分为三步：
+1. 寻找Hook点，原则是静态变量或者单例对象，尽量Hook pulic的对象和方法，非public不保证每个版本都一样，需要适配。
+2. 选择合适的代理方式，如果是接口可以用动态代理；如果是类可以手动写代理也可以使用cglib。
+3. 偷梁换柱——用代理对象替换原始对象
+
+下面以改变startActivity() 逻辑为例来展示HOOK的威力。
+
+首先我们得找到被Hook的对象，我称之为Hook点；什么样的对象比较好Hook呢？自然是容易找到的对象。什么样的对象容易找到？静态变量和单例；在一个进程之内，静态变量和单例变量是相对不容易发生变化的，因此非常容易定位，而普通的对象则要么无法标志，要么容易改变。我们根据这个原则找到所谓的Hook点。
+
+然后我们分析一下startActivity的调用链，找出合适的Hook点。
+我们知道对于Context.startActivity 和 Activity.startActivity的调用链与之不同，由于Context的实现实际上是ContextImpl；我们看ConetxtImpl类的startActivity方法：
+
+@Override
+public void startActivity(Intent intent, Bundle options) {
+    warnIfCallingFromSystemProcess();
+    if ((intent.getFlags()&Intent.FLAG_ACTIVITY_NEW_TASK) == 0) {
+        throw new AndroidRuntimeException(
+                "Calling startActivity() from outside of an Activity "
+                + " context requires the FLAG_ACTIVITY_NEW_TASK flag."
+                + " Is this really what you want?");
+    }
+    mMainThread.getInstrumentation().execStartActivity(
+        getOuterContext(), mMainThread.getApplicationThread(), null,
+        (Activity)null, intent, -1, options);
+}
+
+可以看到contextImp的startActivity的逻辑是：
+
+(1) 先判断intent的flag是不是FLAG_ACTIVITY_NEW_TASK类型的，如果是走步骤2；如果不是，说明startActivity 不是在activity中调用的，在activity中调用的话，走的流程如下：
+
+ Step 1. Activity.startActivity通过指定名称“activity.subactivity”来告诉应用程序框架层，它要隐式地启动SubActivity。所不同的是传入的参数intent没有Intent.FLAG_ACTIVITY_NEW_TASK标志，表示这个SubActivity和启动它的MainActivity运行在同一个Task中。
+
+ Step 2. Activity.startActivityForResult
+
+ Step 3. Instrumentation.execStartActivity
+
+ Step 4. ActivityManagerProxy.startActivity
+
+ 详见罗老师源码分析：[Android应用程序内部启动Activity过程（startActivity）的源代码分析](http://blog.csdn.net/Luoshengyang/article/details/6703247)
+
+(2) 调用了ActivityThread类的mInstrumentation成员的execStartActivity方法。
+
+注意到，ActivityThread 实际上是主线程，而主线程一个进程只有一个mInstrumentation，只在应用刚刚打开第一个activity的时候创建（单例模式），之后不会发生变化，而且看到不管是Activity中startActivity还是在其他地方，调用的都是mInstrumentation.execStartActivity()，因此mInstrumentation对象是一个良好的Hook点。 
+分析完我们的HOOK的点后，接下来就要替换了我们的mInstrumentation对象了，代码如下：
+
+第一步首先通过反射把当前进程的ActivityThread对象拿到手：
+
+// 先获取到当前的ActivityThread对象
+Class<?> activityThreadClass = Class.forName("android.app.ActivityThread");
+Method currentActivityThreadMethod = activityThreadClass.getDeclaredMethod("currentActivityThread");
+currentActivityThreadMethod.setAccessible(true);
+Object currentActivityThread = currentActivityThreadMethod.invoke(null);
+
+第二步，虽然动态代理可以非常方便的进行代理对象，但是我们的mInstrumentation对象不是接口，因此没有办法采用动态代理方式创建代理类，那就没办法只能通过继承来静态代理我们的mInstrumentation，然后覆写我们的mInstrumentation的execStartActivity方法，代码如下：
+
+public class EvilInstrumentation extends Instrumentation {
+
+    private static final String TAG = "EvilInstrumentation";
+
+    // ActivityThread中原始的对象, 保存起来
+    Instrumentation mBase;
+
+    public EvilInstrumentation(Instrumentation base) {
+        mBase = base;
+    }
+
+    public ActivityResult execStartActivity(
+            Context who, IBinder contextThread, IBinder token, Activity target,
+            Intent intent, int requestCode, Bundle options) {
+
+        // Hook之前, XXX到此一游!
+        Log.d(TAG, "\n执行了startActivity, 参数如下: \n" + "who = [" + who + "], " +
+                "\ncontextThread = [" + contextThread + "], \ntoken = [" + token + "], " +
+                "\ntarget = [" + target + "], \nintent = [" + intent +
+                "], \nrequestCode = [" + requestCode + "], \noptions = [" + options + "]");
+
+        // 开始调用原始的方法, 调不调用随你,但是不调用的话, 所有的startActivity都失效了.
+        // 由于这个方法是隐藏的,因此需要使用反射调用;首先找到这个方法
+        try {
+            Method execStartActivity = Instrumentation.class.getDeclaredMethod(
+                    "execStartActivity",
+                    Context.class, IBinder.class, IBinder.class, Activity.class, 
+                    Intent.class, int.class, Bundle.class);
+            execStartActivity.setAccessible(true);
+            return (ActivityResult) execStartActivity.invoke(mBase, who, 
+                    contextThread, token, target, intent, requestCode, options);
+        } catch (Exception e) {
+            // 某该死的rom修改了  需要手动适配
+            throw new RuntimeException("do not support!!! pls adapt it");
+        }
+    }
+}
+
+上面代码就是静态代理的代码，execStartActivity中先是打印一些信息，然后通过反射拿到Instrumentation的execStartActivity方法，进行调用，之所以要反射是因为这个方法不可见，必须要反射才能调用，这是静态代理所不能实现的功能。 
+创建了Instrumentation的代理对象，又找到了HOOK点，最后就只需要把需要替换的对象换掉就可以了。
+
+第三步，使用反射进行Instrumentation对象的替换：代码如下：
+
+
+
+public static void attachContext() throws Exception{
+    // 1先获取到当前的ActivityThread对象
+    Class<?> activityThreadClass = Class.forName("android.app.ActivityThread");
+    Method currentActivityThreadMethod = activityThreadClass.getDeclaredMethod("currentActivityThread");
+    currentActivityThreadMethod.setAccessible(true);
+    Object currentActivityThread = currentActivityThreadMethod.invoke(null);
+
+    // 2拿到原始的 mInstrumentation字段
+    Field mInstrumentationField = activityThreadClass.getDeclaredField("mInstrumentation");
+    mInstrumentationField.setAccessible(true);
+    Instrumentation mInstrumentation = (Instrumentation) mInstrumentationField.get(currentActivityThread);
+
+    //3 创建代理对象，使用反射偷梁换柱
+    Instrumentation evilInstrumentation = new EvilInstrumentation(mInstrumentation);
+    mInstrumentationField.set(currentActivityThread, evilInstrumentation);
+}
+
+最后都完成了，那么就要测试一下了，看看能不能打印出我们代理函数里面的数据了，打印结果如下：
+
+
+
+07-11 22:19:20 9207-9207/com.dynamic_proxy_hook.app D/EvilInstrumentation:执行了startActivity,参数如下:
+who = [android.app.Application@76726c01],
+contextThread = [android.app.ActivityThread$ApplicationThread@4353489dd1],
+token = [null],
+target = [null],
+intent = [Intent { act=android.intent.action.test dat=sadjksadk flg-0x10000000}],
+requestCode = [-1],
+options = [null]
+
+可以看到打印出来了，结果就是HOOK成功了。

@@ -1,3 +1,15 @@
+
+  一、 如果这个控件实在XML中定义的  比如Textview
+  LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) textview.getLayoutParams();  
+lp.leftMargin = 0;  
+textview.setLayoutParams(lp); 
+
+二、如果这个控件是我们new出来的，就会会发现用上面的方法就会有空指针报错了。然后我们用另一种方法  
+    LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);  
+    layoutParams.setMargins(10,10,10,10);//4个参数按顺序分别是左上右下  
+    textview.setLayoutParams(layoutParams);  
+
+
 LayoutParams参数的意义
 http://blog.csdn.net/zizidemenghanxiao/article/details/50051601
 

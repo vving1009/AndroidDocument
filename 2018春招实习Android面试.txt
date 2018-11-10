@@ -1,0 +1,319 @@
+2018春招实习Android面试（得到网易、今日头条、360、依图、粉笔...offer）
+96 biloba
+2018.03.15 16:11* 字数 2963 阅读 337评论 3喜欢 1
+星逻智能科技
+
+第一份offer
+
+    介绍下四大组件
+    Activity启动模式
+    进程/线程之间如何通信
+    项目相关，自己担任什么职务，负责哪方面
+    ...其他忘记了
+
+今日头条
+
+内推提前批吧，处理速度很快
+三面技术面+一面hr一起很考验人，面完等了一个星期拿到offer
+
+一面
+
+    问项目，项目中设计那些主要功能，怎么实现的，具体实现细节。项目里隐私数据怎么加密传输
+    写过那些自定义View，说说实现
+    view中invalidate()和postInvalidate()又什么区别
+    用RecyclerView和ListView实现列表又什么好处，为什么不能用ScrollView自己写个ViewGroup加滑动效果，ViewHolder到底是重用什么，covertView是干嘛的
+    Fragment用FragmentManager开启事务hide它是否立即执行
+    事件分发机制，事件分发从哪开始
+    ViewRootImpl干嘛的
+    动画分类，揭露动画
+    RxJava好处，转换
+
+二面
+
+    TCP和UDP区别
+    Http和Https区别，Https怎么加密
+    TCP三次握手，为什么要有第三次握手
+    Http状态码
+    HashMap怎么实现的
+    Java反射，动态代理实现
+    Java异常
+    Java线程创建方式
+    Java线程同步方法
+    Sychronized/ReentrantLock/Volatile
+    JVM内存区域和垃圾回收机制
+    什么时候会出现类加载
+    双亲委托类加载，又什么好处
+    SQLite和ContentProvider区别
+    Handler机制
+    事件分发机制
+    Activity启动模式
+    Android组件间数据传递如何传输字节流，对象
+    ListView优化
+    include、merge、viewSub
+    APP打包流程
+    二叉树第n层节点数，用递归和非递归
+    在一个区域内有很多点，如何找到离自己最近的点？（地图中找最近的电影院）
+
+三面
+上面问到的重复的就不说了
+
+    浏览器打开一个链接都发生什么
+    Okhttp原理
+    Java到底传值传引用？
+    Android最新技术动态？
+    Kotlin学过吗？相对于Java区别
+    什么是函数式编程
+    线程进程区别
+    线程和进程通信都有哪些方法？
+    还有项目相关
+
+HR面
+这个好说，非技术面，问你一些情况，学Android多久了，那些的，为什么学，做了什么，最满意的什么，对头条了解，喜欢哪些app，为什么...
+粉笔网
+
+两面技术+手撸代码，部门leader没面就通知拿到offer
+
+电话一面
+
+    Activity A跳转Activity B生命周期，B如何传消息给A
+    活动间如何传信息，传对象，如果传大量信息呢
+    持久化数据存储有哪些方法，对应于什么数据，应在Activity那个方法存
+    onSaveInstance会在什么情况下调用
+    Thread和Runnable又什么区别？如果想要返回值用什么
+    AsyncTask原理，三个方法回调
+    显示活动时如何点击时跳转详情？如何详情返回后不退出而回到主界面？PaddingIntent和Intent区别
+    LruCache原理，内部怎么实现
+    ArrayList能否边遍历边修改？能否边遍历边移除？怎么安全移除？是否线程安全？想线程安全怎么办？
+    事件分发流程讲一下
+    自定义View怎么实现？自定义过哪些View
+    对Android源码，框架源码有哪些了解？OkHttp内部实现
+    TCP、UDP
+    三次握手
+    Http和Https区别
+    网络劫持
+    拍照时如何获取合适分辨率？如何压缩Bitmap?
+    动态权限申请
+    ListView的ViewHolder到底是干嘛
+    项目相关
+    滑动冲突解决
+
+电话二面
+
+    开始一直问项目？负责什么？技术细节？他提出各种可能
+    反射相关
+    Java程序，Android项目如何编译运行？编译原理相关
+    汇编如何执行
+
+手撸代码
+########
+目录/translate下有文件，文件名如 AK~AZ.txt, BA~CZ.txt, DAA~DNA.txt。
+写一个函数，File search(String word), 给定一个单词，找出对应的文件。
+如，参数camera, 返回new File("/translate/BA~CZ.txt")
+
+########
+生产者消费者问题。生产者生成1~100的随机整数，消费者消费这个整数并打印。
+生产者有三个，分别以1秒、2秒、5秒的速度生成。
+消费者有两个，分别以1秒、3秒的速度消费。
+
+########
+本地数据库有远程文件目录映射表，表名为file, 表结构如下：
+key type
+id string //文件唯一id
+name string
+type int //文件类型, 文件夹为1
+parentId string //父目录id, 如果没有父目录为0
+
+class FileBean {
+public String id;
+public String name;
+public int type;
+public String parentId;
+}
+有 Db 工具类 List<FileBean> Db.query(String sql);
+
+请写一个函数，返回远程文件的整个树形结构。
+路口网
+
+一面
+
+    讲一下什么是OOP？OOP三大特性？相应特性怎么实现？
+    父类和子类构造函数调用顺序？构造块
+    TCP三次握手，为什么要第三次握手
+    TCP，UDP区别
+    进程线程区别
+    Fragment生命周期
+    Java 8新特性
+    四大组件
+    Java锁机制方式
+    Synchronized和ReentranLock区别
+    JVM内存结构，都干嘛的
+    JVM堆中对象如何回收？
+    ArrayList和LinkedList区别？访问时间复杂度，是否有序
+    Synchronized锁类还是锁对象，传入this呢
+
+二面
+二面坑，体验不好，没问到点上
+
+    项目相关
+    设计模式
+    快排，二分
+    贪心，动态规划
+
+三面
+hehe，三面更坑，这公司都没安排好就来招人，我等了1个小时，最后胡乱问我了5分钟，这公司投前慎重考虑
+永辉
+
+一面
+
+    OOP三大特性？相应特性怎么实现？
+    Java集合架构
+    HashMap和HashTable
+    Java基本类型，引用类型
+    活动跳转的回调
+    Git的暂存区，git add撤销
+    String、StringBuilder、StringBuffer
+    final/finnally/finalize
+    finalize和GC先后
+    线程方式、线程优化、AsyncTask
+    Activity和Fragment信息传递
+    EventBus原理
+    Java设计模式用过哪些
+    自定义View
+    事件分发，具体情境
+    MeasureSpac
+    自定义View wrap_content实现
+    ListView优化
+    Handler机制
+    MessageQueue具体实现
+    HaspMap实现，hashcode实现，调用几次？负载因子设置？优化大量碰撞问题
+    写对象到文件
+    序列化方式？区别
+    Service启动方式？应用场景？控制它？
+    屏幕刷新机制 ＊
+    自定义View遇到的坑
+    内存泄漏，内存溢出？如何优化？
+    Activity启动模式
+    MVP/MVVM/MVC
+
+二面
+不小心放了面试官鸽子...
+CVTE
+
+一面
+
+    项目相关？具体实现？技术？具体使用情况？遇到哪些问题?
+    Android生命周期
+    活动跳转的回调
+    BroadcastReceiver动静态绑定
+    BroadcastReceiver静态如何在APP未启动是接收
+    Service绑定启动
+    并发有哪些好的方法
+    并发控制
+    Synchronized和ReentranLock区别
+    不用上面这些实现生产者消费者模式
+    HashMap实现
+    JVM中垃圾收集算法及垃圾收集器详解
+    事件分发
+    Android消息机制
+    Binder原理
+    设计模式
+    单例模式，那种最好？为什么懒加载线程安全
+    Android新技术
+
+二面
+面试官很好，我提问的问题很耐心的解答，一个问题回答了5分钟10分钟
+
+    项目相关
+    Java 设计模式
+    网络框架
+    框架的原理实现
+    对跨平台开发了解吗
+    算法 找出三个字符串中都出现且出现第n 多的字母是什么
+    Java并发控制，具体场景
+
+hr面
+
+    为什么实习
+    想去哪个公司实习为什么
+    小时候及现在家庭状况？父母对你最大的影响？...
+    压力最大的时候？
+    ...
+
+依图
+
+offer get
+一面
+
+    输入两个字符串的字符数组，表示在坐标系中的点（范围0~255），找出与之距离最近的两个字符相同的点如["00", "FF"]
+    两个骰子投出6点概率
+    n个骰子投出s点概率（编程怎么实现）
+    项目相关
+
+二面
+
+    项目相关，遇到困难
+    蛇形矩阵
+    两个人玩报数游戏，报数只能在前面一个人报的数的基础上加1~10，最先超过100（>=100）的人赢，赢的策略
+    生命周期及作用
+    并发时遇到的问题
+    内存泄漏的情形
+
+酷家乐
+
+一面
+
+    做过那些项目？如何开发，团队or个人？用到哪些技术？
+    Android消息机制
+    事件分发
+    onTouchListener调用时机
+    事件中ACTION_DOWN和其他action有什么区别？
+    性能优化方法？
+    内存泄漏相应场景？防止内存泄漏？
+    菲波那切数列最有效率的求法
+    数组中第k大的数
+    有25匹马，跑道只有5条，通过几次能找出最快的3匹马
+    邮箱系统设计，再加个邮箱文件夹功能如何更改
+    Java设计模式有哪些
+    如何学Android？
+
+蚂蚁金服
+
+一面
+没问知识点，问项目没问技术实现，感觉很不适应，可能要一面凉
+
+    自我介绍，简历上有的不说
+    项目介绍，在其中担任什么职位
+    怎么学的Android
+    TCP和UDP应用场景，在项目开发中的选择
+    单链表长度（有可能有环）
+    有三个箱子，箱子上贴着标签，对应着箱子里的东西，分别是篮球，足球，篮球和足球，但标签顺序不对，如何只在其中一个箱子里只取出一个球来让标签顺序正确
+    开源框架看过哪些
+    有个消息队列，一个线程阻塞式的取消息，如何让它停止
+    再把所有项目介绍下
+    业余时间都在做什么
+
+美图
+
+电话一面
+面试官提前下了我的项目，看里面代码...
+
+    看你专业排名很靠前，说说你的学习方法
+    你怎么学习数学（高等数学、线性代数）的？在实际生活中有哪些应用
+    怎么学习Java、Android的？自学的吗
+    讲一下Java体系结构？各种知识点都讲下
+    Java集合类哪些线程安全，哪些线程不安全？
+    HashTable和HashMap怎么计算hash的？
+    Java设计模式就23种吗？平时开发中用到哪些
+    集合类并发时异常如何处理？Java锁机制有哪些？
+    Synchronized和ReentranLock效率如何量化？时间量化有哪些方法
+    Java中有几种引用？
+    调用System gc有什么用？JVM垃圾回收机制
+    了解JVM有什么用？又不能控制，又不好验证
+    Android Intent有什么作用？如何得到系统符合条件Activity个数？Intent过滤条件又什么
+    自定义View，事件分发机制？
+    内存泄露如何检测？
+    项目调试工具？
+    看你项目里有用到MQTT，为什么用？知道传输质量吗？又什么不好地方？
+    你项目里用到OkHttp和RxJava说说他们用到的设计模式
+    RxJava又什么好处？有哪些坑？怎么解决？看你代码里把json放在主线程如何优化？如何统一在网络错误时显示toast?
+

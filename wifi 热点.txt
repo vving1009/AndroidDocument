@@ -1,0 +1,315 @@
+7.1 以下：WifiManager.java中setWifiApEnabled方法反射
+public class Mywifiap {
+ 
+    private static final int NO_PASS=0;
+    private static final int WPA_PSK=1;
+    private static final int WPA2_PSK=2;
+ 
+    private WifiManager wifiManager;
+    private WifiConfiguration apconfig;
+ 
+    public Mywifiap(Context context) {
+        wifiManager= (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+    }
+ 
+    //开启热点
+    public void openwifiap(String name,String password,int type){
+        if(wifiManager.isWifiEnabled())
+            wifiManager.setWifiEnabled(false);//如果WiFi是开启的就关闭WiFi。
+        apconfig=new WifiConfiguration();
+        apconfig.SSID=name;//设置WiFi名字
+ 
+        //热点相关设置
+        switch (type){
+            case NO_PASS:
+                apconfig.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
+                apconfig.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+                apconfig.wepKeys[0]="";
+                apconfig.wepTxKeyIndex=0;
+                break;
+            case WPA_PSK:
+                apconfig.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
+                apconfig.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
+                apconfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
+                apconfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
+                apconfig.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
+                apconfig.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
+                apconfig.preSharedKey=password;
+                break;
+            case WPA2_PSK:
+                //由于wpa2是不能直接访问的，但是KeyMgmt中却有。所以我们这样写
+                for(int i=0;i<WifiConfiguration.KeyMgmt.strings.length;i++){
+                    if("WPA2_PSK".equals(WifiConfiguration.KeyMgmt.strings[i])) {
+                        apconfig.allowedKeyManagement.set(i);//直接给它赋索引的值
+                        Log.e("wpa2索引", String.valueOf(i));//不同手机索引不同
+                    }
+                }
+                apconfig.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
+                apconfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
+                apconfig.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
+                apconfig.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
+                apconfig.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
+                apconfig.preSharedKey=password;
+                break;
+        }
+ 
+        try {
+ 
+            Method method=wifiManager.getClass().getMethod("setWifiApEnabled",WifiConfiguration.class,boolean.class);
+            method.invoke(wifiManager,apconfig,true);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+    }
+ 
+    //关闭热点
+    public void closewifiap(){
+        try {
+//            Method method1=wifiManager.getClass().getMethod("getWifiApConfiguration");
+//            method1.setAccessible(true);
+//            WifiConfiguration nowconfig= (WifiConfiguration) method1.invoke(wifiManager);//获取当前热点
+            Method method=wifiManager.getClass().getMethod("setWifiApEnabled",WifiConfiguration.class,boolean.class);
+            method.invoke(wifiManager,apconfig,false);
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+    }
+ 
+    //获取连接列表
+    public StringBuffer getconnectlist(){
+        /*
+        连接设备的信息都存在一个文件里面，读这个文件获取信息
+        读取文件后每为这样的格式，每连接一个设备增加一行，没有连接时只有一行
+        IP address       HW type     Flags       HW address            Mask     Device
+        192.168.43.115   0x1         0x2         c4:0b:cb:8a:4c:f1     *        ap0
+        192.168.43.115   0x1         0x2         c4:0b:cb:8a:4c:f1     *        ap0
+         */
+        StringBuffer sb=new StringBuffer();
+        try {
+            BufferedReader br=new BufferedReader(new FileReader("/proc/net/arp"));
+            String line;
+            while((line=br.readLine())!=null){
+                Log.e("连接列表",line);
+                sb.append(line+"\n");
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return sb;
+    }
+}
+
+关于监听热点状态，它是有一个广播的，通过这个广播就可以监听到了热点开关的实时状态
+public class ApReceiver extends BroadcastReceiver{
+ 
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        String action=intent.getAction();
+        if("android.net.wifi.WIFI_AP_STATE_CHANGED".equals(action)){
+            //"android.net.wifi.WIFI_AP_STATE_CHANGED"这个是热点状态改变的广播
+            int state=intent.getIntExtra("wifi_state",0);
+            Log.e("热点状态", String.valueOf(state));
+            /* state:
+            12：正在开启热点
+            13：已开启热点
+            10：正在关闭热点
+            11：已关闭热点
+             */
+        }
+ 
+    }
+}
+既然用socket，端口可以自己设但是客户端必须要知道服务端的IP地址才能通信，所以，在之前WiFi开发的类上加上获取服务端IP的方法。
+
+    //获取连接热点的IP地址
+        public static String getserverip(Context context){
+            WifiManager manager= (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+            DhcpInfo dhcpInfo=manager.getDhcpInfo();
+            int ip=dhcpInfo.serverAddress;
+            //整形转化为IP地址
+            String sip=(ip&0xff)+"."+((ip>>8)&0xff)+"."+((ip>>16)&0xff)+"."+((ip>>24)&0xff);
+            Log.e("服务器IP",sip);
+            return sip;
+        }
+客户（WiFi）端的socket代码
+
+    public class WifiSocket extends AppCompatActivity{
+        private EditText msg;
+        private Button putmsg;
+        private OutputStream out;
+     
+        Handler handler=new Handler(){
+     
+            @Override
+            public void handleMessage(Message msg) {
+                if(msg.what==1){
+                    Toast.makeText(WifiSocket.this, (String) msg.obj,Toast.LENGTH_SHORT).show();
+                }
+            }
+        };
+     
+        @Override
+        protected void onCreate(Bundle savedInstanceState) {
+            super.onCreate(savedInstanceState);
+            setContentView(R.layout.wifisocket);
+     
+            msg= (EditText) findViewById(R.id.msg);
+            putmsg= (Button) findViewById(R.id.putmsg);
+     
+            putmsg.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    try {
+                        //发送消息
+                        out.write(msg.getText().toString().getBytes());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+     
+            thread();
+     
+        }
+     
+        public void thread(){
+            final String ip=Mywifi.getserverip(WifiSocket.this);
+            final int port=1234;
+            new Thread(){
+                @Override
+                public void run() {
+                    try {
+                        Socket socket=new Socket(ip,port);
+                        Log.e("wifisocket","建立连接");
+                        InputStream in=socket.getInputStream();
+                        out=socket.getOutputStream();
+     
+                        //接收消息
+                        while (true){
+                            byte[] buffer=new byte[1024];
+                            int len=0;
+                            if((len=in.read(buffer))!=-1){
+                                byte[] data=new byte[len];
+                                for(int i=0;i<data.length;i++)
+                                    data[i]=buffer[i];
+                                String msg=new String(data);
+                                Log.e("收到消息",msg);
+     
+                                Message message=new Message();
+                                message.what=1;
+                                message.obj=msg;
+                                handler.sendMessage(message);
+                            }
+                        }
+     
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+     
+                }
+            }.start();
+        }
+    }
+ 服务（热点）端的socket代码
+
+    public class Server extends Thread{
+        public ServerSocket serverSocket;
+        public Socket socket;
+        public static final int PORT=1234;
+     
+        public Context context;
+        public Handler handler;
+     
+        public Server(Context context,Handler handler){
+            this.context=context;
+            this.handler=handler;
+        }
+     
+        @Override
+        public void run() {
+            try {
+                serverSocket=new ServerSocket(PORT);
+                Log.e("wifi服务器","已开启");
+                socket=serverSocket.accept();
+                Log.e("wifi服务器","设备已连接");
+     
+                InputStream in=socket.getInputStream();
+                OutputStream out=socket.getOutputStream();
+     
+                //接收到消息后，马上发送一条消息
+                while(true){
+                    byte[] buffer=new byte[1024];
+                    int len=0;
+                    if((len=in.read(buffer))!=-1){
+                        byte[] data=new byte[len];
+                        for(int i=0;i<data.length;i++)
+                            data[i]=buffer[i];
+                        String msg=new String(data);
+                        Log.e("收到消息",msg);
+                        //通过handle来弹出Toast。
+                        Message message=new Message();
+                        message.obj=msg;
+                        message.what=1;
+                        handler.sendMessage(message);
+     
+                        //发送消息
+                        out.write("对方已接收消息".getBytes());
+                    }
+     
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }    
+    
+    
+7.
+方法一：
+ConnectivityManager#startTethering(int, boolean,
+ConnectivityManager#OnStartTetheringCallback)}
+有@SystemApi可以明确看出这是系统级别的方法，无法直接调用，需使用反射。
+方法二：WifiManager#startLocalOnlyHotspot(LocalOnlyHotspotCallback)}.   此方法经测试需要打开定位
+
+总结一下思路：
+1、配置WifiManager.setWifiApConfiguration(mWifiConfig)里面的参数，热点和WiFi 通常的配置一样，只要配置WifiApConfiguration对象，就可以配置我们想要的WiFi热点的名称、密码及加密方式；
+2、通过ConnectivityManager的startTethering方法来启动热点，
+注意参数的传递，第三个参数需要实现ConnectivityManager.OnStartTetheringCallback的本地回调，可以用来更新UI;
+  Cm.startTethering(TETHERING_WIFI, true, mStartTetheringCallback, mHandler);
+3、特别注意，WiFi热点重新配置生效之前一定要做下
+mCm.stopTethering(TETHERING_WIFI);的动作，否则热点会打开异常；
+而且热点配置完密码重新生效有延时，需要关闭后延时一会重新打开才会正常；
+4、配置AndroidManinfest.xml权限
+ <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+ <uses-permission android:name="android.permission.OVERRIDE_WIFI_CONFIG" />
+ 
+  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
+  //Method method = mWifiManager.getClass().getMethod("setWifiApConfiguration",WifiConfiguration.class);
+  //method.invoke(mWifiManager,wifiConfig);
+                Field iConnMgrField = connManager.getClass().getDeclaredField("mService");
+                iConnMgrField.setAccessible(true);
+                Object iConnMgr = iConnMgrField.get(connManager);
+                Class<?> iConnMgrClass = Class.forName(iConnMgr.getClass().getName());
+                Method startTethering = iConnMgrClass.getMethod("startTethering", int.class, ResultReceiver.class, boolean.class);
+                startTethering.invoke(iConnMgr, TETHERING_WIFI, new ResultReceiver(new Handler()) {
+                    @Override
+                    protected void onReceiveResult(int resultCode, Bundle resultData) {
+                        super.onReceiveResult(resultCode, resultData);
+                    }
+                }, true);
+                return true;
+ 
+            } else {
+                Method method = wifiManager.getClass().getMethod("setWifiApEnabled", WifiConfiguration.class, Boolean.TYPE);
+                return (boolean) method.invoke(wifiManager, config, true);
+            }

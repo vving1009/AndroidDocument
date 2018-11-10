@@ -1,0 +1,324 @@
+Android：销毁所有的Activity退出应用程序几种方式
+
+我们在开发当中经常要实现一个退出整个程序的功能，实现这样功能的方法有很多，今天我们就来利用activity中的singletask启动模式来优雅的退出整个程序吧！
+
+首先我们需要了解的是关于singletask的一些知识，这个启动模式是栈内复用，举个简单的例子，如果有四个页面1，2，3，4，我们依次跳转，当从4跳转到2的时候，那么3和4就会被销毁，当然，如果从4跳转到1的话，那1之前的所有activity都将被销毁，此时我们再将1给finish掉就可以了，我们就是利用这样一个原理来实现退出整个程序。
+
+另外大家也要知道，当1使用了singletask的启动模式的时候，我们再次启动该activity的时候，该activity不会再次被创建，但是会调用一个onNewIntent方法，我们的finish就要写在这个方法里面，下面我们看具体实现
+
+第一步 设置退出按钮 设置intent 跳转到首次启动的activity 并且将此activity的启动模式设置成singletask
+
+quit.setOnClickListener(new View.OnClickListener() {
+    @Override
+    public void onClick(View view) {
+        Intent intentto = new Intent(Main3Activity.this,MainActivity.class);
+        startActivity(intentto);
+    }
+});
+
+<activity android:name=".MainActivity"
+    android:launchMode="singleTask">
+    <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+
+        <category android:name="android.intent.category.LAUNCHER" />
+    </intent-filter>
+</activity>
+
+第二步 在首次启动的activity中重写onNewIntent方法 然后在里面写上finish方法
+
+@Override
+protected void onNewIntent(Intent intent) {
+    finish();
+  
+}
+
+如此就可以实现优雅的退出整个程序了
+
+//////////////////////////////////////////////////////////////////////////////////////
+
+我们都知道，Activity是存放在栈中。在默认的情况下（standard）Activity在栈中是以先进后出、后进先出的方式进行存放。最开始出现的Activity会存在栈底，最新启动的Activity总是会存在栈顶。当我们开启的Activity越来越多，当前想在某个界面退出当前应用程序的时候，或者双击返回键退出当前应用程序。这个时候只能一个一个的把当前所有启动的Activity销毁，直到清空栈中的所有Activity，应用程序才能退出。下面给大家介绍四种常用的退出应用程序的方法，希望能够更好的帮助大家开发！
+
+
+销毁所有Activity，退出应用程序常见的方式有下面四种：
+
+
+  (1) System.exit(0) 使用系统的方法，强制退出
+
+  (2) 抛出异常，强制退出
+
+  (3) 使用Application退出
+
+  (4) 使用广播退出
+
+
+第一种方式 System.exit(0)：表示的是终止程序，终止当前正在运行的 Java 虚拟机，在java中我们也使用这种方式来关闭整个应用，在前期很多开发人员都是使用这种方式，我自己在开发项目过程中也用过这种方式来退出，但是有时候会在部分机型中，当退出应用后弹出应用程序崩溃的对话框，有时退出后还会再次启动，少部分的用户体验不太好。但现在也依旧还会有少部分的开发人员会使用这种方式，因为使用方式很简单，只需要在需要退出的地方加上这句代码就行。
+
+
+第二种方式 抛出异常，强制退出 ：这种方式现在基本上已经看不到了，用户体验比第一种方式更差，就是让抛出异常、是系统崩溃、从而达到退出应用的效果。
+
+<接下来我们主要讲解后面两种，这两种在开发过程中经常使用>
+第三种方式 使用Application退出 ：目前比较常用方法之一，我们都知道application是Android的系统组件，当应用程序启动时，会自动帮我们创建一个Application，而且一个应用程序只能存在一个Application，它的生命周期也是最长的，如果需要使用自己创建的Application时，这个时候我们只需要在Androidmanifest.xml中的<Application> 标签中添加name属性：把创建的Application完整的包名+类名放进了就行了。
+那么我们如何使用Application来退出当前的应用程序呢？
+
+我们来看下我写的一个使用Application来退出应用程序的Demo:
+
+<创建一个继承Application的类>
+public class myApplication extends Application {
+private List<Activity> oList;//用于存放所有启动的Activity的集合
+
+public void onCreate() {
+super.onCreate();
+oList = new ArrayList<Activity>();
+}
+
+/**
+* 添加Activity
+*/
+public void addActivity_(Activity activity) {
+// 判断当前集合中不存在该Activity
+if (!oList.contains(activity)) {
+oList.add(activity);//把当前Activity添加到集合中
+}
+}
+
+/**
+* 销毁单个Activity
+*/
+public void removeActivity_(Activity activity) {
+//判断当前集合中存在该Activity
+if (oList.contains(activity)) {
+    oList.remove(activity);//从集合中移除
+    activity.finish();//销毁当前Activity
+}
+}
+
+/**
+* 销毁所有的Activity
+*/
+public void removeALLActivity_() {
+     //通过循环，把集合中的所有Activity销毁
+for (Activity activity : oList) {
+     activity.finish();
+}
+}
+}
+
+<创建BaseActivity 继承 Activity> 用于管理所有的Activity，所有的Activity都继承这个类
+
+public class BaseActivity extends Activity {
+private myApplication application;
+private BaseActivity oContext;
+
+protected void onCreate(Bundle savedInstanceState) {
+super.onCreate(savedInstanceState);
+
+if (application == null) {
+    // 得到Application对象
+    application = (myApplication) getApplication();
+}
+oContext = this;// 把当前的上下文对象赋值给BaseActivity
+addActivity();// 调用添加方法
+}
+
+// 添加Activity方法
+public void addActivity() {
+application.addActivity_(oContext);// 调用myApplication的添加Activity方法
+}
+//销毁当个Activity方法
+public void removeActivity() {
+application.removeActivity_(oContext);// 调用myApplication的销毁单个Activity方法
+}
+//销毁所有Activity方法
+public void removeALLActivity() {
+application.removeALLActivity_();// 调用myApplication的销毁所有Activity方法
+}
+
+/* 把Toast定义成一个方法  可以重复使用，使用时只需要传入需要提示的内容即可*/
+public void show_Toast(String text) {
+Toast.makeText(oContext, text, Toast.LENGTH_SHORT).show();
+}
+}
+
+
+<MainActivity 继承 BaseActivity 主界面---双击返回键，退出当前应用程序> 
+
+
+public class MainActivity extends BaseActivity {
+
+protected void onCreate(Bundle savedInstanceState) {
+super.onCreate(savedInstanceState);
+setContentView(R.layout.activity_main);
+}
+
+        //绑定按钮
+public void button(View v) {
+
+  startActivity(new Intent(MainActivity.this, oneActivity.class));//跳转到oneActivity
+}
+//重写onKeyDown方法
+public boolean onKeyDown(int keyCode, KeyEvent event) {
+
+    //判断当点击的是返回键
+    if (keyCode == event.KEYCODE_BACK) {
+exit();//退出方法
+    }
+    return true;
+}
+
+private long time = 0;
+
+//退出方法
+private void exit() {
+//如果在两秒大于2秒
+if (System.currentTimeMillis() - time > 2000) {
+//获得当前的时间
+time = System.currentTimeMillis();
+showToast("再点击一次退出应用程序");
+} else {
+//点击在两秒以内
+removeALLActivity();//执行移除所以Activity方法
+}
+} 
+
+}
+
+<oneActivity 继承 BaseActivity> 
+
+public class oneActivity extends BaseActivity {
+
+
+protected void onCreate(Bundle savedInstanceState) {
+super.onCreate(savedInstanceState);
+setContentView(R.layout.onelayout);
+}
+// 绑定按钮
+public void button(View v) {
+Intent intent = new Intent(this, MainActivity.class);//跳转到主界面
+startActivity(intent);
+}
+}
+
+< androidmanifest.xml 清单文件>
+
+<application
+        android:name="com.jxsw.chong.application_closeactivity.myApplication" //注册myapplication
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:name="com.jxsw.chong.application_closeactivity.MainActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity android:name="com.jxsw.chong.application_closeactivity.BaseActivity" />
+        <activity android:name="com.jxsw.chong.application_closeactivity.oneActivity" />
+
+</application>
+
+    我们让每个Activity都继承于我们自己定义的BaseActivity,每次新开启个Activity，就会在BaseActivity的oncreate()方法中就会执行addActivity()方法，方法里面执行的是myApplication类中添加Activity的方法，把当前的Activity放进集合中，当连续点击两次back返回键，执行销毁所有Activity的方法。从而达到完全退出应用程序的效果。
+
+ps:一定不要忘记在androidmanifest.xml中注册myApplication
+
+<-----以上代码都可以直接复制粘贴可用   
+
+
+第四种方式 使用广播退出 ：使用广播来实现退出应用程序，其实实现的思路相对于第三种更简单，我们编写一个BaseActivity，让其他的Activity都继承于它，当我需要退出时，我们就销毁BaseActivity，那么其他继承与它的Activity都会销毁。
+我们来看下我写的一个使用广播来退出应用程序的Demo:
+
+<BaseActivity>
+
+public class BaseActivity extends Activity {
+private MyBaseActiviy_Broad oBaseActiviy_Broad;
+
+
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+   //动态注册广播
+    oBaseActiviy_Broad = new MyBaseActiviy_Broad();
+    IntentFilter intentFilter = new IntentFilter("drc.xxx.yyy.baseActivity");
+    registerReceiver(oBaseActiviy_Broad, intentFilter);
+}
+//在销毁的方法里面注销广播
+protected void onDestroy() {
+   super.onDestroy();
+   unregisterReceiver(oBaseActiviy_Broad);//注销广播
+}
+//定义一个广播
+public class MyBaseActiviy_Broad extends BroadcastReceiver {
+
+public void onReceive(Context arg0, Intent intent) {
+//接收发送过来的广播内容
+int closeAll = intent.getIntExtra("closeAll", 0);
+if (closeAll == 1) {
+finish();//销毁BaseActivity
+}
+}
+
+}
+/**
+* 显示Toast信息
+*/
+public void showToast(String text) {
+    Toast.makeText(this, text, 2000).show();
+}
+}
+
+<MainActivity>
+
+public class MainActivity extends BaseActivity {
+
+protected void onCreate(Bundle savedInstanceState) {
+super.onCreate(savedInstanceState);
+setContentView(R.layout.activity_main);
+}
+//绑定按钮
+public void button(View v) {
+Intent intent = new Intent(this, oneActivity.class);
+startActivity(intent);
+}
+//重写onkeydown方法
+public boolean onKeyDown(int keyCode, KeyEvent event) {
+//点击的为返回键
+if (keyCode == event.KEYCODE_BACK) {
+exit();// 退出方法
+}
+return true;
+}
+
+
+private long time = 0;
+
+//退出方法
+private void exit() {
+if (System.currentTimeMillis() - time > 2000) {
+time = System.currentTimeMillis();
+showToast("再点击一次退出应用程序");
+} else {
+Intent intent = new Intent("drc.xxx.yyy.baseActivity");
+intent.putExtra("closeAll", 1);
+sendBroadcast(intent);//发送广播
+}
+}
+
+}
+
+<oneActivity>
+
+public class oneActivity extends BaseActivity {
+
+protected void onCreate(Bundle savedInstanceState) {
+super.onCreate(savedInstanceState);
+setContentView(R.layout.onelayout);
+}
+
+// 绑定按钮
+public void button(View v) {
+Intent intent = new Intent(this, MainActivity.class);//跳转到MainActivity
+startActivity(intent);
+}
+}

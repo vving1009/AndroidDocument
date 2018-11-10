@@ -1,0 +1,22 @@
+ Socket编程中，尽量用PrintWriter取代BufferedWriter
+简单化德把问题说一下吧！最近试着编写socket聊天小软件。
+在服务器端和客户端产生一个Socket 后，
+两边各自用getIputStream()和getOutputStream()方法,构造各自的输入输出流。
+其中服务器端的Socket ss
+BufferedReader is=new BufferedReader(new InputStreamReader(ss.getInputStream()) );
+PrintWriter  os=new PrintWriter (new OutputStreamWriter(ss.getOutputStream()) );
+os.writer("一个乱七八糟的字符串");
+客户端的Socket cs
+BufferedReader is=new BufferedReader(new InputStreamReader(cs.getInputStream()) );
+PrintWriter  os=new PrintWriter (new OutputStreamWriter(cs.getOutputStream()) );
+System.out.println(is.readLine());
+（当然这两个肯定不是一个类文件中噢！）
+按理说，应该是ss的 os对应着cs的 is.  为什么在服务器端写入了，在客户端这边没法读出来呢？
+另外，如果服务器端用os.println("字符串");就好使了。
+请问这是问什么？ 
+
+ 
+ 答：
+问题主要集中在，为什么客户端调用了write()和flush()后，服务器端依然read不到数据。因为socket.getOutputStream()取到的实现类是java.net.SocketOutputStream，这个类并没有覆写flush方法，它的父类java.io.FileOutputStream也没有覆写，于是最终就调到了最顶层java.io.OutputStream的flush()方法，这就恶心了，这个方法是空的。于是...
+因此，还是使用Reader.readLine()和Writer.println()来处理socket吧，或者直接使用NIO。
+（注意，SocketOutputStream类在JavaDoc中不存在，只在源码中有，他是个受保护的类。）

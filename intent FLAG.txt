@@ -1,3 +1,24 @@
+intent.setFlags方法中的参数值含义
+https://blog.csdn.net/berber78/article/details/7278408
+
+一. intent.setFlags()方法中的参数值含义：
+
+1.FLAG_ACTIVITY_CLEAR_TOP：例如现在的栈情况为：A B C D 。D此时通过intent跳转到B，如果这个intent添加FLAG_ACTIVITY_CLEAR_TOP标记，则栈情况变为：A B。如果没有添加这个标记，则栈情况将会变成：A B C D B。也就是说，如果添加了FLAG_ACTIVITY_CLEAR_TOP标记，并且目标Activity在栈中已经存在，则将会把位于该目标activity之上的activity从栈中弹出销毁。这跟上面把B的Launch mode设置成singleTask类似。简而言之，跳转到的activity若已在栈中存在，则将其上的activity都销掉。
+
+2.FLAG_ACTIVITY_NEW_TASK：例如现在栈1的情况是：A B C。C通过intent跳转到D，并且这个intent添加了FLAG_ACTIVITY_NEW_TASK标记，如果D这个Activity在Manifest.xml中的声明中添加了Task affinity，系统首先会查找有没有和D的Task affinity相同的task栈存在，如果有存在，将D压入那个栈，如果不存在则会新建一个D的affinity的栈将其压入。如果D的Task affinity默认没有设置，则会把其压入栈1，变成：A B C D，这样就和不加FLAG_ACTIVITY_NEW_TASK标记效果是一样的了。注意如果试图从非activity的非正常途径启动一个activity（例见下文“intent.setFlags()方法中参数的用例”），比如从一个service中启动一个activity，则intent比如要添加FLAG_ACTIVITY_NEW_TASK标记（编者按：activity要存在于activity的栈中，而非activity的途径启动activity时必然不存在一个activity的栈，所以要新起一个栈装入启动的activity）。简而言之，跳转到的activity根据情况，可能压在一个新建的栈中。
+
+3.FLAG_ACTIVITY_NO_HISTORY：例如现在栈情况为：A B C。C通过intent跳转到D，这个intent添加FLAG_ACTIVITY_NO_HISTORY标志，则此时界面显示D的内容，但是它并不会压入栈中。如果按返回键，返回到C，栈的情况还是：A B C。如果此时D中又跳转到E，栈的情况变为：A B C E，此时按返回键会回到C，因为D根本就没有被压入栈中。简而言之，跳转到的activity不压在栈中。
+
+4.FLAG_ACTIVITY_SINGLE_TOP：和Activity的Launch mode的singleTop类似。如果某个intent添加了这个标志，并且这个intent的目标activity就是栈顶的activity，那么将不会新建一个实例压入栈中。简而言之，目标activity已在栈顶则跳转过去，不在栈顶则在栈顶新建activity。
+
+二.intent.setFlags()方法中参数的用例：
+
+很多人使用startActivity时候，会碰到如下的异常：
+Caused by: android.util.AndroidRuntimeException: Calling startActivity() from outside of an Activity  context requires the FLAG_ACTIVITY_NEW_TASK flag. Is this really what you want?
+都知道，Context中有一个startActivity方法，Activity继承自Context，重载了startActivity方法。如果使用Activity的startActivity方法，不会有任何限制，而如果使用Context的startActivity方法的话，就需要开启一个新的task（编者按：参见一.2.的编者按），遇到上面那个异常的，都是因为使用了Context的startActivity方法。解决办法是：Java代码中加一个flag，即intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)。这样就可以在新的task里面启动这个Activity了。
+
+//////////////////////////////////////////////////////////////////////////////////////
+
 Android Intent Flag的介绍 
 
 一、Activity和Task(栈)的关系

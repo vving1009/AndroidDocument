@@ -1,0 +1,81 @@
+1. cookie是怎么传输的
+
+Cookie使用HTTPHeader传递数据。 
+Cookie机制定义了两种报头：Set-Cookie报头和Cookie报头。
+Set-Cookie报头包含于Web服务器的响应头（ResponseHeader）中 
+Cookie报头包含在浏览器客户端请求头（ReguestHeader）中
+
+客户端Cookie 与 服务器Session 自动管理
+业务中经常出现客户端登录请求结束后，服务端会返回一个带有唯一登录认证信息Session的Response，其中Session就藏在Cookie中，那么如何让下一次Request请求创建时，可以将这个认证信息放入其中呢？
+OkHttp为我们提供了简便的管理方法，可自动携带，保存和更新Cookie信息；方法如下：
+
+方法1：
+//cookie存储
+private ConcurrentHashMap<String, List<Cookie>> cookieStore = new ConcurrentHashMap<>();
+
+mOkHttpClient = new OkHttpClient.Builder()
+                .cookieJar(new CookieJar()
+                {//这里可以做cookie传递，保存等操作
+                    @Override
+                    public void saveFromResponse(HttpUrl url, List<Cookie> cookies)
+                    {//可以做保存cookies操作
+                        cookieStore.put(url.host(), cookies);
+                    }
+
+                    @Override
+                    public List<Cookie> loadForRequest(HttpUrl url)
+                    {//加载新的cookies
+                        List<Cookie> cookies = cookieStore.get(url.host());
+                        return cookies != null ? cookies : new ArrayList<Cookie>();
+                    }
+                })
+                .build();
+
+如此设置后，在同一个域名地址情况下，发送Request都不用管理Cookie了，并且可以通过cookieStore获取已存储的Cookie，如此可达到自动管理。
+
+方法2：
+// 请求头加入cookie
+public class AddCookiesInterceptor implements Interceptor {
+
+    @Override
+    public Response intercept(Chain chain) throws IOException {
+        Request.Builder builder = chain.request().newBuilder();
+        HashSet<String> preferences = (HashSet) Preferences.getDefaultPreferences().getStringSet(Preferences.PREF_COOKIES, new HashSet<>());
+        for (String cookie : preferences) {
+            builder.addHeader("Cookie", cookie);
+            Log.v("OkHttp", "Adding Header: " + cookie); // This is done so I know which headers are being added; this interceptor is used after the normal logging of OkHttp
+        }
+
+        return chain.proceed(builder.build());
+    }
+}
+
+// 从响应头保存cookie
+public class ReceivedCookiesInterceptor implements Interceptor {
+    @Override
+    public Response intercept(Chain chain) throws IOException {
+        Response originalResponse = chain.proceed(chain.request());
+
+        if (!originalResponse.headers("Set-Cookie").isEmpty()) {
+            HashSet<String> cookies = new HashSet<>();
+
+            for (String header : originalResponse.headers("Set-Cookie")) {
+              cookies.add(header);
+            }
+
+            Preferences.getDefaultPreferences().edit()
+                    .putStringSet(Preferences.PREF_COOKIES, cookies)
+                    .apply();
+        }
+
+        return originalResponse;
+    }
+}
+
+OkHttpClient okHttpClient = new OkHttpClient();
+okHttpClient.interceptors().add(new AddCookiesInterceptor());
+okHttpClient.interceptors().add(new ReceivedCookiesInterceptor());
+
+简单的cookie持久化可以用这种方式，创建一个单例的client，全局都使用这个client请求接口。当然你也可以每次new一个client重新设置intercept……
+还要记住的是，cookie是针对于域名存储的。比如：www.baidu.com和image.baidu.com存储的cookies都是不一样的…… 
+如果你的app真的需要同时访问两个域名的接口，并且两个都需要持久化cookie，那么记得做判断（比如用域名作为key存储cookie到sharepreference中）。否则两个域名的cookie会互相覆盖掉……

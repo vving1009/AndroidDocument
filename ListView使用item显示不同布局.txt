@@ -1,3 +1,9 @@
+listView.setCacheColorHint(Color.TRANSPARENT);//让ListView滑动的时候条目背景色不会变成黑色
+listView.setDivider(null);//去掉条目间的分割线
+listView.setSelector(new ColorDrawable());//设置默认状态选择器为全透明，不传颜色就是没颜色（也就是条目被点击时，背景没颜色）
+
+/////////////////////////////////////////////////////////////
+
 /**
      * 自定义城市列表适配器
      */

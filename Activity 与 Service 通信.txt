@@ -1,0 +1,313 @@
+http://blog.csdn.net/xiaanming/article/details/9750689
+
+2种方法：
+1.Activity调用bindService (Intent service, ServiceConnection conn, int flags)方法，
+得到Service对象的一个引用，这样Activity可以直接调用到Service中的方法，如果要主动通知Activity，我们可以利用回调方法.
+     2.Service向Activity发送消息，可以使用广播，当然Activity要注册相应的接收器。比如Service要向多个Activity发送同样的消息的话，用这种方法就更好
+
+1.通过Binder对象
+
+当Activity通过调用bindService(Intent service, ServiceConnection conn,int flags),我们可以得到一个Service的一个对象实例，然后我们就可以访问Service中的方法， 
+
+新建一个回调接口  : 
+public interface OnProgressListener {  
+        void onProgress(int progress);  
+    }  
+    
+Service:
+    
+import android.app.Service;  
+import android.content.Intent;  
+import android.os.Binder;  
+import android.os.IBinder;  
+  
+public class MsgService extends Service {  
+    /** 
+     * 进度条的最大值 
+     */  
+    public static final int MAX_PROGRESS = 100;  
+    /** 
+     * 进度条的进度值 
+     */  
+    private int progress = 0;  
+      
+    /** 
+     * 更新进度的回调接口 
+     */  
+    private OnProgressListener onProgressListener;  
+      
+      
+    /** 
+     * 注册回调接口的方法，供外部调用 
+     * @param onProgressListener 
+     */  
+    public void setOnProgressListener(OnProgressListener onProgressListener) {  
+        this.onProgressListener = onProgressListener;  
+    }  
+  
+    /** 
+     * 增加get()方法，供Activity调用 
+     * @return 下载进度 
+     */  
+    public int getProgress() {  
+        return progress;  
+    }  
+  
+    /** 
+     * 模拟下载任务，每秒钟更新一次 
+     */  
+    public void startDownLoad(){  
+        new Thread(new Runnable() {  
+              
+            @Override  
+            public void run() {  
+                while(progress < MAX_PROGRESS){  
+                    progress += 5;  
+                      
+                    //进度发生变化通知调用方  
+                    if(onProgressListener != null){  
+                        onProgressListener.onProgress(progress);  
+                    }  
+                      
+                    try {  
+                        Thread.sleep(1000);  
+                    } catch (InterruptedException e) {  
+                        e.printStackTrace();  
+                    }  
+                      
+                }  
+            }  
+        }).start();  
+    }  
+  
+  
+    /** 
+     * 返回一个Binder对象 
+     */  
+    @Override  
+    public IBinder onBind(Intent intent) {  
+        return new MsgBinder();  
+    }  
+      
+    public class MsgBinder extends Binder{  
+        /** 
+         * 获取当前Service的实例 
+         * @return 
+         */  
+        public MsgService getService(){  
+            return MsgService.this;  
+        }  
+    }  
+}
+
+Activity:
+import android.app.Activity;  
+import android.content.ComponentName;  
+import android.content.Context;  
+import android.content.Intent;  
+import android.content.ServiceConnection;  
+import android.os.Bundle;  
+import android.os.IBinder;  
+import android.view.View;  
+import android.view.View.OnClickListener;  
+import android.widget.Button;  
+import android.widget.ProgressBar;  
+  
+public class MainActivity extends Activity {  
+    private MsgService msgService;  
+    private ProgressBar mProgressBar;  
+      
+  
+    @Override  
+    protected void onCreate(Bundle savedInstanceState) {  
+        super.onCreate(savedInstanceState);  
+        setContentView(R.layout.activity_main);  
+          
+          
+        //绑定Service  
+        Intent intent = new Intent("com.example.communication.MSG_ACTION");  
+        bindService(intent, conn, Context.BIND_AUTO_CREATE);  
+          
+          
+        mProgressBar = (ProgressBar) findViewById(R.id.progressBar1);  
+        Button mButton = (Button) findViewById(R.id.button1);  
+        mButton.setOnClickListener(new OnClickListener() {  
+              
+            @Override  
+            public void onClick(View v) {  
+                //开始下载  
+                msgService.startDownLoad();  
+            }  
+        });  
+          
+    }  
+      
+  
+    ServiceConnection conn = new ServiceConnection() {  
+        @Override  
+        public void onServiceDisconnected(ComponentName name) {  
+              
+        }  
+          
+        @Override  
+        public void onServiceConnected(ComponentName name, IBinder service) {  
+            //返回一个MsgService对象  
+            msgService = ((MsgService.MsgBinder)service).getService();  
+              
+            //注册回调接口来接收下载进度的变化  
+            msgService.setOnProgressListener(new OnProgressListener() {  
+                  
+                @Override  
+                public void onProgress(int progress) {  
+                    mProgressBar.setProgress(progress);  
+                      
+                }  
+            });  
+              
+        }  
+    };  
+  
+    @Override  
+    protected void onDestroy() {  
+        unbindService(conn);  
+        super.onDestroy();  
+    }  
+}  
+
+
+2.通过broadcast(广播)的形式
+
+当我们的进度发生变化的时候我们发送一条广播，然后在Activity的注册广播接收器，接收到广播之后更新ProgressBar,代码如下
+
+package com.example.communication;  
+import android.app.Activity;  
+import android.content.BroadcastReceiver;  
+import android.content.Context;  
+import android.content.Intent;  
+import android.content.IntentFilter;  
+import android.os.Bundle;  
+import android.view.View;  
+import android.view.View.OnClickListener;  
+import android.widget.Button;  
+import android.widget.ProgressBar;  
+  
+public class MainActivity extends Activity {  
+    private ProgressBar mProgressBar;  
+    private Intent mIntent;  
+    private MsgReceiver msgReceiver;  
+      
+  
+    @Override  
+    protected void onCreate(Bundle savedInstanceState) {  
+        super.onCreate(savedInstanceState);  
+        setContentView(R.layout.activity_main);  
+          
+        //动态注册广播接收器  
+        msgReceiver = new MsgReceiver();  
+        IntentFilter intentFilter = new IntentFilter();  
+        intentFilter.addAction("com.example.communication.RECEIVER");  
+        registerReceiver(msgReceiver, intentFilter);  
+          
+          
+        mProgressBar = (ProgressBar) findViewById(R.id.progressBar1);  
+        Button mButton = (Button) findViewById(R.id.button1);  
+        mButton.setOnClickListener(new OnClickListener() {  
+              
+            @Override  
+            public void onClick(View v) {  
+                //启动服务  
+                mIntent = new Intent("com.example.communication.MSG_ACTION");  
+                startService(mIntent);  
+            }  
+        });  
+          
+    }  
+  
+      
+    @Override  
+    protected void onDestroy() {  
+        //停止服务  
+        stopService(mIntent);  
+        //注销广播  
+        unregisterReceiver(msgReceiver);  
+        super.onDestroy();  
+    }  
+  
+  
+    /** 
+     * 广播接收器 
+     * @author len 
+     * 
+     */  
+    public class MsgReceiver extends BroadcastReceiver{  
+  
+        @Override  
+        public void onReceive(Context context, Intent intent) {  
+            //拿到进度，更新UI  
+            int progress = intent.getIntExtra("progress", 0);  
+            mProgressBar.setProgress(progress);  
+        }  
+          
+    }  
+}  
+
+import android.app.Service;  
+import android.content.Intent;  
+import android.os.IBinder;  
+  
+public class MsgService extends Service {  
+    /** 
+     * 进度条的最大值 
+     */  
+    public static final int MAX_PROGRESS = 100;  
+    /** 
+     * 进度条的进度值 
+     */  
+    private int progress = 0;  
+      
+    private Intent intent = new Intent("com.example.communication.RECEIVER");  
+      
+  
+    /** 
+     * 模拟下载任务，每秒钟更新一次 
+     */  
+    public void startDownLoad(){  
+        new Thread(new Runnable() {  
+              
+            @Override  
+            public void run() {  
+                while(progress < MAX_PROGRESS){  
+                    progress += 5;  
+                      
+                    //发送Action为com.example.communication.RECEIVER的广播  
+                    intent.putExtra("progress", progress);  
+                    sendBroadcast(intent);  
+                      
+                    try {  
+                        Thread.sleep(1000);  
+                    } catch (InterruptedException e) {  
+                        e.printStackTrace();  
+                    }  
+                      
+                }  
+            }  
+        }).start();  
+    }  
+  
+      
+  
+    @Override  
+    public int onStartCommand(Intent intent, int flags, int startId) {  
+        startDownLoad();  
+        return super.onStartCommand(intent, flags, startId);  
+    }  
+  
+  
+  
+    @Override  
+    public IBinder onBind(Intent intent) {  
+        return null;  
+    }  
+  
+  
+}

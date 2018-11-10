@@ -1,0 +1,27 @@
+android viewpager 拿到当前显示的 fragment 的实例 
+
+一个 ViewPager 通过 FragmentPagerAdapter 绑定了 3 个 fragment
+
+可以通过  
+
+Fragment fragment = getSupportFragmentManager().findFragmentByTag( 
+
+androidswitcher + R.id.viewpager +  + viewpager.getCurrentItem() );
+
+拿到当前的 fragment 的实例
+
+R.id.viewpager 是 viewpager 的 ID
+
+底层默认的 tag 是： 
+
+androidswitcher + R.id.viewpager + 0
+
+androidswitcher + R.id.viewpager + 1
+
+androidswitcher + R.id.viewpager + 2
+
+但该方法对  FragmentStatePagerAdapter  没有用
+
+////////////////////////////////////////////////////////////////////////////////
+
+https://blog.csdn.net/u012702547/article/details/52334161

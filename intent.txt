@@ -17,5 +17,15 @@ startActivity(intent);
 intent.putExtra("firstKeyName","FirstKeyValue");  
 intent.putExtra("secondKeyName","SecondKeyValue");  
 
-参考链接：
-http://developer.Android.com/guide/components/intents-filters.html
+
+隐式启动：
+如果Intent只用setAction隐式启动，必须要在manifest中添加
+<category android:name="android.intent.category.DEFAULT"/>
+
+通过URI启动：
+new Intent（Intent.ACTION_VIEW，Uri.parse（“activity：// applock”）
+manifest需添加
+<action android:name="android.intent.action.VIEW" />
+<category android:name="android.intent.category.DEFAULT" />
+<data android:scheme="activity" />
+<data android:host="applock" />

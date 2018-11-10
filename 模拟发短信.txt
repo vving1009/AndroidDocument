@@ -1,0 +1,10 @@
+private void insert(String content, String phone) {
+        ContentResolver reslover = getContext().getContentResolver();
+        Uri uri = Uri.parse("content://sms/");
+        ContentValues values = new ContentValues();
+        values.put("type", "1");
+        values.put("body", content);
+        values.put("address", phone);
+        values.put("date", System.currentTimeMillis());
+        reslover.insert(uri, values);
+    }

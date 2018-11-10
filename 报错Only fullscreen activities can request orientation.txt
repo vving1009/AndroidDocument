@@ -1,0 +1,49 @@
+https://blog.csdn.net/LoveDou0816/article/details/79129324?utm_source=blogxgwz0
+最近做项目的时候发现，当编译版本是27时，26以及以上版本的手机的透明Activity就会出现报错”Only fullscreen activities can request orientation”，所以记录下自己的解决办法。
+1、分析问题
+
+首先，我的代码是这样的：
+style.xml
+
+<style name="app_transparent_activity" parent="Theme.AppCompat.Light.NoActionBar">
+    <item name="android:windowTranslucentStatus">true</item>
+    <item name="android:windowContentTransitions">true</item>
+    <item name="android:windowSoftInputMode">adjustPan</item>
+    <item name="android:windowDrawsSystemBarBackgrounds">false</item>
+    <item name="android:windowBackground">@color/app_transparent_color</item>
+    <item name="android:windowIsTranslucent">true</item>
+</style>
+
+AndroidManifest.xml
+
+<activity
+    android:name=".appmanager.mianframe.UsagePermissionGuideActivity"
+    android:launchMode="singleInstance"
+    android:screenOrientation="portrait"
+    android:theme="@style/app_transparent_activity"/>
+
+从上面可以看出，我的activity是一个状态栏透明并且背景透明的activity。在26的编译版本时是可以正常的使用的，但是当把编译版本升级到27时，就会出现”Only fullscreen activities can request orientation”异常。刚开始也不知道是什么原因，通过网上查找资料和对源码的分析，得出这是google出于安全的考虑，对android8.0以后的版本做的处理，当一个Activity固定方向并且是透明的，在8.0以后的版本中就会抛出异常。相关源码如下：
+
+Entry ent = AttributeCache.instance().get(packageName,realTheme, com.android.internal.R.styleable.Window, userId);
+final boolean translucent = ent != null && (ent.array.getBoolean(com.android.internal.R.styleable.Window_windowIsTranslucent, false)|| (!ent.array.hasValue(
+                com.android.internal.R.styleable.Window_windowIsTranslucent) &&  ent.array.getBoolean(com.android.internal.R.styleable.Window_windowSwipeToDismiss,false)));
+fullscreen = ent != null && !ent.array.getBoolean(com.android.internal.R.styleable.Window_windowIsFloating, false) && !translucent;
+fullscreen = ent != null && !ActivityInfo.isTranslucentOrFloating(ent.array);
+noDisplay = ent != null && ent.array.getBoolean(com.android.internal.R.styleable.Window_windowNoDisplay, false);
+
+if (ActivityInfo.isFixedOrientation(requestedOrientation) && !fullscreen && appInfo.targetSdkVersion >= O) {
+    throw new IllegalStateException("Only fullscreen activities can request orientation");
+}
+
+上面是27的源码片段，通过上面我们可以看出当三个条件同时满足的时候，系统会抛出”Only fullscreen activities can request orientation”异常。先分别来说说这三个条件都表示什么意思：
+
+    ActivityInfo.isFixedOrientation(requestedOrientation) —— 表示判断当前的|Activity是否固定了方向
+    fullscreen —— 表示Activity是否是透明的或者是否悬浮在Activity上，是透明的或者悬浮在Activity上fullscreen就等于false
+    appInfo.targetSdkVersion >= O —— 表示版本号大于等于26
+
+当以上的三个条件同时满足的时候，系统框架就会抛出异常，那意思我们只能让上面的条件不满足就可以了。如果你要适配8.0以上的版本那么第三个条件肯定是满足的，那么我们就只能从第一个和第二个条件入手，第二个条件是否是透明的activity即<item name="android:windowIsTranslucent">true</item> 设置为true，如果设置为false，就可以使第二个条件不满足，但是这样我们的activity的背景就不是透明的了，所以我们要activity透明，那么这个必须设置true，那么第二个条件也满足。那么我们只能从第一个条件入手即不固定activity的方向，但是这样还是有问题，原本我们的应用的其他界面的都是固定方向的，突然有一个不固定方向，用户体验会不太好。所以如果不是必须使用activity才能实现的功能，建议使用Dialog来实现透明Activity的效果。如果一定要使用透明的Activity并且要适配android 8.0以上，就只能不固定activity的方向才能解决报错问题。
+2、解决问题的方法
+
+    使用Dialog代替透明的Activity
+    不固定Activity的方向
+    不适配8.0及以上手机（当你看到这个问题时，肯定是要适配8.0及以上的，所以当我没有说）

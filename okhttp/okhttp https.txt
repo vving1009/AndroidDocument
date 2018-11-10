@@ -1,0 +1,71 @@
+https://www.jianshu.com/p/6c79f67b78aa
+https://www.cnblogs.com/alisecurity/p/5939336.html
+https://www.jianshu.com/p/9e944688fab9
+
+需要TrustManager和HostnameVerifier
+
+一个典型的使用 HTTPS 方式如下:
+如不进行配置，则使用的是默认的SSLSocketFactory，与下段代码使用的SSLContext是一致的
+
+private synchronized SSLSocketFactory getDefaultSSLSocketFactory() {
+  try {
+    SSLContext sslContext = SSLContext.getInstance("TLS");
+    sslContext.init(null, null, null);
+    return defaultSslSocketFactory = sslContext.getSocketFactory();
+  } catch (GeneralSecurityException e) {
+    throw new AssertionError(); // The system has no TLS. Just give up.
+  }
+}
+
+默认的 SSLSocketFactory 校验服务器的证书时，会信任设备内置的100多个根证书。
+
+1、TrustManager
+
+上文说了，SSL 握手开始后，会校验服务器的证书，那么其实就是通过 X509ExtendedTrustManager 做校验的，更一般性的说是 X509TrustManager :
+
+/**
+ * The trust manager for X509 certificates to be used to perform authentication
+ * for secure sockets.
+ */
+public interface X509TrustManager extends TrustManager {
+
+    public void checkClientTrusted(X509Certificate[] chain, String authType)
+            throws CertificateException;
+
+    public void checkServerTrusted(X509Certificate[] chain, String authType)
+            throws CertificateException;
+
+    public X509Certificate[] getAcceptedIssuers();
+}
+
+那么最后校验服务器证书的过程会落到 checkServerTrusted 这个函数，如果校验没通过会抛出 CertificateException 。笔者不得不得吐槽一下，很多博客说，配置 SSL 差不多是这样的:
+
+private static synchronized SSLSocketFactory getDefaultSSLSocketFactory() {
+    try {
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(null, new TrustManager[]{
+                new X509TrustManager() {
+                    public void checkClientTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+
+                    }
+
+                    public void checkServerTrusted(X509Certificate[] x509Certificates, String s) throws CertificateException {
+                    }
+
+                    public X509Certificate[] getAcceptedIssuers() {
+                        return new X509Certificate[0];
+                    }
+                }
+        }, null);
+        return sslContext.getSocketFactory();
+    } catch (GeneralSecurityException e) {
+        throw new AssertionError();
+    }
+}
+
+好的，如果你这么用的话，随便什么证书你都会信任，网络毫无安全可言，可以随意的被中间人攻击，所以千万不要这样做。
+
+用预埋的证书来生成TrustManger和SSLSocketFactory:
+
+https://www.jianshu.com/p/6c79f67b78aa
+https://www.jianshu.com/p/9e944688fab9

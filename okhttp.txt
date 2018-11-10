@@ -1,0 +1,533 @@
+1.1. 异步GET请求
+
+-new OkHttpClient;
+-构造Request对象；
+-通过前两步中的对象构建Call对象；
+-通过Call#enqueue(Callback)方法来提交异步请求；
+
+String url = "http://wwww.baidu.com";
+OkHttpClient okHttpClient = new OkHttpClient();
+final Request request = new Request.Builder()
+        .url(url)
+        .get()//默认就是GET请求，可以不写
+        .build();
+Call call = okHttpClient.newCall(request);
+call.enqueue(new Callback() {
+    @Override
+    public void onFailure(Call call, IOException e) {
+        Log.d(TAG, "onFailure: ");
+    }
+
+    @Override
+    public void onResponse(Call call, Response response) throws IOException {
+        Log.d(TAG, "onResponse: " + response.body().string());
+    }
+});
+
+响应体的 string() 方法对于小文档来说十分方便、高效。但是如果响应体太大（超过1MB），应避免使用string()和bytes()方法 ，因为他会将把整个文档加载到内存中。
+对于超过1MB的响应body，应使用流的方式(charStream(),byteStream())来处理body。
+
+异步发起的请求会被加入到 Dispatcher 中的 runningAsyncCalls双端队列中通过线程池来执行。
+
+1.2. 同步GET请求
+
+前面几个步骤和异步方式一样，只是最后一部是通过 Call#execute() 来提交请求，注意这种方式会阻塞调用线程，所以在Android中应放在子线程中执行，否则有可能引起ANR异常，Android3.0 以后已经不允许在主线程访问网络。
+
+String url = "http://wwww.baidu.com";
+OkHttpClient okHttpClient = new OkHttpClient();
+final Request request = new Request.Builder()
+        .url(url)
+        .build();
+final Call call = okHttpClient.newCall(request);
+new Thread(new Runnable() {
+    @Override
+    public void run() {
+        try {
+            Response response = call.execute();
+            Log.d(TAG, "run: " + response.body().string());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}).start();
+
+2.1. POST方式提交String
+
+这种方式与前面的区别就是在构造Request对象时，需要多构造一个RequestBody对象，用它来携带我们要提交的数据。在构造 RequestBody 需要指定MediaType，用于描述请求/响应 body 的内容类型
+-----------------------------------------------------------------------------
+关于MediaType的详细介绍
+      MediaType指的是要传递的数据的MIME类型，MediaType对象包含了三种信息：type 、subtype以及charset，一般将这些信息传入parse()方法中，这样就可以解析出MediaType对象，比如 "text/x-markdown; charset=utf-8" ，type值是text，表示是文本这一大类；/后面的x-markdown是subtype，表示是文本这一大类下的markdown这一小类； charset=utf-8 则表示采用UTF-8编码。如果不知道某种类型数据的MIME类型，可以参见链接Media Type和MIME 参考手册，较详细的列出了所有数据的MIME类型。
+      http://www.w3school.com.cn/media/media_mimeref.asp
+    json : application/json
+    xml : application/xml
+    png : image/png
+    jpg : image/jpeg
+    gif : imge/gif
+    
+常见的有：
+    application/x-www-form-urlencoded 数据是个普通表单
+    multipart/form-data 数据里有文件
+    application/json 数据是个Json
+    text/x-markdown 文本MarkDown
+    "application/json; charset=utf-8" JSON数据
+    "image/png" 图片数据
+如post的是formbody，FormBody中已指定Content-Type格式为application/x-www-form-urlencoded
+MultipartBody继承了RequestBody,它适用于这五种Content-Type:
+  public static final MediaType MIXED = MediaType.parse("multipart/mixed");
+  public static final MediaType ALTERNATIVE = MediaType.parse("multipart/alternative");
+  public static final MediaType DIGEST = MediaType.parse("multipart/digest");
+  public static final MediaType PARALLEL = MediaType.parse("multipart/parallel");
+  public static final MediaType FORM = MediaType.parse("multipart/form-data");
+
+-----------------------------------------------------------------------------
+
+MediaType mediaType = MediaType.parse("text/x-markdown; charset=utf-8");
+String requestBody = "I am Jdqm.";
+Request request = new Request.Builder()
+        .url("https://api.github.com/markdown/raw")
+        .post(RequestBody.create(mediaType, requestBody))
+        .build();
+OkHttpClient okHttpClient = new OkHttpClient();
+okHttpClient.newCall(request).enqueue(new Callback() {
+    @Override
+    public void onFailure(Call call, IOException e) {
+        Log.d(TAG, "onFailure: " + e.getMessage());
+    }
+
+    @Override
+    public void onResponse(Call call, Response response) throws IOException {
+        Log.d(TAG, response.protocol() + " " +response.code() + " " + response.message());
+        Headers headers = response.headers();
+        for (int i = 0; i < headers.size(); i++) {
+            Log.d(TAG, headers.name(i) + ":" + headers.value(i));
+        }
+        Log.d(TAG, "onResponse: " + response.body().string());
+    }
+});
+
+响应内容
+
+http/1.1 200 OK 
+Date:Sat, 10 Mar 2018 05:23:20 GMT 
+Content-Type:text/html;charset=utf-8
+Content-Length:18
+Server:GitHub.com 
+Status:200 OK 
+X-RateLimit-Limit:60
+X-RateLimit-Remaining:52
+X-RateLimit-Reset:1520661052
+X-CommonMarker-Version:0.17.4
+Access-Control-Expose-Headers:ETag, Link, Retry-After, X-GitHub-OTP, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes, X-Poll-Interval
+
+Access-Control-Allow-Origin:*
+Content-Security-Policy:default-src 'none'
+Strict-Transport-Security:max-age=31536000; includeSubdomains; preload 
+X-Content-Type-Options:nosniff 
+X-Frame-Options:deny 
+X-XSS-Protection:1; mode=block 
+X-Runtime-rack:0.019668
+Vary:Accept-Encoding 
+X-GitHub-Request-Id:1474:20A83:5CC0B6:7A7C1B:5AA36BC8 
+onResponse: <p>I am Jdqm.</p>
+
+---------------------------------------------------------------------------
+From表单形式
+
+        OkHttpClient client = new OkHttpClient();
+        RequestBody body = new FormBody.Builder().add("username","xiaoyi").build();
+        Request request = new Request.Builder()
+                .post(body)
+                .url(url).
+                build();
+        client.newCall(request).enqueue(new Callback() {...});
+
+JSON参数形式
+
+        OkHttpClient client = new OkHttpClient();
+        RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), json);
+        Request request = new Request.Builder()
+                .post(body)
+                .url(url).
+                        build();
+        client.newCall(request).enqueue(new Callback() {...});
+
+文件上传
+
+        OkHttpClient client = new OkHttpClient();
+        RequestBody fileBody = RequestBody.create(MediaType.parse("image/png"), fiDatale);
+        RequestBody requestBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("file", "head_img", fileBody)
+                .addFormDataPart("name", "xiaoyi").build();
+
+        Request request = new Request.Builder()
+                .url(url)
+                .post(requestBody)
+                .build();
+
+        client.newCall(request).enqueue(new Callback() {...});
+
+addFormDataPart和addPart并没有什么区别，只是addFromDataPart进行了封装
+
+  /** Add a form data part to the body. */
+    public Builder addFormDataPart(String name, String value) {
+      return addPart(Part.createFormData(name, value));
+    }
+
+    /** Add a form data part to the body. */
+    public Builder addFormDataPart(String name, String filename, RequestBody body) {
+      return addPart(Part.createFormData(name, filename, body));
+    }
+
+    public static Part createFormData(String name, String value) {
+      return createFormData(name, null, RequestBody.create(null, value));
+    }
+
+    public static Part createFormData(String name, String filename, RequestBody body) {
+      if (name == null) {
+        throw new NullPointerException("name == null");
+      }
+      StringBuilder disposition = new StringBuilder("form-data; name=");
+      appendQuotedString(disposition, name);
+
+      if (filename != null) {
+        disposition.append("; filename=");
+        appendQuotedString(disposition, filename);
+      }
+
+      return create(Headers.of("Content-Disposition", disposition.toString()), body);
+    }
+
+文件下载
+
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder()
+                .url(url)
+                .build();
+        client.newCall(request).enqueue(new Callback() {
+            @Override
+            public void onFailure(Call call, IOException e) {
+                e.printStackTrace();
+            }
+
+            @Override
+            public void onResponse(Call call, Response response) throws IOException {
+                if (response.isSuccessful()){
+                    downlodefile(response, Environment.getExternalStorageDirectory().getAbsolutePath(),"text.txt");
+                }
+            }
+        });
+
+文件下载就是从response中得到inputStream，做写文件操作
+
+    private void downlodefile(Response response, String url, String fileName) {
+        InputStream is = null;
+        byte[] buf = new byte[2048];
+        int len = 0;
+        FileOutputStream fos = null;
+        try {
+            is = response.body().byteStream();
+            //文件大小
+            long total = response.body().contentLength();
+            File file = new File(url, fileName);
+            fos = new FileOutputStream(file);
+            long sum = 0;
+            while ((len = is.read(buf)) != -1) {
+                fos.write(buf, 0, len);
+//                进度条
+//                sum += len;
+//                int progress = (int) (sum * 1.0f / total * 100);
+            }
+            fos.flush();
+            Log.e("xxxxxxxx", "下载成功");
+        } catch (Exception e) {
+        } finally {
+            try {
+                if (is != null)
+                    is.close();
+            } catch (IOException e) {
+            }
+            try {
+                if (fos != null)
+                    fos.close();
+            } catch (IOException e) {
+            }
+        }
+    }
+---------------------------------------------------------------------------
+
+2.2 POST方式提交流
+
+RequestBody requestBody = new RequestBody() {
+    @Nullable
+    @Override
+    public MediaType contentType() {
+        return MediaType.parse("text/x-markdown; charset=utf-8");
+    }
+
+    @Override
+    public void writeTo(BufferedSink sink) throws IOException {
+        sink.writeUtf8("I am Jdqm.");
+    }
+};
+
+Request request = new Request.Builder()
+        .url("https://api.github.com/markdown/raw")
+        .post(requestBody)
+        .build();
+OkHttpClient okHttpClient = new OkHttpClient();
+okHttpClient.newCall(request).enqueue(new Callback() {
+    @Override
+    public void onFailure(Call call, IOException e) {
+        Log.d(TAG, "onFailure: " + e.getMessage());
+    }
+
+    @Override
+    public void onResponse(Call call, Response response) throws IOException {
+        Log.d(TAG, response.protocol() + " " +response.code() + " " + response.message());
+        Headers headers = response.headers();
+        for (int i = 0; i < headers.size(); i++) {
+            Log.d(TAG, headers.name(i) + ":" + headers.value(i));
+        }
+        Log.d(TAG, "onResponse: " + response.body().string());
+    }
+});
+
+2.3. POST提交文件
+
+MediaType mediaType = MediaType.parse("text/x-markdown; charset=utf-8");
+OkHttpClient okHttpClient = new OkHttpClient();
+File file = new File("test.md");
+Request request = new Request.Builder()
+        .url("https://api.github.com/markdown/raw")
+        .post(RequestBody.create(mediaType, file))
+        .build();
+okHttpClient.newCall(request).enqueue(new Callback() {
+    @Override
+    public void onFailure(Call call, IOException e) {
+        Log.d(TAG, "onFailure: " + e.getMessage());
+    }
+
+    @Override
+    public void onResponse(Call call, Response response) throws IOException {
+        Log.d(TAG, response.protocol() + " " +response.code() + " " + response.message());
+        Headers headers = response.headers();
+        for (int i = 0; i < headers.size(); i++) {
+            Log.d(TAG, headers.name(i) + ":" + headers.value(i));
+        }
+        Log.d(TAG, "onResponse: " + response.body().string());
+    }
+});
+
+2.4. POST方式提交表单
+
+OkHttpClient okHttpClient = new OkHttpClient();
+RequestBody requestBody = new FormBody.Builder()
+        .add("search", "Jurassic Park")
+        .build();
+Request request = new Request.Builder()
+        .url("https://en.wikipedia.org/w/index.php")
+        .post(requestBody)
+        .build();
+
+okHttpClient.newCall(request).enqueue(new Callback() {
+    @Override
+    public void onFailure(Call call, IOException e) {
+        Log.d(TAG, "onFailure: " + e.getMessage());
+    }
+
+    @Override
+    public void onResponse(Call call, Response response) throws IOException {
+        Log.d(TAG, response.protocol() + " " +response.code() + " " + response.message());
+        Headers headers = response.headers();
+        for (int i = 0; i < headers.size(); i++) {
+            Log.d(TAG, headers.name(i) + ":" + headers.value(i));
+        }
+        Log.d(TAG, "onResponse: " + response.body().string());
+    }
+});
+
+提交表单时，使用 RequestBody 的实现类FormBody来描述请求体，它可以携带一些经过编码的 key-value 请求体，键值对存储在下面两个集合中：
+
+  private final List<String> encodedNames;
+  private final List<String> encodedValues;
+
+2.5. POST方式提交分块请求
+
+MultipartBody 可以构建复杂的请求体，与HTML文件上传形式兼容。多块请求体中每块请求都是一个请求体，可以定义自己的请求头。这些请求头可以用来描述这块请求，例如它的 Content-Disposition 。如果 Content-Length 和 Content-Type 可用的话，他们会被自动添加到请求头中。
+content-type:multipart/form-data
+
+private static final String IMGUR_CLIENT_ID = "...";
+private static final MediaType MEDIA_TYPE_PNG = MediaType.parse("image/png");
+
+private void postMultipartBody() {
+    OkHttpClient client = new OkHttpClient();
+
+
+    // Use the imgur image upload API as documented at https://api.imgur.com/endpoints/image
+    MultipartBody body = new MultipartBody.Builder("AaB03x")
+            .setType(MultipartBody.FORM)
+            .addPart(
+                    Headers.of("Content-Disposition", "form-data; name=\"title\""),
+                    RequestBody.create(null, "Square Logo"))
+            .addPart(
+                    Headers.of("Content-Disposition", "form-data; name=\"image\""),
+                    RequestBody.create(MEDIA_TYPE_PNG, new File("website/static/logo-square.png")))
+            .build();
+
+    Request request = new Request.Builder()
+            .header("Authorization", "Client-ID " + IMGUR_CLIENT_ID)
+            .url("https://api.imgur.com/3/image")
+            .post(body)
+            .build();
+
+    Call call = client.newCall(request);
+    call.enqueue(new Callback() {
+        @Override
+        public void onFailure(Call call, IOException e) {
+
+        }
+
+        @Override
+        public void onResponse(Call call, Response response) throws IOException {
+            System.out.println(response.body().string());
+
+        }
+
+    });
+}
+
+III.拦截器-interceptor
+
+---------------------------------------------------------------------------
+https://www.jianshu.com/p/2710ed1e6b48
+Response getResponseWithInterceptorChain() throws IOException {
+    // Build a full stack of interceptors.
+    List<Interceptor> interceptors = new ArrayList<>();
+    interceptors.addAll(client.interceptors());
+    interceptors.add(retryAndFollowUpInterceptor);
+    interceptors.add(new BridgeInterceptor(client.cookieJar()));
+    interceptors.add(new CacheInterceptor(client.internalCache()));
+    interceptors.add(new ConnectInterceptor(client));
+    if (!forWebSocket) {
+      interceptors.addAll(client.networkInterceptors());
+    }
+    interceptors.add(new CallServerInterceptor(forWebSocket));
+
+    Interceptor.Chain chain = new RealInterceptorChain(
+        interceptors, null, null, null, 0, originalRequest);
+    return chain.proceed(originalRequest);
+  }
+
+从这可以发现okhttp在处理网络响应时采用的是拦截器机制。okhttp用ArrayList对interceptors进行管理，interceptors将依次被调用。
+
+(1)调用OkHttpClient.Builder的addInterceptor()可以添加应用拦截器，只会被调用一次，可以处理网络请求回来的最终Response
+(2)调用addNetworkInterceptor()可以添加network拦截器，处理所有的网络响应（一次请求如果发生了redirect ，那么这个拦截器的逻辑可能会被调用两次）
+
+Application interceptors与Network Interceptors
+应用拦截器
+
+不需要担心中间过程的响应,如重定向和重试.
+总是只调用一次,即使HTTP响应是从缓存中获取.
+观察应用程序的初衷. 不关心OkHttp注入的头信息如: If-None-Match.
+允许短路而不调用 Chain.proceed(),即中止调用.
+允许重试,使 Chain.proceed()调用多次.
+
+网络连接器
+
+能够操作中间过程的响应,如重定向和重试.
+当网络短路而返回缓存响应时不被调用.
+只观察在网络上传输的数据.
+携带请求来访问连接.
+---------------------------------------------------------------------------
+
+OkHttp的拦截器链可谓是其整个框架的精髓，用户可传入的 interceptor 分为两类：
+①一类是全局的 interceptor，该类 interceptor 在整个拦截器链中最早被调用，通过 OkHttpClient.Builder#addInterceptor(Interceptor) 传入；
+②另外一类是非网页请求的 interceptor ，这类拦截器只会在非网页请求中被调用，并且是在组装完请求之后，真正发起网络请求前被调用，所有的 interceptor 被保存在 List<Interceptor> interceptors 集合中，按照添加顺序来逐个调用，具体可参考 RealCall#getResponseWithInterceptorChain() 方法。通过 OkHttpClient.Builder#addNetworkInterceptor(Interceptor) 传入；
+
+这里举一个简单的例子，例如有这样一个需求，我要监控App通过 OkHttp 发出的所有原始请求，以及整个请求所耗费的时间，针对这样的需求就可以使用第一类全局的 interceptor 在拦截器链头去做。
+
+OkHttpClient okHttpClient = new OkHttpClient.Builder()
+        .addInterceptor(new LoggingInterceptor())
+        .build();
+Request request = new Request.Builder()
+        .url("http://www.publicobject.com/helloworld.txt")
+        .header("User-Agent", "OkHttp Example")
+        .build();
+okHttpClient.newCall(request).enqueue(new Callback() {
+    @Override
+    public void onFailure(Call call, IOException e) {
+        Log.d(TAG, "onFailure: " + e.getMessage());
+    }
+
+    @Override
+    public void onResponse(Call call, Response response) throws IOException {
+        ResponseBody body = response.body();
+        if (body != null) {
+            Log.d(TAG, "onResponse: " + response.body().string());
+            body.close();
+        }
+    }
+});
+
+public class LoggingInterceptor implements Interceptor {
+    private static final String TAG = "LoggingInterceptor";
+    
+    @Override
+    public Response intercept(Chain chain) throws IOException {
+        Request request = chain.request();
+
+        long startTime = System.nanoTime();
+        Log.d(TAG, String.format("Sending request %s on %s%n%s",
+                request.url(), chain.connection(), request.headers()));
+
+        Response response =  chain.proceed(request);
+
+        long endTime = System.nanoTime();
+        Log.d(TAG, String.format("Received response for %s in %.1fms%n%s",
+                response.request().url(), (endTime - startTime) / 1e6d, response.headers()));
+
+        return response;
+    }
+}
+
+针对这个请求，打印出来的结果
+
+Sending request http://www.publicobject.com/helloworld.txt on null
+User-Agent: OkHttp Example
+        
+Received response for https://publicobject.com/helloworld.txt in 1265.9ms
+Server: nginx/1.10.0 (Ubuntu)
+Date: Wed, 28 Mar 2018 08:19:48 GMT
+Content-Type: text/plain
+Content-Length: 1759
+Last-Modified: Tue, 27 May 2014 02:35:47 GMT
+Connection: keep-alive
+ETag: "5383fa03-6df"
+Accept-Ranges: bytes
+
+注意到一点是这个请求做了重定向，原始的 request url 是 http://www.publicobject.com/helloworld.tx，
+而响应的 request url 是 https://publicobject.com/helloworld.txt，
+这说明一定发生了重定向，但是做了几次重定向其实我们这里是不知道的，要知道这些的话，可以使用 addNetworkInterceptor()去做。更多的关于 interceptor的使用以及它们各自的优缺点，请移步OkHttp官方说明文档。
+
+IV. 自定义dns服务
+
+Okhttp默认情况下使用的是系统
+
+V.其他
+    推荐让 OkHttpClient 保持单例，用同一个 OkHttpClient 实例来执行你的所有请求，因为每一个 OkHttpClient 实例都拥有自己的连接池和线程池，重用这些资源可以减少延时和节省资源，如果为每个请求创建一个 OkHttpClient 实例，显然就是一种资源的浪费。当然，也可以使用如下的方式来创建一个新的 OkHttpClient 实例，它们共享连接池、线程池和配置信息。
+
+    OkHttpClient eagerClient = client.newBuilder()
+        .readTimeout(500, TimeUnit.MILLISECONDS)
+        .build();
+    Response response = eagerClient.newCall(request).execute();
+
+    每一个Call（其实现是RealCall）只能执行一次，否则会报异常，具体参见 RealCall#execute()
+    
+源码
+https://www.jianshu.com/p/b0353ed71151
+架构
+https://www.jianshu.com/p/9deec36f2759
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+

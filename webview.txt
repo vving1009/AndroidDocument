@@ -1,9 +1,31 @@
+WebViewÖĞµÄSettings
+
+httpsÒ³Ãæ¼ÓÔØ²»³öÀ´¾ÍÓÃËü£º
+setting.setDomStorageEnabled(true);//ÉèÖÃDOM Storage»º´æ
+
+¶øDomStorage°üÀ¨Session StorageºÍLocal StorageÁ½ÖÖ£¬Äã»¹¿ÉÒÔÕâÑùÉèÖÃ¡£
+webview.getSettings().setDatabaseEnabled(true);
+webview.getSettings().setDatabasePath("/data/data");
+webSettings.setDomStorageEnabled(true);
+
+setJavaScriptEnabled(true) ;//Ö§³Öjs½Å±¾ 
+setPluginsEnabled(true) ;//Ö§³Ö²å¼ş 
+setUserWideViewPort(false) ;//½«Í¼Æ¬µ÷Õûµ½ÊÊºÏwebviewµÄ´óĞ¡ 
+setSupportZoom(true) ;//Ö§³ÖËõ·Å 
+setLayoutAlgorithm(LayoutAlgrithm.SINGLE_COLUMN) ;//Ö§³ÖÄÚÈİ´ÓĞÂ²¼¾Ö 
+supportMultipleWindows() ;//¶à´°¿Ú 
+setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK) ;//¹Ø±ÕwebviewÖĞ»º´æ 
+setAllowFileAccess(true) ;//ÉèÖÃ¿ÉÒÔ·ÃÎÊÎÄ¼ş 
+setNeedInitialFocus(true) ;//µ±webviewµ÷ÓÃrequestFocusÊ±ÎªwebviewÉèÖÃ½Úµã 
+setjavaScriptCanOpenWindowsAutomatically(true) ;//Ö§³ÖÍ¨¹ıJS´ò¿ªĞÂ´°¿Ú 
+setLoadsImagesAutomatically(true) ;//Ö§³Ö×Ô¶¯¼ÓÔØÍ¼Æ¬ 
+setBuiltInZoomControls(true);//Ö§³ÖËõ·Å 
+webView.setInitialScale(35);//ÉèÖÃËõ·Å±ÈÀı 
+webView.setScrollBarStyle(View.SCROLLBARS_OUTSIDE_OVERLAY);//ÉèÖÃ¹ö¶¯ÌõÒş²Ø webView.getSettings().setGeolocationEnabled(true);//ÆôÓÃµØÀí¶¨Î» webView.getSettings().setRenderPriority(RenderPriority.HIGH);//ÉèÖÃäÖÈ¾ÓÅÏÈ¼¶
+
+////////////////////////////////////////////////////////////////////////////////////
+
 Android-----WebViewÊ¹ÓÃ 
-
-
-
-
-  
 
 ´ó²¿·ÖÄÚÈİÎªÍøÉÏÕûÀíÆäËü¸ßÈËµÄÌû×Ó£¬ÏÖÖ»×÷ÕûÀí£¬ÓÃÓÚ²é¿´£º
 
@@ -23,10 +45,6 @@ WebKitÊÇMac OS X v10.3¼°ÒÔÉÏ°æ±¾Ëù°üº¬µÄÈí¼ş¿ò¼Ü£¨¶Ôv10.2.7¼°ÒÔÉÏ°æ±¾Ò²¿ÉÍ¨¹ıÈí¼
         webview.getSettings().setJavaScriptEnabled(true);  
     3.Èç¹ûÒ³ÃæÖĞÁ´½Ó£¬Èç¹ûÏ£Íûµã»÷Á´½Ó¼ÌĞøÔÚµ±Ç°browserÖĞÏìÓ¦£¬¶ø²»ÊÇĞÂ¿ªAndroidµÄÏµÍ³browserÖĞÏìÓ¦¸ÃÁ´½Ó£¬±ØĞë¸²¸Ç webviewµÄWebViewClient¶ÔÏó¡£
 
-
- 
-
-
 mWebView.setWebViewClient(new WebViewClient(){       
                     public boolean shouldOverrideUrlLoading(WebView view, String url) {       
                         view.loadUrl(url);       
@@ -34,16 +52,7 @@ mWebView.setWebViewClient(new WebViewClient(){
                     }       
         });   
 
- 
-
- 
-
  4.Èç¹û²»×öÈÎºÎ´¦Àí£¬ä¯ÀÀÍøÒ³£¬µã»÷ÏµÍ³¡°Back¡±¼ü£¬Õû¸öBrowser»áµ÷ÓÃfinish()¶ø½áÊø×ÔÉí£¬Èç¹ûÏ£Íûä¯ÀÀµÄÍø Ò³»ØÍË¶ø²»ÊÇÍÆ³öä¯ÀÀÆ÷£¬ĞèÒªÔÚµ±Ç°ActivityÖĞ´¦Àí²¢Ïû·Ñµô¸ÃBackÊÂ¼ş¡£
-
-
- 
-
-
 public boolean onKeyDown(int keyCode, KeyEvent event) {       
         if ((keyCode == KeyEvent.KEYCODE_BACK) && mWebView.canGoBack()) {       
             mWebView.goBack();       
@@ -52,18 +61,10 @@ public boolean onKeyDown(int keyCode, KeyEvent event) {
         return super.onKeyDown(keyCode, event);       
     }     
 
- 
-
- 
 
 ÏÂÒ»²½ÈÃÎÒÃÇÀ´ÁË½âÒ»ÏÂandroidÖĞwebviewÊÇÈçºÎÖ§³Öjavascripte×Ô¶¨Òå¶ÔÏóµÄ£¬ÔÚw3c±ê×¼ÖĞjsÓĞ window£¬history£¬documentµÈ±ê×¼¶ÔÏó£¬Í¬ÑùÎÒÃÇ¿ÉÒÔÔÚ¿ª·¢ä¯ÀÀÆ÷Ê±×Ô¼º¶¨ÒåÎÒÃÇµÄ¶ÔÏóµ÷ÓÃÊÖ»úÏµÍ³¹¦ÄÜÀ´´¦Àí£¬ÕâÑùÊ¹ÓÃjs¾Í¿ÉÒÔ ÎªËùÓûÎªÁË¡£
 
   ¿´Ò»¸öÊµÀı£º
-
-
- 
-
-
 
 view plaincopy to clipboardprint?
 01.public class WebViewDemo extends Activity {        
@@ -89,15 +90,7 @@ view plaincopy to clipboardprint?
 21.    }       
 22.}   
 
- 
-
- 
-
 ÎÒÃÇ¿´addJavascriptInterface(Object obj,String interfaceName)Õâ¸ö·½·¨£¬¸Ã·½·¨½«Ò»¸öjava¶ÔÏó°ó¶¨µ½Ò»¸öjavascript¶ÔÏóÖĞ£¬javascript¶ÔÏóÃû¾ÍÊÇ interfaceName£¨demo£©£¬×÷ÓÃÓòÊÇGlobal¡£ÕâÑù³õÊ¼»¯webviewºó£¬ÔÚwebview¼ÓÔØµÄÒ³ÃæÖĞ¾Í¿ÉÒÔÖ±½ÓÍ¨¹ı javascript:window.demo·ÃÎÊµ½°ó¶¨µÄjava¶ÔÏóÁË¡£À´¿´¿´ÔÚhtmlÖĞÊÇÔõÑùµ÷ÓÃµÄ¡£
-
-
- 
-
 
 <html>       
         <mce:script language="javascript"><!--     
@@ -115,13 +108,659 @@ view plaincopy to clipboardprint?
         </body>       
 </html>      
 
- 
-
- 
-
 ÕâÑùÔÚjavascriptÖĞ¾Í¿ÉÒÔµ÷ÓÃjava¶ÔÏóµÄclickOnAndroid()·½·¨ÁË£¬Í¬ÑùÎÒÃÇ¿ÉÒÔÔÚ´Ë¶ÔÏóÖĞ¶¨ÒåºÜ¶à·½·¨£¨±È Èç·¢¶ÌĞÅ£¬µ÷ÓÃÁªÏµÈËÁĞ±íµÈÊÖ»úÏµÍ³¹¦ÄÜ¡££©,ÕâÀïwave()·½·¨ÊÇjavaÖĞµ÷ÓÃjavascriptµÄÀı×Ó¡£
 
 ÕâÀï»¹ÓĞ¼¸¸öÖªÊ¶µã£º 
 
 1)ÎªÁËÈÃWebView´ÓapkÎÄ¼şÖĞ¼ÓÔØassets£¬Android SDKÌá¹©ÁËÒ»¸öschema£¬Ç°×ºÎª"file:///android_asset/"¡£WebViewÓöµ½ÕâÑùµÄschema£¬¾ÍÈ¥µ±Ç°°üÖĞµÄ assetsÄ¿Â¼ÖĞÕÒÄÚÈİ¡£ÈçÉÏÃæµÄ"file:///android_asset/demo.html" 
 2)addJavascriptInterface·½·¨ÖĞÒª°ó¶¨µÄJava¶ÔÏó¼°·½·¨ÒªÔËĞĞÁíÍâµÄÏß³ÌÖĞ£¬²»ÄÜÔËĞĞÔÚ¹¹ÔìËûµÄÏß³ÌÖĞ£¬ÕâÒ²ÊÇÊ¹ÓÃ HandlerµÄÄ¿µÄ¡£
+
+==================================================================================================================
+
+https://blog.csdn.net/lyy666888/article/details/78770442
+
+Android¿ª·¢£º×îÈ«Ãæ¡¢×îÒ×¶®µÄWebviewÊ¹ÓÃÏê½â
+2017Äê12ÔÂ11ÈÕ 10:51:02
+ÔÄ¶ÁÊı£º293
+
+Ç°ÑÔ
+
+    ÏÖÔÚºÜ¶àAppÀï¶¼ÄÚÖÃÁËWebÍøÒ³£¨Hyprid App£©£¬±ÈÈçËµºÜ¶àµçÉÌÆ½Ì¨£¬ÌÔ±¦¡¢¾©¶«¡¢¾Û»®ËãµÈµÈ£¬ÈçÏÂÍ¼
+    ¾©¶«Ê×Ò³
+
+    ÄÇÃ´ÕâÖÖ¸ÃÈçºÎÊµÏÖÄØ£¿ÆäÊµÕâÊÇAndroidÀïÒ»¸ö½ĞWebViewµÄ×é¼şÊµÏÖµÄ¡£½ñÌìÎÒ½«È«Ãæ½éÉÜWebViewµÄ³£ÓÃÓÃ·¨¡£
+
+Ä¿Â¼
+ÎÄÕÂÄ¿Â¼
+1. ¼ò½é
+
+WebViewÊÇÒ»¸ö»ùÓÚwebkitÒıÇæ¡¢Õ¹ÏÖwebÒ³ÃæµÄ¿Ø¼ş¡£
+
+    AndroidµÄWebviewÔÚµÍ°æ±¾ºÍ¸ß°æ±¾²ÉÓÃÁË²»Í¬µÄwebkit°æ±¾ÄÚºË£¬4.4ºóÖ±½ÓÊ¹ÓÃÁËChrome¡£
+
+2. ×÷ÓÃ
+
+    ÏÔÊ¾ºÍäÖÈ¾WebÒ³Ãæ
+    Ö±½ÓÊ¹ÓÃhtmlÎÄ¼ş£¨ÍøÂçÉÏ»ò±¾µØassetsÖĞ£©×÷²¼¾Ö
+    ¿ÉºÍJavaScript½»»¥µ÷ÓÃ 
+
+    WebView¿Ø¼ş¹¦ÄÜÇ¿´ó£¬³ıÁË¾ßÓĞÒ»°ãViewµÄÊôĞÔºÍÉèÖÃÍâ£¬»¹¿ÉÒÔ¶ÔurlÇëÇó¡¢Ò³Ãæ¼ÓÔØ¡¢äÖÈ¾¡¢Ò³Ãæ½»»¥½øĞĞÇ¿´óµÄ´¦Àí¡£
+
+3. Ê¹ÓÃ½éÉÜ
+
+Ò»°ãÀ´ËµWebview¿Éµ¥¶ÀÊ¹ÓÃ£¬¿ÉÁªºÏÆä×ÓÀàÒ»ÆğÊ¹ÓÃ£¬ËùÒÔ½ÓÏÂÀ´£¬ÎÒ»á½éÉÜ£º
+
+    Webview×ÔÉíµÄ³£¼û·½·¨£»
+    WebviewµÄ×î³£ÓÃµÄ×ÓÀà £¨WebSettingsÀà¡¢WebViewClientÀà¡¢WebChromeClientÀà)
+    AndroidºÍJsµÄ½»»¥ 
+
+3.1 Webview³£ÓÃ·½·¨
+3.1.1 ¼ÓÔØurl
+
+¼ÓÔØ·½Ê½¸ù¾İ×ÊÔ´·ÖÎªÈıÖÖ
+
+
+  //·½Ê½1. ¼ÓÔØÒ»¸öÍøÒ³£º
+  webView.loadUrl("http://www.google.com/");
+
+  //·½Ê½2£º¼ÓÔØapk°üÖĞµÄhtmlÒ³Ãæ
+  webView.loadUrl("file:///android_asset/test.html");
+
+  //·½Ê½3£º¼ÓÔØÊÖ»ú±¾µØµÄhtmlÒ³Ãæ
+   webView.loadUrl("content://com.android.htmlfileprovider/sdcard/test.html");
+
+   // ·½Ê½4£º ¼ÓÔØ HTML Ò³ÃæµÄÒ»Ğ¡¶ÎÄÚÈİ
+  WebView.loadData(String data, String mimeType, String encoding)
+// ²ÎÊıËµÃ÷£º
+// ²ÎÊı1£ºĞèÒª½ØÈ¡Õ¹Ê¾µÄÄÚÈİ
+// ÄÚÈİÀï²»ÄÜ³öÏÖ ¡¯#¡¯, ¡®%¡¯, ¡®\¡¯ , ¡®?¡¯ ÕâËÄ¸ö×Ö·û£¬Èô³öÏÖÁËĞèÓÃ %23, %25, %27, %3f ¶ÔÓ¦À´Ìæ´ú£¬·ñÔò»á³öÏÖÒì³£
+// ²ÎÊı2£ºÕ¹Ê¾ÄÚÈİµÄÀàĞÍ
+// ²ÎÊı3£º×Ö½ÚÂë
+
+
+3.1.1 WebViewµÄ×´Ì¬
+
+//¼¤»îWebViewÎª»îÔ¾×´Ì¬£¬ÄÜÕı³£Ö´ĞĞÍøÒ³µÄÏìÓ¦
+webView.onResume() £»
+
+//µ±Ò³Ãæ±»Ê§È¥½¹µã±»ÇĞ»»µ½ºóÌ¨²»¿É¼û×´Ì¬£¬ĞèÒªÖ´ĞĞonPause
+//Í¨¹ıonPause¶¯×÷Í¨ÖªÄÚºËÔİÍ£ËùÓĞµÄ¶¯×÷£¬±ÈÈçDOMµÄ½âÎö¡¢pluginµÄÖ´ĞĞ¡¢JavaScriptÖ´ĞĞ¡£
+webView.onPause()£»
+
+//µ±Ó¦ÓÃ³ÌĞò(´æÔÚwebview)±»ÇĞ»»µ½ºóÌ¨Ê±£¬Õâ¸ö·½·¨²»½ö½öÕë¶Ôµ±Ç°µÄwebview¶øÊÇÈ«¾ÖµÄÈ«Ó¦ÓÃ³ÌĞòµÄwebview
+//Ëü»áÔİÍ£ËùÓĞwebviewµÄlayout£¬parsing£¬javascripttimer¡£½µµÍCPU¹¦ºÄ¡£
+webView.pauseTimers()
+//»Ö¸´pauseTimers×´Ì¬
+webView.resumeTimers()£»
+
+//Ïú»ÙWebview
+//ÔÚ¹Ø±ÕÁËActivityÊ±£¬Èç¹ûWebviewµÄÒôÀÖ»òÊÓÆµ£¬»¹ÔÚ²¥·Å¡£¾Í±ØĞëÏú»ÙWebview
+//µ«ÊÇ×¢Òâ£ºwebviewµ÷ÓÃdestoryÊ±,webviewÈÔ°ó¶¨ÔÚActivityÉÏ
+//ÕâÊÇÓÉÓÚ×Ô¶¨Òåwebview¹¹½¨Ê±´«ÈëÁË¸ÃActivityµÄcontext¶ÔÏó
+//Òò´ËĞèÒªÏÈ´Ó¸¸ÈİÆ÷ÖĞÒÆ³ıwebview,È»ºóÔÙÏú»Ùwebview:
+rootLayout.removeView(webView); 
+webView.destroy();
+
+3.1.2 ¹ØÓÚÇ°½ø / ºóÍËÍøÒ³
+
+//ÊÇ·ñ¿ÉÒÔºóÍË
+Webview.canGoBack() 
+//ºóÍËÍøÒ³
+Webview.goBack()
+
+//ÊÇ·ñ¿ÉÒÔÇ°½ø                     
+Webview.canGoForward()
+//Ç°½øÍøÒ³
+Webview.goForward()
+
+//ÒÔµ±Ç°µÄindexÎªÆğÊ¼µãÇ°½ø»òÕßºóÍËµ½ÀúÊ·¼ÇÂ¼ÖĞÖ¸¶¨µÄsteps
+//Èç¹ûstepsÎª¸ºÊıÔòÎªºóÍË£¬ÕıÊıÔòÎªÇ°½ø
+Webview.goBackOrForward(intsteps) 
+
+³£¼ûÓÃ·¨£ºBack¼ü¿ØÖÆÍøÒ³ºóÍË
+
+    ÎÊÌâ£ºÔÚ²»×öÈÎºÎ´¦ÀíÇ°ÌáÏÂ £¬ä¯ÀÀÍøÒ³Ê±µã»÷ÏµÍ³µÄ¡°Back¡±¼ü,Õû¸ö Browser »áµ÷ÓÃ finish()¶ø½áÊø×ÔÉí
+    Ä¿±ê£ºµã»÷·µ»Øºó£¬ÊÇÍøÒ³»ØÍË¶ø²»ÊÇÍÆ³öä¯ÀÀÆ÷
+    ½â¾ö·½°¸£ºÔÚµ±Ç°ActivityÖĞ´¦Àí²¢Ïû·Ñµô¸Ã Back ÊÂ¼ş
+
+public boolean onKeyDown(int keyCode, KeyEvent event) {
+    if ((keyCode == KEYCODE_BACK) && mWebView.canGoBack()) { 
+        mWebView.goBack();
+        return true;
+    }
+    return super.onKeyDown(keyCode, event);
+}
+
+3.1.3 Çå³ı»º´æÊı¾İ
+
+//Çå³ıÍøÒ³·ÃÎÊÁôÏÂµÄ»º´æ
+//ÓÉÓÚÄÚºË»º´æÊÇÈ«¾ÖµÄÒò´ËÕâ¸ö·½·¨²»½ö½öÕë¶Ôwebview¶øÊÇÕë¶ÔÕû¸öÓ¦ÓÃ³ÌĞò.
+Webview.clearCache(true);
+
+//Çå³ıµ±Ç°webview·ÃÎÊµÄÀúÊ·¼ÇÂ¼
+//Ö»»áwebview·ÃÎÊÀúÊ·¼ÇÂ¼ÀïµÄËùÓĞ¼ÇÂ¼³ıÁËµ±Ç°·ÃÎÊ¼ÇÂ¼
+Webview.clearHistory()£»
+
+//Õâ¸öapi½ö½öÇå³ı×Ô¶¯Íê³ÉÌî³äµÄ±íµ¥Êı¾İ£¬²¢²»»áÇå³ıWebView´æ´¢µ½±¾µØµÄÊı¾İ
+Webview.clearFormData()£»
+
+3.2 ³£ÓÃÀà
+3.2.1 WebSettingsÀà
+
+    ×÷ÓÃ£º¶ÔWebView½øĞĞÅäÖÃºÍ¹ÜÀí
+    ÅäÖÃ²½Öè & ³£¼û·½·¨£º
+
+ÅäÖÃ²½Öè1£ºÌí¼Ó·ÃÎÊÍøÂçÈ¨ÏŞ£¨AndroidManifest.xml£©
+
+    ÕâÊÇÇ°Ìá£¡ÕâÊÇÇ°Ìá£¡ÕâÊÇÇ°Ìá£¡
+
+<uses-permission android:name="android.permission.INTERNET"/>
+
+ÅäÖÃ²½Öè2£ºÉú³ÉÒ»¸öWebView×é¼ş£¨ÓĞÁ½ÖÖ·½Ê½£©
+
+//·½Ê½1£ºÖ±½ÓÔÚÔÚActivityÖĞÉú³É
+WebView webView = new WebView(this)
+
+//·½·¨2£ºÔÚActivityµÄlayoutÎÄ¼şÀïÌí¼Ówebview¿Ø¼ş£º
+WebView webview = (WebView) findViewById(R.id.webView1);
+
+ÅäÖÃ²½Öè3£º½øĞĞÅäÖÃ-ÀûÓÃWebSettings×ÓÀà£¨³£¼û·½·¨£©
+
+//ÉùÃ÷WebSettings×ÓÀà
+WebSettings webSettings = webView.getSettings();
+
+//Èç¹û·ÃÎÊµÄÒ³ÃæÖĞÒªÓëJavascript½»»¥£¬Ôòwebview±ØĞëÉèÖÃÖ§³ÖJavascript
+webSettings.setJavaScriptEnabled(true);  
+// Èô¼ÓÔØµÄ html ÀïÓĞJS ÔÚÖ´ĞĞ¶¯»­µÈ²Ù×÷£¬»áÔì³É×ÊÔ´ÀË·Ñ£¨CPU¡¢µçÁ¿£©
+// ÔÚ onStop ºÍ onResume Àï·Ö±ğ°Ñ setJavaScriptEnabled() ¸øÉèÖÃ³É false ºÍ true ¼´¿É
+
+//Ö§³Ö²å¼ş
+webSettings.setPluginsEnabled(true); 
+
+//ÉèÖÃ×ÔÊÊÓ¦ÆÁÄ»£¬Á½ÕßºÏÓÃ
+webSettings.setUseWideViewPort(true); //½«Í¼Æ¬µ÷Õûµ½ÊÊºÏwebviewµÄ´óĞ¡ 
+webSettings.setLoadWithOverviewMode(true); // Ëõ·ÅÖÁÆÁÄ»µÄ´óĞ¡
+
+//Ëõ·Å²Ù×÷
+webSettings.setSupportZoom(true); //Ö§³ÖËõ·Å£¬Ä¬ÈÏÎªtrue¡£ÊÇÏÂÃæÄÇ¸öµÄÇ°Ìá¡£
+webSettings.setBuiltInZoomControls(true); //ÉèÖÃÄÚÖÃµÄËõ·Å¿Ø¼ş¡£ÈôÎªfalse£¬Ôò¸ÃWebView²»¿ÉËõ·Å
+webSettings.setDisplayZoomControls(false); //Òş²ØÔ­ÉúµÄËõ·Å¿Ø¼ş
+
+//ÆäËûÏ¸½Ú²Ù×÷
+webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK); //¹Ø±ÕwebviewÖĞ»º´æ 
+webSettings.setAllowFileAccess(true); //ÉèÖÃ¿ÉÒÔ·ÃÎÊÎÄ¼ş 
+webSettings.setJavaScriptCanOpenWindowsAutomatically(true); //Ö§³ÖÍ¨¹ıJS´ò¿ªĞÂ´°¿Ú 
+webSettings.setLoadsImagesAutomatically(true); //Ö§³Ö×Ô¶¯¼ÓÔØÍ¼Æ¬
+webSettings.setDefaultTextEncodingName("utf-8");//ÉèÖÃ±àÂë¸ñÊ½
+
+³£¼ûÓÃ·¨£ºÉèÖÃWebView»º´æ
+
+    µ±¼ÓÔØ html Ò³ÃæÊ±£¬WebView»áÔÚ/data/data/°üÃûÄ¿Â¼ÏÂÉú³É database Óë cache Á½¸öÎÄ¼ş¼Ğ
+    ÇëÇóµÄ URL¼ÇÂ¼±£´æÔÚ WebViewCache.db£¬¶ø URLµÄÄÚÈİÊÇ±£´æÔÚ WebViewCache ÎÄ¼ş¼ĞÏÂ
+    ÊÇ·ñÆôÓÃ»º´æ£º
+
+    //ÓÅÏÈÊ¹ÓÃ»º´æ: 
+    WebView.getSettings().setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK); 
+        //»º´æÄ£Ê½ÈçÏÂ£º
+        //LOAD_CACHE_ONLY: ²»Ê¹ÓÃÍøÂç£¬Ö»¶ÁÈ¡±¾µØ»º´æÊı¾İ
+        //LOAD_DEFAULT: £¨Ä¬ÈÏ£©¸ù¾İcache-control¾ö¶¨ÊÇ·ñ´ÓÍøÂçÉÏÈ¡Êı¾İ¡£
+        //LOAD_NO_CACHE: ²»Ê¹ÓÃ»º´æ£¬Ö»´ÓÍøÂç»ñÈ¡Êı¾İ.
+        //LOAD_CACHE_ELSE_NETWORK£¬Ö»Òª±¾µØÓĞ£¬ÎŞÂÛÊÇ·ñ¹ıÆÚ£¬»òÕßno-cache£¬¶¼Ê¹ÓÃ»º´æÖĞµÄÊı¾İ¡£
+
+    //²»Ê¹ÓÃ»º´æ: 
+    WebView.getSettings().setCacheMode(WebSettings.LOAD_NO_CACHE);
+
+    ½áºÏÊ¹ÓÃ£¨ÀëÏß¼ÓÔØ£©
+
+if (NetStatusUtil.isConnected(getApplicationContext())) {
+    webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);//¸ù¾İcache-control¾ö¶¨ÊÇ·ñ´ÓÍøÂçÉÏÈ¡Êı¾İ¡£
+} else {
+    webSettings.setCacheMode(WebSettings.LOAD_CACHE_ELSE_NETWORK);//Ã»Íø£¬Ôò´Ó±¾µØ»ñÈ¡£¬¼´ÀëÏß¼ÓÔØ
+}
+
+webSettings.setDomStorageEnabled(true); // ¿ªÆô DOM storage API ¹¦ÄÜ
+webSettings.setDatabaseEnabled(true);   //¿ªÆô database storage API ¹¦ÄÜ
+webSettings.setAppCacheEnabled(true);//¿ªÆô Application Caches ¹¦ÄÜ
+
+String cacheDirPath = getFilesDir().getAbsolutePath() + APP_CACAHE_DIRNAME;
+webSettings.setAppCachePath(cacheDirPath); //ÉèÖÃ  Application Caches »º´æÄ¿Â¼
+
+×¢Òâ£º Ã¿¸ö Application Ö»µ÷ÓÃÒ»´Î WebSettings.setAppCachePath()£¬WebSettings.setAppCacheMaxSize()
+3.2.2 WebViewClientÀà
+
+    ×÷ÓÃ£º´¦Àí¸÷ÖÖÍ¨Öª & ÇëÇóÊÂ¼ş
+    ³£¼û·½·¨£º
+
+³£¼û·½·¨1£ºshouldOverrideUrlLoading()
+
+    ×÷ÓÃ£º´ò¿ªÍøÒ³Ê±²»µ÷ÓÃÏµÍ³ä¯ÀÀÆ÷£¬ ¶øÊÇÔÚ±¾WebViewÖĞÏÔÊ¾£»ÔÚÍøÒ³ÉÏµÄËùÓĞ¼ÓÔØ¶¼¾­¹ıÕâ¸ö·½·¨,Õâ¸öº¯ÊıÎÒÃÇ¿ÉÒÔ×öºÜ¶à²Ù×÷¡£
+
+//²½Öè1. ¶¨ÒåWebview×é¼ş
+Webview webview = (WebView) findViewById(R.id.webView1);
+
+//²½Öè2. Ñ¡Ôñ¼ÓÔØ·½Ê½
+  //·½Ê½1. ¼ÓÔØÒ»¸öÍøÒ³£º
+  webView.loadUrl("http://www.google.com/");
+
+  //·½Ê½2£º¼ÓÔØapk°üÖĞµÄhtmlÒ³Ãæ
+  webView.loadUrl("file:///android_asset/test.html");
+
+  //·½Ê½3£º¼ÓÔØÊÖ»ú±¾µØµÄhtmlÒ³Ãæ
+   webView.loadUrl("content://com.android.htmlfileprovider/sdcard/test.html");
+
+//²½Öè3. ¸´Ğ´shouldOverrideUrlLoading()·½·¨£¬Ê¹µÃ´ò¿ªÍøÒ³Ê±²»µ÷ÓÃÏµÍ³ä¯ÀÀÆ÷£¬ ¶øÊÇÔÚ±¾WebViewÖĞÏÔÊ¾
+    webView.setWebViewClient(new WebViewClient(){
+      @Override
+      public boolean shouldOverrideUrlLoading(WebView view, String url) {
+          view.loadUrl(url);
+      return true;
+      }
+  });
+
+³£¼û·½·¨2£ºonPageStarted()
+
+    ×÷ÓÃ£º¿ªÊ¼ÔØÈëÒ³Ãæµ÷ÓÃµÄ£¬ÎÒÃÇ¿ÉÒÔÉè¶¨Ò»¸öloadingµÄÒ³Ãæ£¬¸æËßÓÃ»§³ÌĞòÔÚµÈ´ıÍøÂçÏìÓ¦¡£
+
+   webView.setWebViewClient(new WebViewClient(){
+     @Override
+     public void  onPageStarted(WebView view, String url, Bitmap favicon) {
+        //Éè¶¨¼ÓÔØ¿ªÊ¼µÄ²Ù×÷
+     }
+ });
+
+³£¼û·½·¨3£ºonPageFinished()
+
+    ×÷ÓÃ£ºÔÚÒ³Ãæ¼ÓÔØ½áÊøÊ±µ÷ÓÃ¡£ÎÒÃÇ¿ÉÒÔ¹Ø±Õloading Ìõ£¬ÇĞ»»³ÌĞò¶¯×÷¡£
+
+    webView.setWebViewClient(new WebViewClient(){
+      @Override
+      public void onPageFinished(WebView view, String url) {
+         //Éè¶¨¼ÓÔØ½áÊøµÄ²Ù×÷
+      }
+  });
+
+³£¼û·½·¨4£ºonLoadResource()
+
+    ×÷ÓÃ£ºÔÚ¼ÓÔØÒ³Ãæ×ÊÔ´Ê±»áµ÷ÓÃ£¬Ã¿Ò»¸ö×ÊÔ´£¨±ÈÈçÍ¼Æ¬£©µÄ¼ÓÔØ¶¼»áµ÷ÓÃÒ»´Î¡£
+
+    webView.setWebViewClient(new WebViewClient(){
+      @Override
+      public boolean onLoadResource(WebView view, String url) {
+         //Éè¶¨¼ÓÔØ×ÊÔ´µÄ²Ù×÷
+      }
+  });
+
+³£¼û·½·¨5£ºonReceivedError£¨£©
+
+    ×÷ÓÃ£º¼ÓÔØÒ³ÃæµÄ·şÎñÆ÷³öÏÖ´íÎóÊ±£¨Èç404£©µ÷ÓÃ¡£
+
+    AppÀïÃæÊ¹ÓÃwebview¿Ø¼şµÄÊ±ºòÓöµ½ÁËÖîÈç404ÕâÀàµÄ´íÎóµÄÊ±ºò£¬ÈôÒ²ÏÔÊ¾ä¯ÀÀÆ÷ÀïÃæµÄÄÇÖÖ´íÎóÌáÊ¾Ò³Ãæ¾ÍÏÔµÃºÜ³óÂªÁË£¬ÄÇÃ´Õâ¸öÊ±ºòÎÒÃÇµÄapp¾ÍĞèÒª¼ÓÔØÒ»¸ö±¾µØµÄ´íÎóÌáÊ¾Ò³Ãæ£¬¼´webviewÈçºÎ¼ÓÔØÒ»¸ö±¾µØµÄÒ³Ãæ
+
+//²½Öè1£ºĞ´Ò»¸öhtmlÎÄ¼ş£¨error_handle.html£©£¬ÓÃÓÚ³ö´íÊ±Õ¹Ê¾¸øÓÃ»§¿´µÄÌáÊ¾Ò³Ãæ
+//²½Öè2£º½«¸ÃhtmlÎÄ¼ş·ÅÖÃµ½´úÂë¸ùÄ¿Â¼µÄassetsÎÄ¼ş¼ĞÏÂ
+
+//²½Öè3£º¸´Ğ´WebViewClientµÄonRecievedError·½·¨
+//¸Ã·½·¨´«»ØÁË´íÎóÂë£¬¸ù¾İ´íÎóÀàĞÍ¿ÉÒÔ½øĞĞ²»Í¬µÄ´íÎó·ÖÀà´¦Àí
+    webView.setWebViewClient(new WebViewClient(){
+      @Override
+      public void onReceivedError(WebView view, int errorCode, String description, String failingUrl){
+switch(errorCode)
+                {
+                case HttpStatus.SC_NOT_FOUND:
+                    view.loadUrl("file:///android_assets/error_handle.html");
+                    break;
+                }
+            }
+        });
+
+³£¼û·½·¨6£ºonReceivedSslError()
+
+    ×÷ÓÃ£º´¦ÀíhttpsÇëÇó
+
+    webViewÄ¬ÈÏÊÇ²»´¦ÀíhttpsÇëÇóµÄ£¬Ò³ÃæÏÔÊ¾¿Õ°×£¬ĞèÒª½øĞĞÈçÏÂÉèÖÃ£º
+
+webView.setWebViewClient(new WebViewClient() {    
+        @Override    
+        public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {    
+            handler.proceed();    //±íÊ¾µÈ´ıÖ¤ÊéÏìÓ¦
+        // handler.cancel();      //±íÊ¾¹ÒÆğÁ¬½Ó£¬ÎªÄ¬ÈÏ·½Ê½
+        // handler.handleMessage(null);    //¿É×öÆäËû´¦Àí
+        }    
+    });    
+
+3.2.3 WebChromeClientÀà
+
+    ×÷ÓÃ£º¸¨Öú WebView ´¦Àí Javascript µÄ¶Ô»°¿ò,ÍøÕ¾Í¼±ê,ÍøÕ¾±êÌâµÈµÈ¡£
+    ³£¼ûÊ¹ÓÃ£º
+
+³£¼û·½·¨1£º onProgressChanged£¨£©
+
+    ×÷ÓÃ£º»ñµÃÍøÒ³µÄ¼ÓÔØ½ø¶È²¢ÏÔÊ¾
+
+webview.setWebChromeClient(new WebChromeClient(){
+
+      @Override
+      public void onProgressChanged(WebView view, int newProgress) {
+          if (newProgress < 100) {
+              String progress = newProgress + "%";
+              progress.setText(progress);
+            } else {
+        }
+    });
+
+³£¼û·½·¨2£º onReceivedTitle£¨£©
+
+    ×÷ÓÃ£º»ñÈ¡WebÒ³ÖĞµÄ±êÌâ
+
+    Ã¿¸öÍøÒ³µÄÒ³Ãæ¶¼ÓĞÒ»¸ö±êÌâ£¬±ÈÈçwww.baidu.comÕâ¸öÒ³ÃæµÄ±êÌâ¼´¡°°Ù¶ÈÒ»ÏÂ£¬Äã¾ÍÖªµÀ¡±£¬ÄÇÃ´ÈçºÎÖªµÀµ±Ç°webviewÕıÔÚ¼ÓÔØµÄÒ³ÃæµÄtitle²¢½øĞĞÉèÖÃÄØ£¿
+
+webview.setWebChromeClient(new WebChromeClient(){
+
+    @Override
+    public void onReceivedTitle(WebView view, String title) {
+       titleview.setText(title)£»
+    }
+
+³£¼û·½·¨3£º onJsAlert£¨£©
+
+    ×÷ÓÃ£ºÖ§³ÖjavascriptµÄ¾¯¸æ¿ò
+
+    Ò»°ãÇé¿öÏÂÔÚ Android ÖĞÎª Toast£¬ÔÚÎÄ±¾ÀïÃæ¼ÓÈë\n¾Í¿ÉÒÔ»»ĞĞ
+
+webview.setWebChromeClient(new WebChromeClient() {
+            
+            @Override
+            public boolean onJsAlert(WebView view, String url, String message, final JsResult result)  {
+    new AlertDialog.Builder(MainActivity.this)
+            .setTitle("JsAlert")
+            .setMessage(message)
+            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    result.confirm();
+                }
+            })
+            .setCancelable(false)
+            .show();
+    return true;
+            }
+
+³£¼û·½·¨4£º onJsConfirm£¨£©
+
+    ×÷ÓÃ£ºÖ§³ÖjavascriptµÄÈ·ÈÏ¿ò
+
+webview.setWebChromeClient(new WebChromeClient() {
+        
+            @Override
+public boolean onJsConfirm(WebView view, String url, String message, final JsResult result) {
+    new AlertDialog.Builder(MainActivity.this)
+            .setTitle("JsConfirm")
+            .setMessage(message)
+            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    result.confirm();
+                }
+            })
+            .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    result.cancel();
+                }
+            })
+            .setCancelable(false)
+            .show();
+// ·µ»Ø²¼¶ûÖµ£ºÅĞ¶Ïµã»÷Ê±È·ÈÏ»¹ÊÇÈ¡Ïû
+// true±íÊ¾µã»÷ÁËÈ·ÈÏ£»false±íÊ¾µã»÷ÁËÈ¡Ïû£»
+    return true;
+}
+
+            
+
+³£¼û·½·¨5£º onJsPrompt£¨£©
+
+    ×÷ÓÃ£ºÖ§³ÖjavascriptÊäÈë¿ò
+
+    µã»÷È·ÈÏ·µ»ØÊäÈë¿òÖĞµÄÖµ£¬µã»÷È¡Ïû·µ»Ø null¡£
+
+webview.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onJsPrompt(WebView view, String url, String message, String defaultValue, final JsPromptResult result) {
+    final EditText et = new EditText(MainActivity.this);
+    et.setText(defaultValue);
+    new AlertDialog.Builder(MainActivity.this)
+            .setTitle(message)
+            .setView(et)
+            .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    result.confirm(et.getText().toString());
+                }
+            })
+            .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    result.cancel();
+                }
+            })
+            .setCancelable(false)
+            .show();
+
+    return true;
+}
+            
+
+3.3 WebViewÓëJavaScriptµÄ½»»¥
+
+¾ßÌåÇë¿´ÎÒĞ´µÄÎÄÕÂ£º×îÈ«Ãæ & ×îÏêÏ¸µÄ Android WebViewÓëJSµÄ½»»¥·½Ê½ »ã×Ü
+3.4 ×¢ÒâÊÂÏî£ºÈçºÎ±ÜÃâWebViewÄÚ´æĞ¹Â¶£¿
+
+3.4.1 ²»ÔÚxmlÖĞ¶¨Òå Webview £¬¶øÊÇÔÚĞèÒªµÄÊ±ºòÔÚActivityÖĞ´´½¨£¬²¢ÇÒContextÊ¹ÓÃ getApplicationgContext()
+
+LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        mWebView = new WebView(getApplicationContext());
+        mWebView.setLayoutParams(params);
+        mLayout.addView(mWebView);
+
+3.4.2 ÔÚ Activity Ïú»Ù£¨ WebView £©µÄÊ±ºò£¬ÏÈÈÃ WebView ¼ÓÔØnullÄÚÈİ£¬È»ºóÒÆ³ı WebView£¬ÔÙÏú»Ù WebView£¬×îºóÖÃ¿Õ¡£
+
+@Override
+    protected void onDestroy() {
+        if (mWebView != null) {
+            mWebView.loadDataWithBaseURL(null, "", "text/html", "utf-8", null);
+            mWebView.clearHistory();
+
+            ((ViewGroup) mWebView.getParent()).removeView(mWebView);
+            mWebView.destroy();
+            mWebView = null;
+        }
+        super.onDestroy();
+    }
+
+4. ÊµÀı
+
+    Ä¿±ê£ºÊµÏÖÏÔÊ¾¡°www.baidu.com¡±¡¢»ñÈ¡Æä±êÌâ¡¢ÌáÊ¾¼ÓÔØ¿ªÊ¼ & ½áÊøºÍ»ñÈ¡¼ÓÔØ½ø¶È
+    ¾ßÌåÊµÏÖ£º
+
+²½Öè1£ºÌí¼Ó·ÃÎÊÍøÂçÈ¨ÏŞ
+
+    ÕâÊÇÇ°Ìá£¡ÕâÊÇÇ°Ìá£¡ÕâÊÇÇ°Ìá£¡
+
+AndroidManifest.xml
+
+<uses-permission android:name="android.permission.INTERNET"/>
+
+²½Öè2£ºÖ÷²¼¾Ö
+activity_main.xml
+
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="com.example.carson_ho.webview_demo.MainActivity">
+
+
+   <!-- »ñÈ¡ÍøÕ¾µÄ±êÌâ-->
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""/>
+
+    <!--¿ªÊ¼¼ÓÔØÌáÊ¾-->
+    <TextView
+        android:id="@+id/text_beginLoading"
+        android:layout_below="@+id/title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""/>
+
+    <!--»ñÈ¡¼ÓÔØ½ø¶È-->
+    <TextView
+        android:layout_below="@+id/text_beginLoading"
+        android:id="@+id/text_Loading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""/>
+
+    <!--½áÊø¼ÓÔØÌáÊ¾-->
+    <TextView
+        android:layout_below="@+id/text_Loading"
+        android:id="@+id/text_endLoading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text=""/>
+    
+    <!--ÏÔÊ¾ÍøÒ³ÇøÓò-->
+    <WebView
+        android:id="@+id/webView1"
+        android:layout_below="@+id/text_endLoading"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_marginTop="10dp" />
+</RelativeLayout>
+
+²½Öè3£º¸ù¾İĞèÒªÊµÏÖµÄ¹¦ÄÜ´Ó¶øÊ¹ÓÃÏàÓ¦µÄ×ÓÀà¼°Æä·½·¨£¨×¢ÊÍºÜÇå³şÁË£©
+MainActivity.java
+
+package com.example.carson_ho.webview_demo;
+
+import android.graphics.Bitmap;
+import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.view.KeyEvent;
+import android.view.ViewGroup;
+import android.webkit.WebChromeClient;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.TextView;
+
+
+public class MainActivity extends AppCompatActivity {
+    WebView mWebview;
+    WebSettings mWebSettings;
+    TextView beginLoading,endLoading,loading,mtitle;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+
+        mWebview = (WebView) findViewById(R.id.webView1);
+        beginLoading = (TextView) findViewById(R.id.text_beginLoading);
+        endLoading = (TextView) findViewById(R.id.text_endLoading);
+        loading = (TextView) findViewById(R.id.text_Loading);
+        mtitle = (TextView) findViewById(R.id.title);
+
+        mWebSettings = mWebview.getSettings();
+
+        mWebview.loadUrl("http://www.baidu.com/");
+
+        
+        //ÉèÖÃ²»ÓÃÏµÍ³ä¯ÀÀÆ÷´ò¿ª,Ö±½ÓÏÔÊ¾ÔÚµ±Ç°Webview
+        mWebview.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                view.loadUrl(url);
+                return true;
+            }
+        });
+
+        //ÉèÖÃWebChromeClientÀà
+        mWebview.setWebChromeClient(new WebChromeClient() {
+
+
+            //»ñÈ¡ÍøÕ¾±êÌâ
+            @Override
+            public void onReceivedTitle(WebView view, String title) {
+                System.out.println("±êÌâÔÚÕâÀï");
+                mtitle.setText(title);
+            }
+
+
+            //»ñÈ¡¼ÓÔØ½ø¶È
+            @Override
+            public void onProgressChanged(WebView view, int newProgress) {
+                if (newProgress < 100) {
+                    String progress = newProgress + "%";
+                    loading.setText(progress);
+                } else if (newProgress == 100) {
+                    String progress = newProgress + "%";
+                    loading.setText(progress);
+                }
+            }
+        });
+
+
+        //ÉèÖÃWebViewClientÀà
+        mWebview.setWebViewClient(new WebViewClient() {
+            //ÉèÖÃ¼ÓÔØÇ°µÄº¯Êı
+            @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                System.out.println("¿ªÊ¼¼ÓÔØÁË");
+                beginLoading.setText("¿ªÊ¼¼ÓÔØÁË");
+
+            }
+
+            //ÉèÖÃ½áÊø¼ÓÔØº¯Êı
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                endLoading.setText("½áÊø¼ÓÔØÁË");
+
+            }
+        });
+    }
+
+    //µã»÷·µ»ØÉÏÒ»Ò³Ãæ¶ø²»ÊÇÍË³öä¯ÀÀÆ÷
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK && mWebview.canGoBack()) {
+            mWebview.goBack();
+            return true;
+        }
+
+        return super.onKeyDown(keyCode, event);
+    }
+
+    //Ïú»ÙWebview
+    @Override
+    protected void onDestroy() {
+        if (mWebview != null) {
+            mWebview.loadDataWithBaseURL(null, "", "text/html", "utf-8", null);
+            mWebview.clearHistory();
+
+            ((ViewGroup) mWebview.getParent()).removeView(mWebview);
+            mWebview.destroy();
+            mWebview = null;
+        }
+        super.onDestroy();
+    }
+}

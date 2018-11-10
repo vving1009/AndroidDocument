@@ -1,0 +1,85 @@
+openssl 给自己颁发证书的步骤：
+https://www.cnblogs.com/lan1x/p/5872915.html
+前提：先建一个cert目录，cd到该目录，以下所有命令的当前路径均为该目录
+
+1. 生成私钥KEY
+
+openssl genrsa -des3 -out server.key 2048
+这一步执行完以后，cert目录下会生成server.key文件
+
+2. 生成证书请求文件CSR
+
+openssl req -new -key server.key -out server.csr
+该命令先进入交互模式，让你填一堆东西，参考下图：
+https://images2015.cnblogs.com/blog/27612/201602/27612-20160203162544132-833752847.png
+要注意的是Common Name这里，要填写成使用SSL证书(即：https协议)的域名或主机名，否则浏览器会认为不安全。例如：如果以后打算用https://yjm-docker/xxx 这里就填写yjm-docker
+
+3. 生成CA的证书
+
+前面提过X.509证书的认证者总是CA或由CA指定的人，所以得先生成一个CA的证书
+
+openssl req -new -x509 -key server.key -out ca.crt -days 3650
+
+4. 最后用第3步的CA证书给自己颁发一个证书玩玩
+
+openssl x509 -req -days 3650 -in server.csr \
+  -CA ca.crt -CAkey server.key \
+  -CAcreateserial -out server.crt
+
+执行完以后，cert目录下server.crt 就是我们需要的证书。当然，如果要在google等浏览器显示出安全的绿锁标志，自己颁发的证书肯定不好使，得花钱向第三方权威证书颁发机构申请(即：第4步是交给权威机构来做，我们只需要提交server.key、server.csr，哦，还有毛爷爷就好了)
+
+///////////////////////////////////////////////////////////////////////
+https://www.cnblogs.com/alisecurity/p/5939336.html
+自有数字证书的生成
+
+HTTPS网站所用的证书可向可信CA机构申请，不过这一类基本上都是商业机构，申请证书需要缴费，一般是按年缴费，费用因为CA机构的不同而不同。如果只是APP与后台服务器进行HTTPS通信，可以使用openssl工具生成自签发的数字证书，可以节约费用，不过得妥善保护好证书私钥，不能泄露或者丢失。HTTPS通信所用的数字证书格式为X.509。
+
+自签发数字证书步骤如下：
+
+Step1 生成自己的CA根证书
+
+生成CA私钥文件ca.key：
+openssl genrsa -out ca.key 1024
+
+生成X.509证书签名请求文件ca.csr：
+openssl req -new -key ca_private.key -out ca.csr
+
+在生成ca.csr的过程中，会让输入一些组织信息等。
+
+生成X.509格式的CA根证书ca_public.crt（公钥证书）：
+openssl x509 -req -in ca.csr -signkey ca_private.key -out ca_public.crt
+
+Step2 生成服务端证书
+
+先生成服务器私钥文件server_private.key：
+openssl genrsa -out server_private.key 1024
+
+根据服务器私钥生成服务器公钥文件server_public.pem：
+openssl rsa -in server_private.key -pubout -out server_public.pem
+
+服务器端需要向CA机构申请签名证书，在申请签名证书之前依然是创建自己的证书签名请求文件server.csr：
+openssl req -new -key server_prviate.key -out server.csr
+
+对于用于HTTPS的CSR，Common Name必须和网站域名一致，以便之后进行Host Name校验。
+
+服务器端用server.csr文件向CA申请证书，签名过程需要CA的公钥证书和私钥参与，最终颁发一个带有CA签名的服务器端证书server.crt：
+openssl x509 -req -CA ca_public.crt -CAkey ca_private.key -CAcreateserial -in server.csr -out server.crt
+
+如果服务器端还想校验客户端的证书，可以按生成服务器端证书的形式来生成客户端证书。
+
+使用openssl查看证书信息：
+openssl x509 -in server.crt -text -noout
+
+用web.py搭建一个简单的服务器测试生成的server.crt，文件webpytest.py为：
+
+在本地运行web服务器程序：
+python webpytest.py 1234
+
+在safari浏览器中输入 https://0.0.0.0:1234 ，提示此证书无效（主机名不相符），因为在生成服务器端证书签名请求文件server.csr时，在Common Name中输入的是localhost，与0.0.0.0不符：
+
+在safari浏览器中输入 https://localhost:1234 ，不再提示主机名不相符了，而是提示此证书是由未知颁发机构签名的，因为是私有CA签发的证书，私有CA不在浏览器或者操作系统的的根信任列表中：
+
+还可用以下命令查看网站证书信息：
+openssl s_client -connect localhost:1234
+
+服务器端搭建成功，接下来讲Android客户端怎么和服务端进行HTTPS通信。

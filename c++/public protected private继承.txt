@@ -1,0 +1,103 @@
+ C++中的三种继承public，protected，private
+http://www.cnblogs.com/BeyondAnyTime/archive/2012/05/23/2514964.html
+三种访问权限
+
+public:可以被任意实体访问
+
+protected:只允许子类及本类的成员函数访问
+
+private:只允许本类的成员函数访问
+
+ 
+
+三种继承方式
+
+public 继承
+
+protect 继承
+
+private 继承
+
+ 
+
+组合结果
+
+基类中 继承方式 子类中
+
+public ＆ public继承 => public
+
+public ＆ protected继承 => protected
+
+public ＆ private继承 = > private
+
+ 
+
+protected ＆ public继承 => protected
+
+protected ＆ protected继承 => protected
+
+protected ＆ private继承 = > private
+
+ 
+
+private ＆ public继承 => 子类无权访问
+
+private ＆ protected继承 => 子类无权访问
+
+private ＆ private继承 = > 子类无权访问
+
+ 
+
+由以上组合结果可以看出
+
+1、public继承不改变基类成员的访问权限
+
+2、private继承使得基类所有成员在子类中的访问权限变为private
+
+3、protected继承将基类中public成员变为子类的protected成员，其它成员的访问 权限不变。
+
+4、基类中的private成员不受继承方式的影响，子类永远无权访问。
+
+ 
+
+此外，在使用private继承时，还存在另外一种机制：准许访问 。
+
+我们已经知道，在基类以private方式被继承时，其public和protected成员在子类中变为private成员。然而某些情况下，需要在子类中将一个或多个继承的成员恢复其在基类中的访问权限。
+
+C++支持以两种方式实现该目的
+
+方法一，使用using 语句，这是C++标准建议使用的方式
+
+方法二，使用访问声明，形式为 base-class::member;， 位置在子类中适当的访问声明处。(注，只能恢复原有访问权限，而不能提高或降低访问权限)
+
+ 
+
+c++ 中为什么要定义public protect private 三种访问权限？
+
+有些我们需要给外面看的，也就是对外接口，那么就是public，如果没有，那么我们做的工作将是毫无意义的，（别人没法用）
+
+如果我们不想让别人知道内部的实现细节，那么就是private，比如，我们这么：
+
+public:
+
+count()
+
+{
+
+　　mycount();
+
+}
+
+private:
+
+　　mycount();
+
+这样的，count是对外的接口，而实现的时候，我们不想让外面知道怎么实现的，就用private，防止它用mycount！
+
+如果我们不想让别人知道，想让自己的孩子什么的知道（这里涉及到继承），那么就可以作为protected!
+
+这样的话，private是自己私有的，protected是可以让孩子知道的，public是公开的！
+
+ 
+
+因为有需求，所以才有这样 的设计！

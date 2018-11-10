@@ -1,0 +1,62 @@
+https://www.jianshu.com/p/4f8f2fbb0cf7
+HTTP请求报文中与缓存相关的首部字段Cache-Control中的值都有哪些，它们的作用分别都是什么
+指令 	目的
+max-stale=<s> 	在<s>时间段内，文档不会过期。该指令放松了缓存的规则
+min-fresh=<s> 	至少在未来的<s>秒内文档要保持新鲜。这使缓存规则更加严格了
+max-age=<s> 	缓存无法返回缓存时间长于<s>秒的文档。这条指令会使规则更加严格，除非同时还发送了max-stale指令，在这种情况下，使用期可能会超过其过期时间。
+no-cache 	除非资源进行了再验证，否则这个客户端不会接受已缓存的资源
+no-store 	缓存应该尽快从存储器中删除文档的所有痕迹，因为其中可能会包含敏感信息
+only-if-cached 	只有当缓存中有副本存在时，客户端才会获取一份副本
+
+OkHttp3中关于缓存的类，我们使用的最多的是：Cache类和ControlCache类，其中前者用于指定缓存的地址和大小，后者用于对缓存进行各种控制，ControlCache又有其构建者类Builder。
+
+先利用Cache类定义缓存地址和缓存最大尺寸：
+
+long maxCacheSize = 100 * 1024 * 1024;
+Cache cache = new Cache(
+        new File("E:/Soft_Develop/iMooc/NetworkFrameDesign/Test"),
+        maxCacheSize);
+
+然后将其注入到OkHttpClient实例中：
+OkHttpClient client = new OkHttpClient.Builder().cache(cache).build();
+
+为了验证缓存是有效的，我们进行两次拉取，分别使用Response类的networkResponse()方法和cacheResponse()方法来查看从网络或缓存中读取到的内容情况：
+Response response = client.newCall(request).execute();
+response.body().close();
+// String body2 = response2.body().string();
+System.out.println("network response = " + response.networkResponse());
+System.out.println("cache response = " + response.cacheResponse());
+System.out.println("--------------------");
+Response response2 = client.newCall(request).execute();
+// String body2 = response2.body().string();
+response.body().close();
+System.out.println("network response2 = " + response2.networkResponse());
+System.out.println("cache response2 = " + response2.cacheResponse());
+
+Response的Body需要关闭（Body的string()方法内嵌了关闭功能），否则缓存将不会如期生效，比如我们将其中关闭主体的两行去掉，那么结果将不会从缓存中读取
+
+OkHttp3控制缓存
+
+上一节说到，OkHttp3控制缓存的类为CacheControl。这一小节具体讲讲怎么使用该类。
+要对缓存进行控制，我们需要在创建Request实例的时候就为其注入相应的缓存控制机制。这个注入是通过Request的cacheControl(CacheControl )方法实现的。例如，加入我不想存储缓存，而是直接从服务器拉取，并且不保存缓存。要实现这样的功能，HTTP是通过首部字段Cache-Control: no-store实现的。使用OkHttp3我们只需要在构造Request实例时按如下方式增加一行代码：
+Request request = new Request.Builder()
+        .url("http://www.ifeng.com")
+        .cacheControl(new CacheControl.Builder().noStore().build())
+        .build();
+
+（1）强制从网络获取资源
+    如果想要跳过缓存直接从网络中获取资源，可以通过noCache()方法；
+    如果需要每次请求都进行再验证环节，如果验证通过还是使用缓存，那么可以使用maxAge(0, TimeUnit.SECONDS)来构建CacheControl。
+
+（2）强制从缓存获取网络资源
+    可以使用onlyIfCached()方法，使用该方法，如果缓存中没有时，将返回504 Unsatisfiable Request；
+    也可以采用maxStale(365, TimeUnit.DAYS)，这样我们就使用了一个很长的缓存放松时间。
+
+Cache-Control  no-cache — 强制每次请求直接发送给源服务器，而不经过本地缓存版本的校验。这对于需要确认认证应用很有用（可以和public结合使用），或者严格要求使用最新数据 的应用（不惜牺牲使用缓存的所有好处）
+Pragma 当"no-cache"出现在请求消息中时，应用程序应当向原始服务器推送此请求，即使它已
+经在上次请求时已经缓存了一份拷贝。这样将保证客户端能接收到最权威的回应。它也用来
+在客户端发现其缓存中拷贝不可用或过期时，对拷贝进行强制刷新。
+cache-control
+max-age>0 时 直接从游览器缓存中 提取
+max-age<=0 时 向server 发送http 请求确认 ,该资源是否有修改
+有的话 返回200 ,无的话 返回304. 

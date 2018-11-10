@@ -1,0 +1,29 @@
+        //调整字体
+        TextView textView = mSearchView.findViewById(android.support.v7.appcompat.R.id.search_src_text);
+        textView.setTextColor(Color.BLACK);
+        textView.setTextSize(14);
+        textView.setHintTextColor(Color.GRAY);
+        textView.setGravity(Gravity.CENTER_VERTICAL);
+        //设置hint字体
+        SpannableString spanText = new SpannableString("请输入姓名、工号");
+        spanText.setSpan(new AbsoluteSizeSpan(14, true), 0, spanText.length(),
+                Spannable.SPAN_INCLUSIVE_EXCLUSIVE);
+        mSearchView.setQueryHint(spanText);// 设置字体大小
+        //动态显示删除键
+        mSearchView.onActionViewExpanded();
+        mSearchView.setIconified(true);
+        //取消下划线
+        try {
+            Class<?> argClass = mSearchView.getClass();
+            Field searchPlate = argClass.getDeclaredField("mSearchPlate");
+            searchPlate.setAccessible(true);
+            View view = (View) searchPlate.get(mSearchView);
+            view.setBackgroundColor(Color.TRANSPARENT);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        mSearchView.setOnQueryTextListener。。。
+        
+        //外部删除SearchView输入文字
+        mSearchView.setQuery("", false);
+        mSearchView.setIconified(false);

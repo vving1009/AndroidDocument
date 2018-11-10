@@ -1,0 +1,63 @@
+Butterknife 使用指南
+https://mp.weixin.qq.com/s/pDH5d1DL12Y6Ar-n-rDIzg
+
+http://jakewharton.github.io/butterknife/
+在module的GRADLE上使用[截止目前Butterknife版本:8.6.0].
+
+dependencies {
+compile ‘com.jakewharton:butterknife:8.6.0′
+annotationProcessor ‘com.jakewharton:butterknife-compiler:8.6.0′
+}
+写在前面:关于ButterKnife服务注册
+调用ButterKnife.bind可以使你在任何地方使用
+
+在Activity上使用 ButterKnife.bind(this)
+在非Activity上使用ButterKnife.bind(this,view)
+一、绑定View控件
+/**单个View控件的绑定*/
+@BindView(R.id.btn_login)
+/**多个控件的绑定可以写在List或者Array中*/
+@BindViews({ R.id.first_name, R.id.middle_name, R.id.last_name })
+List<EditText> nameViews;
+二、资源绑定
+@BindString(R.string.title) String title; 
+@BindDrawable(R.drawable.graphic) Drawable graphic; 
+@BindColor(R.color.red) int red; // int or ColorStateList field 
+@BindDimen(R.dimen.spacer) Float spacer; // int (for pixel size) or float (for exact value) field
+三、监听器绑定[LISTENER BINDING]
+监听器可以直接注解到方法上
+
+@OnClick(R.id.submit)
+public void submit(View view) {
+    // TODO submit data to server...
+}
+监听器方法的参数是可选的(监听器是可以带参数的)
+
+@OnClick(R.id.submit)
+public void sayHi(Button button) { 
+    button.setText("Hello!");
+}
+多个控件可以绑定同一个监听器
+
+@OnClick({R.id.submit,R.id.login})
+public void sayHi(Button button) { 
+    button.setText("Hello!");
+}
+四、Fragment重置Binding
+Fragment的生命周期不同于Activity,当Butterknife在onCreateView上进行绑定时，需要再onDestroyView上进行解绑,Butterknife.bind()方法提供了一个Unbinder 返回值，在onDestroyView上调用相关的unbinder方法即可
+
+public class FancyFragment extends Fragment {
+@BindView(R.id.button1) Button button1; 
+@BindView(R.id.button2) Button button2;
+private Unbinder unbinder; 
+@Override 
+public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) { 
+    View view = inflater.inflate(R.layout.fancy_fragment, container,false); 
+    unbinder = ButterKnife.bind(this, view); 
+// TODO Use fields... 
+return view; 
+} 
+@Override public void onDestroyView() { 
+    super.onDestroyView(); 
+    unbinder.unbind(); 
+}}
