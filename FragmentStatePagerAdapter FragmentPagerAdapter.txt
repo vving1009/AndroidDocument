@@ -12,3 +12,132 @@
 怎么用？
 
 通过上面，我们就可以很容易得出，我们的FragmentPagerAdapter适用于Fragment比较少的情况，因为我们会把每一个Fragment保存在内存中，不用每次切换的时候，去保存现场，切换回来在重新创建，所以用户体验比较好。而对于我们的Fragment比较多的情况，我们需要切换的时候销毁以前的Fragment以释放内存，就可以使用FragmentStatePagerAdapter。
+
+--------------------------------------------------------------------------
+
+1. 当前fragment左右两边缓存的fragment数量
+mViewPager.setOffscreenPageLimit(3);  //（左边3个，右边3个）
+默认mViewPager.setOffscreenPageLimit(1);  //（左右各1个）
+
+--------------------------------------------------------------------------
+
+2. FragmentStatePagerAdapter：
+
+开始在第1个：
+D: setUserVisibleHint: false,1
+D: setUserVisibleHint: false,2
+D: setUserVisibleHint: true,1
+D: onAttach: 1
+D: onCreate: 1
+D: onAttach: 2
+D: onCreate: 2
+D: onCreateView: 1
+D: onActivityCreated: 1
+D: onStart: 1
+D: onResume: 1
+D: onCreateView: 2
+D: onActivityCreated: 2
+D: onStart: 2
+D: onResume: 2
+
+滑动到第2个：
+D: setUserVisibleHint: false,3
+D: setUserVisibleHint: false,1
+D: setUserVisibleHint: true,2
+D: onAttach: 3
+D: onCreate: 3
+D: onCreateView: 3
+D: onActivityCreated: 3
+D: onStart: 3
+D: onResume: 3
+
+滑动到第3个：
+D: setUserVisibleHint: false,4
+D: setUserVisibleHint: false,2
+D: setUserVisibleHint: true,3
+D: onAttach: 4
+D: onCreate: 4
+D: onPause: 1
+D: onStop: 1
+D: onDestroyView: 1
+D: onDestroy: 1
+D: onDetach: 1
+D: onCreateView: 4
+D: onActivityCreated: 4
+D: onStart: 4
+D: onResume: 4
+
+滑动到第2个：
+D: setUserVisibleHint: false,1
+D: setUserVisibleHint: false,3
+D: setUserVisibleHint: true,2
+D: onAttach: 1
+D: onCreate: 1
+D: onPause: 4
+D: onStop: 4
+D: onDestroyView: 4
+D: onDestroy: 4
+D: onDetach: 4
+D: onCreateView: 1
+D: onActivityCreated: 1
+D: onStart: 1
+D: onResume: 1
+
+--------------------------------------------------------------------------
+
+3. FragmentPagerAdapter：（没有state的onDestroy和onDetach）
+
+开始在第1个：
+D: setUserVisibleHint: false,1
+D: setUserVisibleHint: false,2
+D: setUserVisibleHint: true,1
+D: onAttach: 1
+D: onCreate: 1
+D: onAttach: 2
+D: onCreate: 2
+D: onCreateView: 1
+D: onActivityCreated: 1
+D: onStart: 1
+D: onResume: 1
+D: onCreateView: 2
+D: onActivityCreated: 2
+D: onStart: 2
+D: onResume: 2
+
+
+滑动到第2个：
+D: setUserVisibleHint: false,3
+D: setUserVisibleHint: false,1
+D: setUserVisibleHint: true,2
+D: onAttach: 3
+D: onCreate: 3
+D: onCreateView: 3
+D: onActivityCreated: 3
+D: onStart: 3
+D: onResume: 3
+
+滑动到第3个：
+D: setUserVisibleHint: false,4
+D: setUserVisibleHint: false,2
+D: setUserVisibleHint: true,3
+D: onAttach: 4
+D: onCreate: 4
+D: onPause: 1
+D: onStop: 1
+D: onDestroyView: 1
+D: onCreateView: 4
+D: onActivityCreated: 4
+D: onStart: 4
+D: onResume: 4
+
+滑动到第2个：
+D: setUserVisibleHint: false,1
+D: setUserVisibleHint: false,3
+D: setUserVisibleHint: true,2
+D: onCreateView: 1
+D: onActivityCreated: 1
+D: onPause: 4
+D: onStop: 4
+D: onDestroyView: 4
+D: onStart: 1
+D: onResume: 1
